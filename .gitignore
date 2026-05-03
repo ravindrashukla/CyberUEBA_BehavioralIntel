@@ -1,0 +1,11 @@
+__pycache__/
+*.pyc
+*.egg-info/
+.env
+data/generated/
+data/embedding_cache/
+data/snapshots.parquet
+data/concept_embeddings.npz
+*.parquet
+.venv/
+.pytest_cache/
