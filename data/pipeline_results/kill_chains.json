@@ -1,0 +1,567 @@
+[
+  {
+    "id": "b202df69-fe3d-4bd0-b8d6-463b49b66ec2",
+    "created_at": "2026-05-02T23:37:37.749759",
+    "status": "active",
+    "severity": "high",
+    "duration_seconds": 186047.88580241162,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access",
+      "Execution"
+    ],
+    "entities_involved": [
+      "user:USR-042",
+      "user:USR-001",
+      "user:USR-030"
+    ],
+    "events": [
+      {
+        "alert_id": "45726748-5359-41ac-a4ff-363ebc6d19ad",
+        "entity_type": "user",
+        "entity_id": "USR-042",
+        "timestamp": "2026-05-02T23:37:37.749759",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8362. Top concept: data_exfiltration (critical).",
+        "confidence": 0.7892761701176136
+      },
+      {
+        "alert_id": "52141368-1992-4cb4-a15d-1177240c6904",
+        "entity_type": "user",
+        "entity_id": "USR-030",
+        "timestamp": "2026-05-02T23:37:37.749668",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.7974. Top concept: data_exfiltration (critical).",
+        "confidence": 0.4537695432157269
+      },
+      {
+        "alert_id": "58bac364-a6d4-43da-899f-63725649b2f4",
+        "entity_type": "user",
+        "entity_id": "USR-001",
+        "timestamp": "2026-05-02T23:37:37.749379",
+        "tactic": "Execution",
+        "techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.8064. Top concept: compromised_endpoint (critical).",
+        "confidence": 0.846470918353919
+      }
+    ],
+    "event_count": 3
+  },
+  {
+    "id": "3fc96611-cc2c-4103-9c65-8fed8b50e563",
+    "created_at": "2026-05-02T23:37:37.749379",
+    "status": "resolved",
+    "severity": "high",
+    "duration_seconds": 198049.4242814868,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access"
+    ],
+    "entities_involved": [
+      "user:USR-033",
+      "user:USR-001"
+    ],
+    "events": [
+      {
+        "alert_id": "58bac364-a6d4-43da-899f-63725649b2f4",
+        "entity_type": "user",
+        "entity_id": "USR-001",
+        "timestamp": "2026-05-02T23:37:37.749379",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.8064. Top concept: compromised_endpoint (critical).",
+        "confidence": 0.846470918353919
+      },
+      {
+        "alert_id": "de0caac1-866e-4ee9-a759-85a00e26c43f",
+        "entity_type": "user",
+        "entity_id": "USR-033",
+        "timestamp": "2026-05-02T23:37:37.749691",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.8394. Top concept: c2_beacon (critical).",
+        "confidence": 0.8876697565869911
+      }
+    ],
+    "event_count": 2
+  },
+  {
+    "id": "03ce180d-5f05-405d-9b9e-d53518a5cd00",
+    "created_at": "2026-05-02T23:37:37.749751",
+    "status": "active",
+    "severity": "critical",
+    "duration_seconds": 104986.15630816376,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access",
+      "Execution",
+      "Persistence"
+    ],
+    "entities_involved": [
+      "user:USR-017",
+      "user:USR-043",
+      "user:USR-041",
+      "user:USR-015"
+    ],
+    "events": [
+      {
+        "alert_id": "3d5aceed-e03c-40be-83f7-9938256aaa8d",
+        "entity_type": "user",
+        "entity_id": "USR-041",
+        "timestamp": "2026-05-02T23:37:37.749751",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.7832. Top concept: insider_threat_fast (critical).",
+        "confidence": 0.4233535220840111
+      },
+      {
+        "alert_id": "7ebd437c-e2f7-4894-9984-048cdb64ad69",
+        "entity_type": "user",
+        "entity_id": "USR-043",
+        "timestamp": "2026-05-02T23:37:37.749767",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8188. Top concept: reconnaissance (medium).",
+        "confidence": 0.5642831069520124
+      },
+      {
+        "alert_id": "3f17aedb-be2b-48a7-bd58-d6d788725fa9",
+        "entity_type": "user",
+        "entity_id": "USR-015",
+        "timestamp": "2026-05-02T23:37:37.749547",
+        "tactic": "Execution",
+        "techniques": [
+          "T1110",
+          "T1078"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8188. Top concept: credential_stuffing (high).",
+        "confidence": 0.7300535264003072
+      },
+      {
+        "alert_id": "22bfdc02-9a9e-4d39-bbaa-a5c10856bc12",
+        "entity_type": "user",
+        "entity_id": "USR-017",
+        "timestamp": "2026-05-02T23:37:37.749564",
+        "tactic": "Persistence",
+        "techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.7943. Top concept: insider_threat_slow (high).",
+        "confidence": 0.5216485326499772
+      }
+    ],
+    "event_count": 4
+  },
+  {
+    "id": "cd684f22-91cd-41e2-840d-3da324b302c5",
+    "created_at": "2026-05-02T23:37:37.749547",
+    "status": "resolved",
+    "severity": "critical",
+    "duration_seconds": 48701.129409507135,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access",
+      "Execution",
+      "Persistence",
+      "Privilege Escalation"
+    ],
+    "entities_involved": [
+      "user:USR-017",
+      "user:USR-035",
+      "user:USR-031",
+      "user:USR-015",
+      "user:USR-026"
+    ],
+    "events": [
+      {
+        "alert_id": "3f17aedb-be2b-48a7-bd58-d6d788725fa9",
+        "entity_type": "user",
+        "entity_id": "USR-015",
+        "timestamp": "2026-05-02T23:37:37.749547",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1110",
+          "T1078"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8188. Top concept: credential_stuffing (high).",
+        "confidence": 0.7300535264003072
+      },
+      {
+        "alert_id": "22bfdc02-9a9e-4d39-bbaa-a5c10856bc12",
+        "entity_type": "user",
+        "entity_id": "USR-017",
+        "timestamp": "2026-05-02T23:37:37.749564",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.7943. Top concept: insider_threat_slow (high).",
+        "confidence": 0.5216485326499772
+      },
+      {
+        "alert_id": "83c90236-9747-4f3f-8f7d-87cf94fb00a5",
+        "entity_type": "user",
+        "entity_id": "USR-035",
+        "timestamp": "2026-05-02T23:37:37.749706",
+        "tactic": "Execution",
+        "techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8356. Top concept: privilege_escalation (high).",
+        "confidence": 0.8296718005810662
+      },
+      {
+        "alert_id": "0192d131-655c-4021-8134-70cc06dd30f0",
+        "entity_type": "user",
+        "entity_id": "USR-026",
+        "timestamp": "2026-05-02T23:37:37.749637",
+        "tactic": "Persistence",
+        "techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.6103. Top concept: insider_threat_slow (high).",
+        "confidence": 0.5052289496935198
+      },
+      {
+        "alert_id": "bed61dff-bcb2-4243-9b08-527dd480f0a8",
+        "entity_type": "user",
+        "entity_id": "USR-031",
+        "timestamp": "2026-05-02T23:37:37.749676",
+        "tactic": "Privilege Escalation",
+        "techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.7919. Top concept: insider_threat_fast (critical).",
+        "confidence": 0.5803722983581153
+      }
+    ],
+    "event_count": 5
+  },
+  {
+    "id": "3f7efcaa-97c7-454e-b431-e39501972e54",
+    "created_at": "2026-05-02T23:37:37.749706",
+    "status": "active",
+    "severity": "critical",
+    "duration_seconds": 258255.38155326396,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access",
+      "Execution",
+      "Persistence"
+    ],
+    "entities_involved": [
+      "user:USR-031",
+      "user:USR-008",
+      "user:USR-026",
+      "user:USR-035"
+    ],
+    "events": [
+      {
+        "alert_id": "83c90236-9747-4f3f-8f7d-87cf94fb00a5",
+        "entity_type": "user",
+        "entity_id": "USR-035",
+        "timestamp": "2026-05-02T23:37:37.749706",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8356. Top concept: privilege_escalation (high).",
+        "confidence": 0.8296718005810662
+      },
+      {
+        "alert_id": "0192d131-655c-4021-8134-70cc06dd30f0",
+        "entity_type": "user",
+        "entity_id": "USR-026",
+        "timestamp": "2026-05-02T23:37:37.749637",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.6103. Top concept: insider_threat_slow (high).",
+        "confidence": 0.5052289496935198
+      },
+      {
+        "alert_id": "bed61dff-bcb2-4243-9b08-527dd480f0a8",
+        "entity_type": "user",
+        "entity_id": "USR-031",
+        "timestamp": "2026-05-02T23:37:37.749676",
+        "tactic": "Execution",
+        "techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.7919. Top concept: insider_threat_fast (critical).",
+        "confidence": 0.5803722983581153
+      },
+      {
+        "alert_id": "cd57923e-e192-4e88-92cd-05267c679ac0",
+        "entity_type": "user",
+        "entity_id": "USR-008",
+        "timestamp": "2026-05-02T23:37:37.749468",
+        "tactic": "Persistence",
+        "techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.8332. Top concept: lateral_movement (high).",
+        "confidence": 0.5926390471381319
+      }
+    ],
+    "event_count": 4
+  },
+  {
+    "id": "5786aae4-142c-46c6-961f-601ec19f7672",
+    "created_at": "2026-05-02T23:37:37.749676",
+    "status": "resolved",
+    "severity": "high",
+    "duration_seconds": 136547.3743090735,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access",
+      "Execution"
+    ],
+    "entities_involved": [
+      "user:USR-009",
+      "user:USR-008",
+      "user:USR-031"
+    ],
+    "events": [
+      {
+        "alert_id": "bed61dff-bcb2-4243-9b08-527dd480f0a8",
+        "entity_type": "user",
+        "entity_id": "USR-031",
+        "timestamp": "2026-05-02T23:37:37.749676",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.7919. Top concept: insider_threat_fast (critical).",
+        "confidence": 0.5803722983581153
+      },
+      {
+        "alert_id": "cd57923e-e192-4e88-92cd-05267c679ac0",
+        "entity_type": "user",
+        "entity_id": "USR-008",
+        "timestamp": "2026-05-02T23:37:37.749468",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.8332. Top concept: lateral_movement (high).",
+        "confidence": 0.5926390471381319
+      },
+      {
+        "alert_id": "4f6d170a-b6bf-4e35-a3b9-1b659800f80f",
+        "entity_type": "user",
+        "entity_id": "USR-009",
+        "timestamp": "2026-05-02T23:37:37.749476",
+        "tactic": "Execution",
+        "techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.7942. Top concept: c2_beacon (critical).",
+        "confidence": 0.6473665616374855
+      }
+    ],
+    "event_count": 3
+  },
+  {
+    "id": "770ae396-6e02-4cae-bcb8-1814248c88fa",
+    "created_at": "2026-05-02T23:37:37.749476",
+    "status": "active",
+    "severity": "high",
+    "duration_seconds": 398143.7504136237,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access"
+    ],
+    "entities_involved": [
+      "user:USR-009",
+      "user:USR-023"
+    ],
+    "events": [
+      {
+        "alert_id": "4f6d170a-b6bf-4e35-a3b9-1b659800f80f",
+        "entity_type": "user",
+        "entity_id": "USR-009",
+        "timestamp": "2026-05-02T23:37:37.749476",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.7942. Top concept: c2_beacon (critical).",
+        "confidence": 0.6473665616374855
+      },
+      {
+        "alert_id": "5391fb95-e369-4927-9954-fc8f52f8c43c",
+        "entity_type": "user",
+        "entity_id": "USR-023",
+        "timestamp": "2026-05-02T23:37:37.749614",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1195",
+          "T1059",
+          "T1071"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.7858. Top concept: supply_chain_compromise (critical).",
+        "confidence": 0.9001867855657476
+      }
+    ],
+    "event_count": 2
+  },
+  {
+    "id": "16eefb9a-e359-4f7f-96bc-b48db9bd690a",
+    "created_at": "2026-05-02T23:37:37.749621",
+    "status": "active",
+    "severity": "critical",
+    "duration_seconds": 69407.97850027792,
+    "tactics_observed": [
+      "Reconnaissance",
+      "Initial Access",
+      "Execution",
+      "Persistence"
+    ],
+    "entities_involved": [
+      "user:USR-024",
+      "user:USR-039",
+      "user:USR-040",
+      "user:USR-003"
+    ],
+    "events": [
+      {
+        "alert_id": "4b7d9005-a704-4d5e-8867-a811ab9270ab",
+        "entity_type": "user",
+        "entity_id": "USR-024",
+        "timestamp": "2026-05-02T23:37:37.749621",
+        "tactic": "Reconnaissance",
+        "techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ],
+        "description": "Detection method: threshold. Drift magnitude: 0.6183. Top concept: insider_threat_slow (high).",
+        "confidence": 0.9039717162208165
+      },
+      {
+        "alert_id": "40172f83-83b2-451b-adac-6ed3cf6b7dfe",
+        "entity_type": "user",
+        "entity_id": "USR-003",
+        "timestamp": "2026-05-02T23:37:37.749423",
+        "tactic": "Initial Access",
+        "techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ],
+        "description": "Detection method: cusum. Drift magnitude: 0.8125. Top concept: reconnaissance (medium).",
+        "confidence": 0.881917794201273
+      },
+      {
+        "alert_id": "6c6b1087-e2a3-4100-a3b5-5feef9c76c62",
+        "entity_type": "user",
+        "entity_id": "USR-039",
+        "timestamp": "2026-05-02T23:37:37.749736",
+        "tactic": "Execution",
+        "techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ],
+        "description": "Detection method: cusum. Drift magnitude: 0.7899. Top concept: data_exfiltration (critical).",
+        "confidence": 0.8314906664288548
+      },
+      {
+        "alert_id": "ec73ab6c-b39e-4242-b0ee-1a13b8d2e3a6",
+        "entity_type": "user",
+        "entity_id": "USR-040",
+        "timestamp": "2026-05-02T23:37:37.749743",
+        "tactic": "Persistence",
+        "techniques": [
+          "T1195",
+          "T1059",
+          "T1071"
+        ],
+        "description": "Detection method: drift_direction. Drift magnitude: 0.8046. Top concept: supply_chain_compromise (critical).",
+        "confidence": 0.5512772758328617
+      }
+    ],
+    "event_count": 4
+  }
+]

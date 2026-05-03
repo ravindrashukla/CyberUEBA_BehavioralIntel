@@ -15,6 +15,9 @@ def _filter_user_window(df: pd.DataFrame, user_id: str, window_start: date, wind
     """Filter a DataFrame to a specific user and time window."""
     if df is None or df.empty:
         return pd.DataFrame()
+    if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
+        df = df.copy()
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
     mask = (
         (df[user_col] == user_id)
         & (df["timestamp"].dt.date >= window_start)

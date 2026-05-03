@@ -374,7 +374,7 @@ def get_alert(alert_id):
     if use_database():
         from services.database import Database
         rows = Database.execute(
-            "SELECT * FROM trajectory_events WHERE event_id = %s", (alert_id,)
+            "SELECT * FROM trajectory_events WHERE id = %s", (alert_id,)
         )
         if not rows:
             return None
@@ -387,13 +387,14 @@ def update_alert_status(alert_id, status):
     """Update alert status. Returns True if found, False otherwise."""
     if use_database():
         from services.database import Database
-        # Check existence first
         rows = Database.execute(
-            "SELECT event_id FROM trajectory_events WHERE event_id = %s", (alert_id,)
+            "SELECT id FROM trajectory_events WHERE id = %s", (alert_id,)
         )
         if not rows:
             return False
-        Database.update_alert_status(alert_id, status)
+        Database.execute(
+            "UPDATE trajectory_events SET status = %s WHERE id = %s", (status, alert_id)
+        )
         return True
     from api.store import get_store
     return get_store().update_alert_status(alert_id, status)
@@ -414,12 +415,11 @@ def get_kill_chain(chain_id):
     if use_database():
         from services.database import Database
         rows = Database.execute(
-            "SELECT * FROM kill_chain_sequences WHERE chain_id = %s", (chain_id,)
+            "SELECT * FROM kill_chain_sequences WHERE id = %s", (chain_id,)
         )
         if not rows:
             return None
         chain = dict(rows[0])
-        # Get associated events
         events = Database.execute(
             "SELECT * FROM trajectory_events WHERE kill_chain_id = %s ORDER BY detected_at ASC",
             (chain_id,),
@@ -451,7 +451,7 @@ def get_dashboard():
         stats = Database.get_dashboard_stats()
         entity_counts = {
             etype: stats.get(f"{etype}_count", 0)
-            for etype in ("user", "device", "segment", "app", "session")
+            for etype in ("user", "device", "segment", "app")
         }
         alerts_by_severity = stats.get("alerts_7d", {})
         return {
@@ -513,16 +513,26 @@ def _normalize_alert_row(row):
     if detected_at and hasattr(detected_at, "isoformat"):
         detected_at = detected_at.isoformat()
 
+    # Extract concept name from concept_alignments JSONB
+    concept_alignments = row.get("concept_alignments") or []
+    if isinstance(concept_alignments, str):
+        import json as _json
+        try:
+            concept_alignments = _json.loads(concept_alignments)
+        except Exception:
+            concept_alignments = []
+    concept_name = concept_alignments[0]["concept"] if concept_alignments else "unknown"
+
     return {
-        "id": str(row.get("event_id", "")),
+        "id": str(row.get("id", "")),
         "timestamp": str(detected_at or ""),
         "entity_type": row.get("entity_type", ""),
         "entity_id": str(row.get("entity_id", "")),
         "severity": row.get("severity", "medium"),
-        "title": f"Behavioral drift: {row.get('drift_concept', 'unknown')}",
-        "detection_method": row.get("event_type", "behavioral_shift"),
-        "drift_magnitude": float(row.get("magnitude", 0.0) or 0.0),
-        "status": row.get("event_type", "new"),
+        "title": f"Behavioral drift: {concept_name}",
+        "detection_method": row.get("event_type", "drift_direction"),
+        "drift_magnitude": float(row.get("drift_magnitude", 0.0) or 0.0),
+        "status": row.get("status", "new"),
     }
 
 
@@ -533,45 +543,36 @@ def _normalize_alert_detail(row):
     if detected_at and hasattr(detected_at, "isoformat"):
         detected_at = detected_at.isoformat()
 
-    # Parse contributing_signals JSON
-    contrib = row.get("contributing_signals")
-    if isinstance(contrib, str):
+    # Parse concept_alignments JSONB
+    concept_alignments = row.get("concept_alignments") or []
+    if isinstance(concept_alignments, str):
         try:
-            contrib = json_mod.loads(contrib)
+            concept_alignments = json_mod.loads(concept_alignments)
         except (json_mod.JSONDecodeError, TypeError):
-            contrib = {}
+            concept_alignments = []
 
     # Parse mitre_techniques
     techniques = row.get("mitre_techniques") or []
     if isinstance(techniques, str):
         techniques = [t.strip() for t in techniques.strip("{}").split(",") if t.strip()]
 
-    concept_name = row.get("drift_concept", "unknown")
-    alignment_score = float(row.get("concept_alignment", 0.0) or 0.0)
+    concept_name = concept_alignments[0]["concept"] if concept_alignments else "unknown"
+    alignment_score = concept_alignments[0].get("similarity", 0.0) if concept_alignments else 0.0
 
     return {
-        "id": str(row.get("event_id", "")),
+        "id": str(row.get("id", "")),
         "timestamp": str(detected_at or ""),
         "entity_type": row.get("entity_type", ""),
         "entity_id": str(row.get("entity_id", "")),
         "severity": row.get("severity", "medium"),
         "title": f"Behavioral drift: {concept_name}",
-        "description": f"Detection: {row.get('event_type', 'behavioral_shift')}. "
-                       f"Magnitude: {row.get('magnitude', 0):.4f}. Concept: {concept_name}.",
-        "detection_method": row.get("event_type", "behavioral_shift"),
-        "drift_magnitude": float(row.get("magnitude", 0.0) or 0.0),
-        "concept_alignments": [
-            {
-                "concept": concept_name,
-                "similarity": alignment_score,
-                "category": "threat",
-                "severity": row.get("severity", "medium"),
-                "mitre_techniques": techniques,
-            }
-        ] if concept_name != "unknown" else [],
+        "description": row.get("description", ""),
+        "detection_method": row.get("event_type", "drift_direction"),
+        "drift_magnitude": float(row.get("drift_magnitude", 0.0) or 0.0),
+        "concept_alignments": concept_alignments,
         "mitre_techniques": techniques,
         "confidence": alignment_score,
-        "status": row.get("event_type", "new"),
+        "status": row.get("status", "new"),
         "kill_chain_id": str(row["kill_chain_id"]) if row.get("kill_chain_id") else None,
         "related_entities": [],
     }
@@ -579,41 +580,26 @@ def _normalize_alert_detail(row):
 
 def _normalize_chain_row(row):
     """Convert a kill_chain_sequences row to summary format."""
-    created_at = row.get("created_at") or row.get("start_time")
+    created_at = row.get("created_at")
     if created_at and hasattr(created_at, "isoformat"):
         created_at = created_at.isoformat()
 
-    # Compute duration
-    start = row.get("start_time")
-    end = row.get("end_time")
-    duration = 0.0
-    if start and end:
-        try:
-            duration = (end - start).total_seconds()
-        except (TypeError, AttributeError):
-            duration = 0.0
+    entities = row.get("entities_involved") or []
+    if isinstance(entities, str):
+        entities = [x.strip() for x in entities.strip("{}").split(",") if x.strip()]
 
-    # Build entities involved list
-    entities = []
-    for field in ("involved_users", "involved_devices", "involved_segments"):
-        val = row.get(field)
-        if val:
-            if isinstance(val, list):
-                entities.extend(val)
-            elif isinstance(val, str):
-                entities.extend([x.strip() for x in val.strip("{}").split(",") if x.strip()])
-
-    # Parse tactics
-    tactics = row.get("mitre_tactics") or []
-    if isinstance(tactics, str):
-        tactics = [t.strip() for t in tactics.strip("{}").split(",") if t.strip()]
+    narrative = row.get("narrative", "")
+    tactics = []
+    if "tactics:" in narrative:
+        tactics_str = narrative.split("tactics:")[-1].strip()
+        tactics = [t.strip() for t in tactics_str.split(",") if t.strip()]
 
     return {
-        "id": str(row.get("chain_id", "")),
+        "id": str(row.get("id", "")),
         "created_at": str(created_at or ""),
         "status": row.get("status", "active"),
-        "severity": "critical" if row.get("confidence", 0) > 0.7 else "high",
-        "duration_seconds": duration,
+        "severity": row.get("severity", "high"),
+        "duration_seconds": 0.0,
         "tactics_observed": tactics,
         "entities_involved": entities,
         "event_count": len(entities),
@@ -622,25 +608,35 @@ def _normalize_chain_row(row):
 
 def _normalize_chain_detail(chain_row, event_rows):
     """Convert kill_chain_sequences + events to detail format."""
+    import json as json_mod
     summary = _normalize_chain_row(chain_row)
     events = []
     for ev in event_rows:
-        detected_at = ev.get("detected_at") or ev.get("event_date")
+        detected_at = ev.get("detected_at")
         if detected_at and hasattr(detected_at, "isoformat"):
             detected_at = detected_at.isoformat()
         techniques = ev.get("mitre_techniques") or []
         if isinstance(techniques, str):
             techniques = [t.strip() for t in techniques.strip("{}").split(",") if t.strip()]
 
+        concept_alignments = ev.get("concept_alignments") or []
+        if isinstance(concept_alignments, str):
+            try:
+                concept_alignments = json_mod.loads(concept_alignments)
+            except Exception:
+                concept_alignments = []
+        concept_name = concept_alignments[0]["concept"] if concept_alignments else "unknown"
+        confidence = concept_alignments[0].get("similarity", 0.0) if concept_alignments else 0.0
+
         events.append({
-            "alert_id": str(ev.get("event_id", "")),
+            "alert_id": str(ev.get("id", "")),
             "entity_type": ev.get("entity_type", ""),
             "entity_id": str(ev.get("entity_id", "")),
             "timestamp": str(detected_at or ""),
-            "tactic": ev.get("drift_concept", "unknown"),
+            "tactic": concept_name,
             "techniques": techniques,
-            "description": f"Magnitude: {ev.get('magnitude', 0):.4f}",
-            "confidence": float(ev.get("concept_alignment", 0.0) or 0.0),
+            "description": ev.get("description", ""),
+            "confidence": float(confidence),
         })
 
     return {

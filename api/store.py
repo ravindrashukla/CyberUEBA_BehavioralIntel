@@ -1,17 +1,20 @@
 """In-memory data store for demo API.
 
-Generates synthetic entities, embeddings, trajectory snapshots, alerts,
-and kill-chains on startup. Replace with PostgreSQL queries for production.
+Loads pipeline results (alerts, kill-chains, drift series) when available,
+fills remaining data with synthetic generation. Replace with PostgreSQL for production.
 """
+import json
 import uuid
 import numpy as np
 from datetime import datetime, date, timedelta
 from functools import lru_cache
+from pathlib import Path
 
 from detection.reference_concepts import ALL_CONCEPTS, THREAT_CONCEPTS, BENIGN_CONCEPTS
 from embeddings.composer import cosine_similarity, drift_magnitude
 
 _RNG = np.random.default_rng(42)
+_RESULTS_DIR = Path(__file__).parent.parent / "data" / "pipeline_results"
 
 # Signal names per entity type (matches schema column naming)
 SIGNAL_NAMES = {
@@ -166,11 +169,25 @@ class DemoStore:
             self._trajectories[key] = snapshots
 
     def _generate_alerts(self):
+        alerts_file = _RESULTS_DIR / "alerts.json"
+        if alerts_file.exists():
+            with open(alerts_file) as f:
+                loaded = json.load(f)
+            for a in loaded:
+                if "timestamp" not in a:
+                    a["timestamp"] = a.get("detected_at", datetime.utcnow().isoformat())
+                if "kill_chain_id" not in a:
+                    a["kill_chain_id"] = None
+                if "related_entities" not in a:
+                    a["related_entities"] = []
+                self._alerts.append(a)
+                self._alert_index[a["id"]] = a
+            return
+
         severities = ["critical", "high", "medium", "low"]
         methods = ["drift_direction", "cusum", "threshold"]
         statuses = ["new", "investigating", "confirmed", "false_positive", "resolved"]
 
-        # Pick ~20% of entities to have alerts
         all_keys = list(self._entity_index.keys())
         indices = _RNG.choice(len(all_keys), size=min(40, len(all_keys)), replace=False)
 
@@ -183,7 +200,6 @@ class DemoStore:
                 method = _RNG.choice(methods)
                 mag = float(_RNG.uniform(0.15, 0.6))
 
-                # Pick a random threat concept for alignment
                 concept = _RNG.choice(THREAT_CONCEPTS)
                 alignments = [
                     {
@@ -222,7 +238,15 @@ class DemoStore:
                 self._alert_index[alert_id] = alert
 
     def _generate_kill_chains(self):
-        # Group some alerts into kill chains
+        chains_file = _RESULTS_DIR / "kill_chains.json"
+        if chains_file.exists():
+            with open(chains_file) as f:
+                loaded = json.load(f)
+            for c in loaded:
+                self._kill_chains.append(c)
+                self._chain_index[c["id"]] = c
+            return
+
         critical_alerts = [a for a in self._alerts if a["severity"] in ("critical", "high")]
         if len(critical_alerts) < 3:
             return

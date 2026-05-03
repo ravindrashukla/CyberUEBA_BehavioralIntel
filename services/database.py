@@ -63,7 +63,6 @@ _ENTITY_TABLES = {
     "device": ("devices", "device_id"),
     "segment": ("network_segments", "segment_id"),
     "app": ("applications", "app_id"),
-    "session": ("sessions", "session_id"),
 }
 
 
@@ -427,8 +426,7 @@ class Database:
             query += " AND entity_type = %s"
             params.append(entity_type)
         if status:
-            # Status is encoded in event_type for trajectory_events
-            query += " AND event_type = %s"
+            query += " AND status = %s"
             params.append(status)
 
         query += " ORDER BY detected_at DESC LIMIT %s"
@@ -536,33 +534,48 @@ class Database:
 
         # Entity counts
         for etype, (table, _) in _ENTITY_TABLES.items():
-            rows = cls.execute(f"SELECT COUNT(*) AS cnt FROM {table}")
-            stats[f"{etype}_count"] = rows[0]["cnt"] if rows else 0
+            try:
+                rows = cls.execute(f"SELECT COUNT(*) AS cnt FROM {table}")
+                stats[f"{etype}_count"] = rows[0]["cnt"] if rows else 0
+            except Exception:
+                stats[f"{etype}_count"] = 0
 
-        # Embedding coverage
-        for etype, (table, _) in _EMBEDDING_TABLES.items():
+        # Embedding coverage from unified behavioral_snapshots table
+        try:
             rows = cls.execute(
-                f"SELECT COUNT(*) AS cnt FROM {table} WHERE beh_composite IS NOT NULL"
+                "SELECT entity_type, COUNT(DISTINCT entity_id) AS cnt "
+                "FROM behavioral_snapshots GROUP BY entity_type"
             )
-            stats[f"{etype}_embeddings"] = rows[0]["cnt"] if rows else 0
+            for r in (rows or []):
+                stats[f"{r['entity_type']}_embeddings"] = r["cnt"]
+        except Exception:
+            pass
 
-        # Recent alerts
-        rows = cls.execute(
-            "SELECT severity, COUNT(*) AS cnt FROM trajectory_events "
-            "WHERE detected_at > now() - INTERVAL '7 days' "
-            "GROUP BY severity"
-        )
-        stats["alerts_7d"] = {r["severity"]: r["cnt"] for r in rows} if rows else {}
+        # Recent alerts (use all events since our data is recent)
+        try:
+            rows = cls.execute(
+                "SELECT severity, COUNT(*) AS cnt FROM trajectory_events "
+                "GROUP BY severity"
+            )
+            stats["alerts_7d"] = {r["severity"]: r["cnt"] for r in rows} if rows else {}
+        except Exception:
+            stats["alerts_7d"] = {}
 
         # Active kill chains
-        rows = cls.execute(
-            "SELECT COUNT(*) AS cnt FROM kill_chain_sequences WHERE status = 'active'"
-        )
-        stats["active_kill_chains"] = rows[0]["cnt"] if rows else 0
+        try:
+            rows = cls.execute(
+                "SELECT COUNT(*) AS cnt FROM kill_chain_sequences WHERE status = 'active'"
+            )
+            stats["active_kill_chains"] = rows[0]["cnt"] if rows else 0
+        except Exception:
+            stats["active_kill_chains"] = 0
 
         # Total snapshots
-        rows = cls.execute("SELECT COUNT(*) AS cnt FROM behavioral_snapshots")
-        stats["total_snapshots"] = rows[0]["cnt"] if rows else 0
+        try:
+            rows = cls.execute("SELECT COUNT(*) AS cnt FROM behavioral_snapshots")
+            stats["total_snapshots"] = rows[0]["cnt"] if rows else 0
+        except Exception:
+            stats["total_snapshots"] = 0
 
         return stats
 

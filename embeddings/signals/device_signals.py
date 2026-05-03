@@ -15,6 +15,9 @@ def _filter_device_window(df: pd.DataFrame, device_id: str, window_start: date, 
     """Filter a DataFrame to a specific device and time window."""
     if df is None or df.empty:
         return pd.DataFrame()
+    if not pd.api.types.is_datetime64_any_dtype(df["timestamp"]):
+        df = df.copy()
+        df["timestamp"] = pd.to_datetime(df["timestamp"])
     mask = (
         (df["device_id"] == device_id)
         & (df["timestamp"].dt.date >= window_start)

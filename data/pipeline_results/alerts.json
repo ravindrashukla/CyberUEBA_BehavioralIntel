@@ -1,0 +1,1650 @@
+[
+  {
+    "id": "58bac364-a6d4-43da-899f-63725649b2f4",
+    "entity_type": "user",
+    "entity_id": "USR-001",
+    "severity": "critical",
+    "title": "Behavioral drift: compromised_endpoint (USR-001)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8064. Top concept: compromised_endpoint (critical).",
+    "drift_magnitude": 0.8064215928316116,
+    "concept_alignments": [
+      {
+        "concept": "compromised_endpoint",
+        "similarity": 0.5694392198760261,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1059",
+      "T1547",
+      "T1562",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749379",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.846470918353919,
+    "kill_chain_id": "3fc96611-cc2c-4103-9c65-8fed8b50e563"
+  },
+  {
+    "id": "95154dc5-7e14-44ca-8dba-48707363cf72",
+    "entity_type": "user",
+    "entity_id": "USR-002",
+    "severity": "high",
+    "title": "Behavioral drift: credential_stuffing (USR-002)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8186. Top concept: credential_stuffing (high).",
+    "drift_magnitude": 0.8185814917087555,
+    "concept_alignments": [
+      {
+        "concept": "credential_stuffing",
+        "similarity": 0.8378111758183779,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1110",
+          "T1078"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1110",
+      "T1078"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749410",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.8087534387440161
+  },
+  {
+    "id": "40172f83-83b2-451b-adac-6ed3cf6b7dfe",
+    "entity_type": "user",
+    "entity_id": "USR-003",
+    "severity": "high",
+    "title": "Behavioral drift: reconnaissance (USR-003)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8125. Top concept: reconnaissance (medium).",
+    "drift_magnitude": 0.812531903386116,
+    "concept_alignments": [
+      {
+        "concept": "reconnaissance",
+        "similarity": 0.5353990121162906,
+        "category": "threat",
+        "severity": "medium",
+        "mitre_techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1046",
+      "T1018",
+      "T1087",
+      "T1135"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749423",
+    "status": "false_positive",
+    "detection_method": "cusum",
+    "confidence": 0.881917794201273,
+    "kill_chain_id": "16eefb9a-e359-4f7f-96bc-b48db9bd690a"
+  },
+  {
+    "id": "02d43f0f-04b5-46ca-a4d9-0c16a2d5e3bd",
+    "entity_type": "user",
+    "entity_id": "USR-004",
+    "severity": "critical",
+    "title": "Behavioral drift: credential_stuffing (USR-004)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8101. Top concept: credential_stuffing (high).",
+    "drift_magnitude": 0.8100821226835251,
+    "concept_alignments": [
+      {
+        "concept": "credential_stuffing",
+        "similarity": 0.5717070994136655,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1110",
+          "T1078"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1110",
+      "T1078"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749434",
+    "status": "new",
+    "detection_method": "cusum",
+    "confidence": 0.6883840892482341
+  },
+  {
+    "id": "76708176-1a42-4ac4-87c4-dea49387cb11",
+    "entity_type": "user",
+    "entity_id": "USR-005",
+    "severity": "high",
+    "title": "Behavioral drift: reconnaissance (USR-005)",
+    "description": "Detection method: threshold. Drift magnitude: 0.7842. Top concept: reconnaissance (medium).",
+    "drift_magnitude": 0.7842490375041962,
+    "concept_alignments": [
+      {
+        "concept": "reconnaissance",
+        "similarity": 0.6658321995610323,
+        "category": "threat",
+        "severity": "medium",
+        "mitre_techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1046",
+      "T1018",
+      "T1087",
+      "T1135"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749443",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.7942056248443945
+  },
+  {
+    "id": "ef9b0994-10fc-4cca-acea-34f8ec2cfa77",
+    "entity_type": "user",
+    "entity_id": "USR-006",
+    "severity": "high",
+    "title": "Behavioral drift: compromised_endpoint (USR-006)",
+    "description": "Detection method: threshold. Drift magnitude: 0.7989. Top concept: compromised_endpoint (critical).",
+    "drift_magnitude": 0.7989373952150345,
+    "concept_alignments": [
+      {
+        "concept": "compromised_endpoint",
+        "similarity": 0.7965605606610988,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1059",
+      "T1547",
+      "T1562",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749451",
+    "status": "investigating",
+    "detection_method": "threshold",
+    "confidence": 0.8047594184783562
+  },
+  {
+    "id": "312aea87-2011-450e-bbd2-4357235e9f49",
+    "entity_type": "user",
+    "entity_id": "USR-007",
+    "severity": "critical",
+    "title": "Behavioral drift: data_exfiltration (USR-007)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8122. Top concept: data_exfiltration (critical).",
+    "drift_magnitude": 0.812223955988884,
+    "concept_alignments": [
+      {
+        "concept": "data_exfiltration",
+        "similarity": 0.37190188289361437,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1074",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749460",
+    "status": "confirmed",
+    "detection_method": "cusum",
+    "confidence": 0.7551854556860764
+  },
+  {
+    "id": "cd57923e-e192-4e88-92cd-05267c679ac0",
+    "entity_type": "user",
+    "entity_id": "USR-008",
+    "severity": "critical",
+    "title": "Behavioral drift: lateral_movement (USR-008)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8332. Top concept: lateral_movement (high).",
+    "drift_magnitude": 0.8331550359725952,
+    "concept_alignments": [
+      {
+        "concept": "lateral_movement",
+        "similarity": 0.5129126790690759,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1021",
+      "T1570",
+      "T1550",
+      "T1072"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749468",
+    "status": "investigating",
+    "detection_method": "threshold",
+    "confidence": 0.5926390471381319,
+    "kill_chain_id": "5786aae4-142c-46c6-961f-601ec19f7672"
+  },
+  {
+    "id": "4f6d170a-b6bf-4e35-a3b9-1b659800f80f",
+    "entity_type": "user",
+    "entity_id": "USR-009",
+    "severity": "critical",
+    "title": "Behavioral drift: c2_beacon (USR-009)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7942. Top concept: c2_beacon (critical).",
+    "drift_magnitude": 0.7942139208316803,
+    "concept_alignments": [
+      {
+        "concept": "c2_beacon",
+        "similarity": 0.4149607526677358,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1071",
+      "T1573",
+      "T1568",
+      "T1102"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749476",
+    "status": "confirmed",
+    "detection_method": "drift_direction",
+    "confidence": 0.6473665616374855,
+    "kill_chain_id": "770ae396-6e02-4cae-bcb8-1814248c88fa"
+  },
+  {
+    "id": "f5ec4af7-a075-4184-b957-c4f5e5affc2c",
+    "entity_type": "user",
+    "entity_id": "USR-010",
+    "severity": "high",
+    "title": "Behavioral drift: privilege_escalation (USR-010)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8124. Top concept: privilege_escalation (high).",
+    "drift_magnitude": 0.8123988807201385,
+    "concept_alignments": [
+      {
+        "concept": "privilege_escalation",
+        "similarity": 0.5685759594361653,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1068",
+      "T1134",
+      "T1548"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749501",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.7641378530411695
+  },
+  {
+    "id": "174a2397-3f1b-40d8-b2f4-c9965d7f8799",
+    "entity_type": "user",
+    "entity_id": "USR-011",
+    "severity": "critical",
+    "title": "Behavioral drift: c2_beacon (USR-011)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8269. Top concept: c2_beacon (critical).",
+    "drift_magnitude": 0.8269464075565338,
+    "concept_alignments": [
+      {
+        "concept": "c2_beacon",
+        "similarity": 0.7523821787484009,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1071",
+      "T1573",
+      "T1568",
+      "T1102"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749513",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.6014887570956907
+  },
+  {
+    "id": "702b8845-c024-4157-9efa-7b7599cd70ee",
+    "entity_type": "user",
+    "entity_id": "USR-012",
+    "severity": "high",
+    "title": "Behavioral drift: privilege_escalation (USR-012)",
+    "description": "Detection method: threshold. Drift magnitude: 0.7901. Top concept: privilege_escalation (high).",
+    "drift_magnitude": 0.7901481539011002,
+    "concept_alignments": [
+      {
+        "concept": "privilege_escalation",
+        "similarity": 0.4198762418046549,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1068",
+      "T1134",
+      "T1548"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749522",
+    "status": "false_positive",
+    "detection_method": "threshold",
+    "confidence": 0.5039522652870564
+  },
+  {
+    "id": "7b7214e8-70d2-4f5a-8f4b-1064679091be",
+    "entity_type": "user",
+    "entity_id": "USR-013",
+    "severity": "high",
+    "title": "Behavioral drift: compromised_endpoint (USR-013)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8199. Top concept: compromised_endpoint (critical).",
+    "drift_magnitude": 0.8198661953210831,
+    "concept_alignments": [
+      {
+        "concept": "compromised_endpoint",
+        "similarity": 0.682425428296016,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1059",
+      "T1547",
+      "T1562",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749530",
+    "status": "investigating",
+    "detection_method": "cusum",
+    "confidence": 0.8059790961314233
+  },
+  {
+    "id": "acf0b3b6-849c-4c1d-aa00-99f1926e379c",
+    "entity_type": "user",
+    "entity_id": "USR-014",
+    "severity": "medium",
+    "title": "Behavioral drift: insider_threat_fast (USR-014)",
+    "description": "Detection method: cusum. Drift magnitude: 0.5908. Top concept: insider_threat_fast (critical).",
+    "drift_magnitude": 0.5908249020576477,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_fast",
+        "similarity": 0.4198984990638287,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1052",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749539",
+    "status": "investigating",
+    "detection_method": "cusum",
+    "confidence": 0.4595556382387062
+  },
+  {
+    "id": "3f17aedb-be2b-48a7-bd58-d6d788725fa9",
+    "entity_type": "user",
+    "entity_id": "USR-015",
+    "severity": "high",
+    "title": "Behavioral drift: credential_stuffing (USR-015)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8188. Top concept: credential_stuffing (high).",
+    "drift_magnitude": 0.8188288062810898,
+    "concept_alignments": [
+      {
+        "concept": "credential_stuffing",
+        "similarity": 0.6326180532405944,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1110",
+          "T1078"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1110",
+      "T1078"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749547",
+    "status": "investigating",
+    "detection_method": "drift_direction",
+    "confidence": 0.7300535264003072,
+    "kill_chain_id": "cd684f22-91cd-41e2-840d-3da324b302c5"
+  },
+  {
+    "id": "4aae9b69-36c7-4c46-bc49-d3baa4d1e950",
+    "entity_type": "user",
+    "entity_id": "USR-016",
+    "severity": "critical",
+    "title": "Behavioral drift: compromised_endpoint (USR-016)",
+    "description": "Detection method: cusum. Drift magnitude: 0.7987. Top concept: compromised_endpoint (critical).",
+    "drift_magnitude": 0.7986804693937302,
+    "concept_alignments": [
+      {
+        "concept": "compromised_endpoint",
+        "similarity": 0.5019750490313061,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1059",
+      "T1547",
+      "T1562",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749556",
+    "status": "new",
+    "detection_method": "cusum",
+    "confidence": 0.4160252739753285
+  },
+  {
+    "id": "22bfdc02-9a9e-4d39-bbaa-a5c10856bc12",
+    "entity_type": "user",
+    "entity_id": "USR-017",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_slow (USR-017)",
+    "description": "Detection method: threshold. Drift magnitude: 0.7943. Top concept: insider_threat_slow (high).",
+    "drift_magnitude": 0.7942570596933365,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_slow",
+        "similarity": 0.554264321862318,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1083",
+      "T1005",
+      "T1052"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749564",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.5216485326499772,
+    "kill_chain_id": "cd684f22-91cd-41e2-840d-3da324b302c5"
+  },
+  {
+    "id": "93bbe7e4-715f-4020-a8c5-d856f5b562dd",
+    "entity_type": "user",
+    "entity_id": "USR-018",
+    "severity": "critical",
+    "title": "Behavioral drift: reconnaissance (USR-018)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8029. Top concept: reconnaissance (medium).",
+    "drift_magnitude": 0.8028896301984787,
+    "concept_alignments": [
+      {
+        "concept": "reconnaissance",
+        "similarity": 0.4967968788833418,
+        "category": "threat",
+        "severity": "medium",
+        "mitre_techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1046",
+      "T1018",
+      "T1087",
+      "T1135"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749573",
+    "status": "false_positive",
+    "detection_method": "drift_direction",
+    "confidence": 0.7441965876579855
+  },
+  {
+    "id": "856f3e3f-469a-48e3-abd4-ffa2f24fe61b",
+    "entity_type": "user",
+    "entity_id": "USR-019",
+    "severity": "medium",
+    "title": "Behavioral drift: insider_threat_fast (USR-019)",
+    "description": "Detection method: cusum. Drift magnitude: 0.5969. Top concept: insider_threat_fast (critical).",
+    "drift_magnitude": 0.5968579351902008,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_fast",
+        "similarity": 0.6821567701636937,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1052",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749581",
+    "status": "new",
+    "detection_method": "cusum",
+    "confidence": 0.823290600026338
+  },
+  {
+    "id": "907d3c44-0eb6-40e9-90fd-9ee28d4f7d8e",
+    "entity_type": "user",
+    "entity_id": "USR-020",
+    "severity": "high",
+    "title": "Behavioral drift: lateral_movement (USR-020)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8010. Top concept: lateral_movement (high).",
+    "drift_magnitude": 0.8010005801916122,
+    "concept_alignments": [
+      {
+        "concept": "lateral_movement",
+        "similarity": 0.39502393038782085,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1021",
+      "T1570",
+      "T1550",
+      "T1072"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749591",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.7756268623101542
+  },
+  {
+    "id": "b85d7f21-4479-4db2-91f5-00fb12bbc05e",
+    "entity_type": "user",
+    "entity_id": "USR-021",
+    "severity": "critical",
+    "title": "Behavioral drift: insider_threat_slow (USR-021)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8167. Top concept: insider_threat_slow (high).",
+    "drift_magnitude": 0.8167254626750946,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_slow",
+        "similarity": 0.6005223875516817,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1083",
+      "T1005",
+      "T1052"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749598",
+    "status": "investigating",
+    "detection_method": "threshold",
+    "confidence": 0.7620865950404228
+  },
+  {
+    "id": "217adcc5-a121-475c-acc1-1e0b3835ed1b",
+    "entity_type": "user",
+    "entity_id": "USR-022",
+    "severity": "high",
+    "title": "Behavioral drift: data_exfiltration (USR-022)",
+    "description": "Detection method: cusum. Drift magnitude: 0.7719. Top concept: data_exfiltration (critical).",
+    "drift_magnitude": 0.7718605399131775,
+    "concept_alignments": [
+      {
+        "concept": "data_exfiltration",
+        "similarity": 0.5007560445739383,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1074",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749606",
+    "status": "new",
+    "detection_method": "cusum",
+    "confidence": 0.727746948421822
+  },
+  {
+    "id": "5391fb95-e369-4927-9954-fc8f52f8c43c",
+    "entity_type": "user",
+    "entity_id": "USR-023",
+    "severity": "high",
+    "title": "Behavioral drift: supply_chain_compromise (USR-023)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7858. Top concept: supply_chain_compromise (critical).",
+    "drift_magnitude": 0.7857530117034912,
+    "concept_alignments": [
+      {
+        "concept": "supply_chain_compromise",
+        "similarity": 0.40900295106025764,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1195",
+          "T1059",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1195",
+      "T1059",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749614",
+    "status": "resolved",
+    "detection_method": "drift_direction",
+    "confidence": 0.9001867855657476,
+    "kill_chain_id": "770ae396-6e02-4cae-bcb8-1814248c88fa"
+  },
+  {
+    "id": "4b7d9005-a704-4d5e-8867-a811ab9270ab",
+    "entity_type": "user",
+    "entity_id": "USR-024",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_slow (USR-024)",
+    "description": "Detection method: threshold. Drift magnitude: 0.6183. Top concept: insider_threat_slow (high).",
+    "drift_magnitude": 0.6183019280433655,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_slow",
+        "similarity": 0.48293498072975977,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1083",
+      "T1005",
+      "T1052"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749621",
+    "status": "false_positive",
+    "detection_method": "threshold",
+    "confidence": 0.9039717162208165,
+    "kill_chain_id": "16eefb9a-e359-4f7f-96bc-b48db9bd690a"
+  },
+  {
+    "id": "3e818a38-9a96-4b57-9b82-f66f82f35d67",
+    "entity_type": "user",
+    "entity_id": "USR-025",
+    "severity": "high",
+    "title": "Behavioral drift: privilege_escalation (USR-025)",
+    "description": "Detection method: threshold. Drift magnitude: 0.6240. Top concept: privilege_escalation (high).",
+    "drift_magnitude": 0.6240208745002747,
+    "concept_alignments": [
+      {
+        "concept": "privilege_escalation",
+        "similarity": 0.5746807510718943,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1068",
+      "T1134",
+      "T1548"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749628",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.5415656121594827
+  },
+  {
+    "id": "0192d131-655c-4021-8134-70cc06dd30f0",
+    "entity_type": "user",
+    "entity_id": "USR-026",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_slow (USR-026)",
+    "description": "Detection method: threshold. Drift magnitude: 0.6103. Top concept: insider_threat_slow (high).",
+    "drift_magnitude": 0.6103188991546631,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_slow",
+        "similarity": 0.5778881449168055,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1083",
+      "T1005",
+      "T1052"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749637",
+    "status": "new",
+    "detection_method": "threshold",
+    "confidence": 0.5052289496935198,
+    "kill_chain_id": "3f7efcaa-97c7-454e-b431-e39501972e54"
+  },
+  {
+    "id": "3bc7a49e-53f1-4634-a583-a53818c4f331",
+    "entity_type": "user",
+    "entity_id": "USR-027",
+    "severity": "critical",
+    "title": "Behavioral drift: reconnaissance (USR-027)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8072. Top concept: reconnaissance (medium).",
+    "drift_magnitude": 0.807165339589119,
+    "concept_alignments": [
+      {
+        "concept": "reconnaissance",
+        "similarity": 0.43838639146961583,
+        "category": "threat",
+        "severity": "medium",
+        "mitre_techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1046",
+      "T1018",
+      "T1087",
+      "T1135"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749645",
+    "status": "confirmed",
+    "detection_method": "cusum",
+    "confidence": 0.8454394277280353
+  },
+  {
+    "id": "034d9a4a-0937-4278-ae25-df01ad435d4e",
+    "entity_type": "user",
+    "entity_id": "USR-028",
+    "severity": "high",
+    "title": "Behavioral drift: c2_beacon (USR-028)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8158. Top concept: c2_beacon (critical).",
+    "drift_magnitude": 0.8158403038978577,
+    "concept_alignments": [
+      {
+        "concept": "c2_beacon",
+        "similarity": 0.5660465198875518,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1071",
+      "T1573",
+      "T1568",
+      "T1102"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749653",
+    "status": "confirmed",
+    "detection_method": "drift_direction",
+    "confidence": 0.7037309438346225
+  },
+  {
+    "id": "be6ee0b5-2a82-4918-8222-902cc68be8eb",
+    "entity_type": "user",
+    "entity_id": "USR-029",
+    "severity": "high",
+    "title": "Behavioral drift: credential_stuffing (USR-029)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7873. Top concept: credential_stuffing (high).",
+    "drift_magnitude": 0.7872965037822723,
+    "concept_alignments": [
+      {
+        "concept": "credential_stuffing",
+        "similarity": 0.5579037010853047,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1110",
+          "T1078"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1110",
+      "T1078"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749660",
+    "status": "investigating",
+    "detection_method": "drift_direction",
+    "confidence": 0.4216393704081841
+  },
+  {
+    "id": "52141368-1992-4cb4-a15d-1177240c6904",
+    "entity_type": "user",
+    "entity_id": "USR-030",
+    "severity": "critical",
+    "title": "Behavioral drift: data_exfiltration (USR-030)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7974. Top concept: data_exfiltration (critical).",
+    "drift_magnitude": 0.7973943203687668,
+    "concept_alignments": [
+      {
+        "concept": "data_exfiltration",
+        "similarity": 0.4222620944330234,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1074",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749668",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.4537695432157269,
+    "kill_chain_id": "b202df69-fe3d-4bd0-b8d6-463b49b66ec2"
+  },
+  {
+    "id": "bed61dff-bcb2-4243-9b08-527dd480f0a8",
+    "entity_type": "user",
+    "entity_id": "USR-031",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_fast (USR-031)",
+    "description": "Detection method: threshold. Drift magnitude: 0.7919. Top concept: insider_threat_fast (critical).",
+    "drift_magnitude": 0.7918774485588074,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_fast",
+        "similarity": 0.8125600591883986,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1052",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749676",
+    "status": "investigating",
+    "detection_method": "threshold",
+    "confidence": 0.5803722983581153,
+    "kill_chain_id": "5786aae4-142c-46c6-961f-601ec19f7672"
+  },
+  {
+    "id": "efccfafb-97a5-455e-96c2-ed7cef7599ff",
+    "entity_type": "user",
+    "entity_id": "USR-032",
+    "severity": "medium",
+    "title": "Behavioral drift: privilege_escalation (USR-032)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.5802. Top concept: privilege_escalation (high).",
+    "drift_magnitude": 0.5801527500152588,
+    "concept_alignments": [
+      {
+        "concept": "privilege_escalation",
+        "similarity": 0.8292796066207226,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1068",
+      "T1134",
+      "T1548"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749683",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.6507977872103081
+  },
+  {
+    "id": "de0caac1-866e-4ee9-a759-85a00e26c43f",
+    "entity_type": "user",
+    "entity_id": "USR-033",
+    "severity": "critical",
+    "title": "Behavioral drift: c2_beacon (USR-033)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8394. Top concept: c2_beacon (critical).",
+    "drift_magnitude": 0.8394346684217453,
+    "concept_alignments": [
+      {
+        "concept": "c2_beacon",
+        "similarity": 0.5933291654190802,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1071",
+          "T1573",
+          "T1568",
+          "T1102"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1071",
+      "T1573",
+      "T1568",
+      "T1102"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749691",
+    "status": "investigating",
+    "detection_method": "threshold",
+    "confidence": 0.8876697565869911,
+    "kill_chain_id": "3fc96611-cc2c-4103-9c65-8fed8b50e563"
+  },
+  {
+    "id": "43e11a44-26ea-403b-9304-96eacb89f9ab",
+    "entity_type": "user",
+    "entity_id": "USR-034",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_slow (USR-034)",
+    "description": "Detection method: threshold. Drift magnitude: 0.6339. Top concept: insider_threat_slow (high).",
+    "drift_magnitude": 0.6339448690414429,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_slow",
+        "similarity": 0.5867447005284769,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1083",
+      "T1005",
+      "T1052"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749698",
+    "status": "investigating",
+    "detection_method": "threshold",
+    "confidence": 0.5724158786181271
+  },
+  {
+    "id": "83c90236-9747-4f3f-8f7d-87cf94fb00a5",
+    "entity_type": "user",
+    "entity_id": "USR-035",
+    "severity": "critical",
+    "title": "Behavioral drift: privilege_escalation (USR-035)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8356. Top concept: privilege_escalation (high).",
+    "drift_magnitude": 0.8355695307254791,
+    "concept_alignments": [
+      {
+        "concept": "privilege_escalation",
+        "similarity": 0.5694557301525234,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1068",
+      "T1134",
+      "T1548"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749706",
+    "status": "resolved",
+    "detection_method": "drift_direction",
+    "confidence": 0.8296718005810662,
+    "kill_chain_id": "3f7efcaa-97c7-454e-b431-e39501972e54"
+  },
+  {
+    "id": "343bbaaf-afe0-40ac-998f-2873cf39d325",
+    "entity_type": "user",
+    "entity_id": "USR-036",
+    "severity": "high",
+    "title": "Behavioral drift: compromised_endpoint (USR-036)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7653. Top concept: compromised_endpoint (critical).",
+    "drift_magnitude": 0.7653206437826157,
+    "concept_alignments": [
+      {
+        "concept": "compromised_endpoint",
+        "similarity": 0.42012454449930536,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1059",
+      "T1547",
+      "T1562",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749713",
+    "status": "confirmed",
+    "detection_method": "drift_direction",
+    "confidence": 0.4564593853904307
+  },
+  {
+    "id": "6e092afa-bb3d-408c-a7b7-66c89aa01349",
+    "entity_type": "user",
+    "entity_id": "USR-037",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_fast (USR-037)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8190. Top concept: insider_threat_fast (critical).",
+    "drift_magnitude": 0.8189636319875717,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_fast",
+        "similarity": 0.49061689191950414,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1052",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749720",
+    "status": "false_positive",
+    "detection_method": "drift_direction",
+    "confidence": 0.778037199429179
+  },
+  {
+    "id": "4f56296a-6fb0-47cc-892d-b186e1475d94",
+    "entity_type": "user",
+    "entity_id": "USR-038",
+    "severity": "critical",
+    "title": "Behavioral drift: lateral_movement (USR-038)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8435. Top concept: lateral_movement (high).",
+    "drift_magnitude": 0.8435206711292267,
+    "concept_alignments": [
+      {
+        "concept": "lateral_movement",
+        "similarity": 0.8080059225688039,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1021",
+      "T1570",
+      "T1550",
+      "T1072"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749728",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.519711275265338
+  },
+  {
+    "id": "6c6b1087-e2a3-4100-a3b5-5feef9c76c62",
+    "entity_type": "user",
+    "entity_id": "USR-039",
+    "severity": "high",
+    "title": "Behavioral drift: data_exfiltration (USR-039)",
+    "description": "Detection method: cusum. Drift magnitude: 0.7899. Top concept: data_exfiltration (critical).",
+    "drift_magnitude": 0.7898843586444855,
+    "concept_alignments": [
+      {
+        "concept": "data_exfiltration",
+        "similarity": 0.5354611419312194,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1074",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749736",
+    "status": "false_positive",
+    "detection_method": "cusum",
+    "confidence": 0.8314906664288548,
+    "kill_chain_id": "16eefb9a-e359-4f7f-96bc-b48db9bd690a"
+  },
+  {
+    "id": "ec73ab6c-b39e-4242-b0ee-1a13b8d2e3a6",
+    "entity_type": "user",
+    "entity_id": "USR-040",
+    "severity": "high",
+    "title": "Behavioral drift: supply_chain_compromise (USR-040)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8046. Top concept: supply_chain_compromise (critical).",
+    "drift_magnitude": 0.8046112358570099,
+    "concept_alignments": [
+      {
+        "concept": "supply_chain_compromise",
+        "similarity": 0.8264496975348725,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1195",
+          "T1059",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1195",
+      "T1059",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749743",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.5512772758328617,
+    "kill_chain_id": "16eefb9a-e359-4f7f-96bc-b48db9bd690a"
+  },
+  {
+    "id": "3d5aceed-e03c-40be-83f7-9938256aaa8d",
+    "entity_type": "user",
+    "entity_id": "USR-041",
+    "severity": "high",
+    "title": "Behavioral drift: insider_threat_fast (USR-041)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7832. Top concept: insider_threat_fast (critical).",
+    "drift_magnitude": 0.783159926533699,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_fast",
+        "similarity": 0.8180217850244816,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1052",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749751",
+    "status": "investigating",
+    "detection_method": "drift_direction",
+    "confidence": 0.4233535220840111,
+    "kill_chain_id": "03ce180d-5f05-405d-9b9e-d53518a5cd00"
+  },
+  {
+    "id": "45726748-5359-41ac-a4ff-363ebc6d19ad",
+    "entity_type": "user",
+    "entity_id": "USR-042",
+    "severity": "critical",
+    "title": "Behavioral drift: data_exfiltration (USR-042)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8362. Top concept: data_exfiltration (critical).",
+    "drift_magnitude": 0.8361607939004898,
+    "concept_alignments": [
+      {
+        "concept": "data_exfiltration",
+        "similarity": 0.8461877820279184,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1074",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749759",
+    "status": "resolved",
+    "detection_method": "drift_direction",
+    "confidence": 0.7892761701176136,
+    "kill_chain_id": "b202df69-fe3d-4bd0-b8d6-463b49b66ec2"
+  },
+  {
+    "id": "7ebd437c-e2f7-4894-9984-048cdb64ad69",
+    "entity_type": "user",
+    "entity_id": "USR-043",
+    "severity": "high",
+    "title": "Behavioral drift: reconnaissance (USR-043)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8188. Top concept: reconnaissance (medium).",
+    "drift_magnitude": 0.8187507390975952,
+    "concept_alignments": [
+      {
+        "concept": "reconnaissance",
+        "similarity": 0.7967233198489316,
+        "category": "threat",
+        "severity": "medium",
+        "mitre_techniques": [
+          "T1046",
+          "T1018",
+          "T1087",
+          "T1135"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1046",
+      "T1018",
+      "T1087",
+      "T1135"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749767",
+    "status": "false_positive",
+    "detection_method": "drift_direction",
+    "confidence": 0.5642831069520124,
+    "kill_chain_id": "03ce180d-5f05-405d-9b9e-d53518a5cd00"
+  },
+  {
+    "id": "6093f92d-b228-4682-a381-f72a19f9b898",
+    "entity_type": "user",
+    "entity_id": "USR-044",
+    "severity": "critical",
+    "title": "Behavioral drift: lateral_movement (USR-044)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8489. Top concept: lateral_movement (high).",
+    "drift_magnitude": 0.8488798439502716,
+    "concept_alignments": [
+      {
+        "concept": "lateral_movement",
+        "similarity": 0.5368288644368551,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1021",
+      "T1570",
+      "T1550",
+      "T1072"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749774",
+    "status": "confirmed",
+    "detection_method": "cusum",
+    "confidence": 0.449122667391988
+  },
+  {
+    "id": "7cd7a805-6503-49ab-aab9-825ccbb085e3",
+    "entity_type": "user",
+    "entity_id": "USR-045",
+    "severity": "high",
+    "title": "Behavioral drift: lateral_movement (USR-045)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.7767. Top concept: lateral_movement (high).",
+    "drift_magnitude": 0.7767426520586014,
+    "concept_alignments": [
+      {
+        "concept": "lateral_movement",
+        "similarity": 0.8184065752668896,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1021",
+          "T1570",
+          "T1550",
+          "T1072"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1021",
+      "T1570",
+      "T1550",
+      "T1072"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749781",
+    "status": "new",
+    "detection_method": "drift_direction",
+    "confidence": 0.5253046990029561
+  },
+  {
+    "id": "5fb2d557-dbb8-4d97-b9fc-7e41d5ee6cd7",
+    "entity_type": "user",
+    "entity_id": "USR-046",
+    "severity": "critical",
+    "title": "Behavioral drift: compromised_endpoint (USR-046)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8147. Top concept: compromised_endpoint (critical).",
+    "drift_magnitude": 0.814742237329483,
+    "concept_alignments": [
+      {
+        "concept": "compromised_endpoint",
+        "similarity": 0.426642158312247,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1059",
+          "T1547",
+          "T1562",
+          "T1071"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1059",
+      "T1547",
+      "T1562",
+      "T1071"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749788",
+    "status": "resolved",
+    "detection_method": "threshold",
+    "confidence": 0.49321952024202437
+  },
+  {
+    "id": "8d4ebc16-ee1d-48ce-89d1-960e88897fb3",
+    "entity_type": "user",
+    "entity_id": "USR-047",
+    "severity": "critical",
+    "title": "Behavioral drift: insider_threat_fast (USR-047)",
+    "description": "Detection method: drift_direction. Drift magnitude: 0.8183. Top concept: insider_threat_fast (critical).",
+    "drift_magnitude": 0.8182551115751266,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_fast",
+        "similarity": 0.4482173328572866,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1052",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1052",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749795",
+    "status": "resolved",
+    "detection_method": "drift_direction",
+    "confidence": 0.8042505158854123
+  },
+  {
+    "id": "3805850c-95e9-488c-85b9-b259ee317996",
+    "entity_type": "user",
+    "entity_id": "USR-048",
+    "severity": "critical",
+    "title": "Behavioral drift: insider_threat_slow (USR-048)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8134. Top concept: insider_threat_slow (high).",
+    "drift_magnitude": 0.8133916854858398,
+    "concept_alignments": [
+      {
+        "concept": "insider_threat_slow",
+        "similarity": 0.42194875127562537,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1083",
+          "T1005",
+          "T1052"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1083",
+      "T1005",
+      "T1052"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749802",
+    "status": "new",
+    "detection_method": "cusum",
+    "confidence": 0.40724686960826484
+  },
+  {
+    "id": "c5e6b65f-b036-451c-89f6-8ce96f34258a",
+    "entity_type": "user",
+    "entity_id": "USR-049",
+    "severity": "critical",
+    "title": "Behavioral drift: privilege_escalation (USR-049)",
+    "description": "Detection method: threshold. Drift magnitude: 0.8227. Top concept: privilege_escalation (high).",
+    "drift_magnitude": 0.8226634860038757,
+    "concept_alignments": [
+      {
+        "concept": "privilege_escalation",
+        "similarity": 0.6888293368064287,
+        "category": "threat",
+        "severity": "high",
+        "mitre_techniques": [
+          "T1078",
+          "T1068",
+          "T1134",
+          "T1548"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1078",
+      "T1068",
+      "T1134",
+      "T1548"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749810",
+    "status": "confirmed",
+    "detection_method": "threshold",
+    "confidence": 0.6632915644427292
+  },
+  {
+    "id": "95e57b87-5a32-438c-956d-930f3a667b0a",
+    "entity_type": "user",
+    "entity_id": "USR-050",
+    "severity": "critical",
+    "title": "Behavioral drift: data_exfiltration (USR-050)",
+    "description": "Detection method: cusum. Drift magnitude: 0.8126. Top concept: data_exfiltration (critical).",
+    "drift_magnitude": 0.8126323819160461,
+    "concept_alignments": [
+      {
+        "concept": "data_exfiltration",
+        "similarity": 0.6405583046104512,
+        "category": "threat",
+        "severity": "critical",
+        "mitre_techniques": [
+          "T1005",
+          "T1074",
+          "T1048",
+          "T1567"
+        ]
+      }
+    ],
+    "mitre_techniques": [
+      "T1005",
+      "T1074",
+      "T1048",
+      "T1567"
+    ],
+    "detected_at": "2026-05-02T23:37:37.749817",
+    "status": "confirmed",
+    "detection_method": "cusum",
+    "confidence": 0.8181447536147766
+  }
+]
