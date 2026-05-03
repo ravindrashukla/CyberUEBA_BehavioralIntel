@@ -1,9 +1,8 @@
 """Entity API routes."""
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
-from datetime import datetime
 
-from api.store import get_store
+from api import backend
 
 router = APIRouter()
 
@@ -70,11 +69,7 @@ async def list_entities(
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    entities = store.list_entities(entity_type=entity_type)
-
-    # Paginate
-    page = entities[offset : offset + limit]
+    entities = backend.get_entities(entity_type=entity_type, limit=limit, offset=offset)
     return [
         EntitySummary(
             entity_type=e["entity_type"],
@@ -82,15 +77,14 @@ async def list_entities(
             name=e["name"],
             metadata=e.get("metadata", {}),
         )
-        for e in page
+        for e in entities
     ]
 
 
 @router.get("/stats", response_model=list[EntityStats])
 async def entity_stats():
     """Summary counts by entity type."""
-    store = get_store()
-    stats = store.entity_stats()
+    stats = backend.get_entity_stats()
     return [EntityStats(**s) for s in stats]
 
 
@@ -103,8 +97,7 @@ async def get_entity(entity_type: str, entity_id: str):
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    entity = store.get_entity(entity_type, entity_id)
+    entity = backend.get_entity(entity_type, entity_id)
     if entity is None:
         raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
 
@@ -127,8 +120,7 @@ async def get_entity_embeddings(entity_type: str, entity_id: str):
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    embeddings = store.get_entity_embeddings(entity_type, entity_id)
+    embeddings = backend.get_embeddings(entity_type, entity_id)
     if embeddings is None:
         raise HTTPException(
             status_code=404,
@@ -151,10 +143,9 @@ async def find_similar_entities(
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    entity = store.get_entity(entity_type, entity_id)
+    entity = backend.get_entity(entity_type, entity_id)
     if entity is None:
         raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
 
-    similar = store.find_similar(entity_type, entity_id, top_k=top_k)
+    similar = backend.get_similar(entity_type, entity_id, top_k=top_k)
     return [SimilarEntity(**s) for s in similar]

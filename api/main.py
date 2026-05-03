@@ -1,6 +1,8 @@
 """FastAPI application for Cyber UEBA Behavioral Intelligence."""
+from pathlib import Path
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 
 
 def create_app() -> FastAPI:
@@ -29,6 +31,11 @@ def create_app() -> FastAPI:
     @app.get("/health")
     def health():
         return {"status": "ok", "service": "cyber-ueba"}
+
+    # Serve demo UI static files
+    ui_path = Path(__file__).parent.parent / "demo" / "ui"
+    if ui_path.exists():
+        app.mount("/ui", StaticFiles(directory=str(ui_path), html=True), name="demo-ui")
 
     return app
 

@@ -3,7 +3,7 @@ from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 from datetime import date
 
-from api.store import get_store
+from api import backend
 
 router = APIRouter()
 
@@ -89,12 +89,11 @@ async def get_trajectory(
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    entity = store.get_entity(entity_type, entity_id)
+    entity = backend.get_entity(entity_type, entity_id)
     if entity is None:
         raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
 
-    snapshots = store.get_trajectory(
+    snapshots = backend.get_trajectory(
         entity_type, entity_id,
         start_date=start_date.isoformat() if start_date else None,
         end_date=end_date.isoformat() if end_date else None,
@@ -122,12 +121,11 @@ async def get_drift_analysis(
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    entity = store.get_entity(entity_type, entity_id)
+    entity = backend.get_entity(entity_type, entity_id)
     if entity is None:
         raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
 
-    analysis = store.get_drift_analysis(
+    analysis = backend.get_drift_analysis(
         entity_type, entity_id,
         from_date=from_date.isoformat() if from_date else None,
         to_date=to_date.isoformat() if to_date else None,
@@ -160,12 +158,11 @@ async def get_drift_series(entity_type: str, entity_id: str):
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    entity = store.get_entity(entity_type, entity_id)
+    entity = backend.get_entity(entity_type, entity_id)
     if entity is None:
         raise HTTPException(status_code=404, detail=f"Entity {entity_type}:{entity_id} not found")
 
-    series = store.get_drift_series(entity_type, entity_id)
+    series = backend.get_drift_series(entity_type, entity_id)
 
     return DriftSeriesResponse(
         entity_type=entity_type,
@@ -186,8 +183,7 @@ async def scan_all_entities(
             detail=f"Invalid entity_type. Must be one of: {sorted(VALID_ENTITY_TYPES)}",
         )
 
-    store = get_store()
-    scan = store.scan_entities(entity_type=entity_type, threshold=threshold)
+    scan = backend.scan_entities(entity_type=entity_type, threshold=threshold)
 
     return ScanResponse(
         threshold=threshold,

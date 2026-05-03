@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Alerts — Cyber UEBA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        nav {
+            background: #0f3460;
+            border-bottom: 1px solid #1a5276;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+        nav .brand { font-size: 1.2rem; font-weight: 700; color: #00d4ff; margin-right: 3rem; }
+        nav .brand span { color: #4ade80; }
+        nav a {
+            color: #a0aec0; text-decoration: none; padding: 0.5rem 1rem;
+            border-radius: 4px; font-size: 0.9rem; transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #fff; background: rgba(0, 212, 255, 0.1); }
+        nav a.active { border-bottom: 2px solid #00d4ff; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+        /* Filter Bar */
+        .filter-bar {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .filter-bar label { color: #7f8c9b; font-size: 0.8rem; text-transform: uppercase; }
+        .filter-bar select {
+            background: #1a1a2e; border: 1px solid #1a5276; color: #e0e0e0;
+            padding: 0.5rem 0.8rem; border-radius: 4px; font-size: 0.9rem;
+        }
+        .filter-bar button {
+            background: #00d4ff; color: #1a1a2e; border: none;
+            padding: 0.5rem 1.2rem; border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        .filter-bar button:hover { background: #00b8d4; }
+        .filter-bar .count { margin-left: auto; color: #7f8c9b; font-size: 0.85rem; }
+
+        /* Table */
+        .table-container {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            overflow: hidden;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #0f3460; padding: 0.8rem 1rem; text-align: left;
+            font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.5px;
+            color: #7f8c9b; cursor: pointer; user-select: none;
+        }
+        th:hover { color: #00d4ff; }
+        th .sort-arrow { margin-left: 0.3rem; font-size: 0.7rem; }
+        td { padding: 0.7rem 1rem; border-top: 1px solid #1a5276; font-size: 0.88rem; }
+        tr:hover { background: rgba(0, 212, 255, 0.03); }
+        tr.expandable { cursor: pointer; }
+
+        /* Badges */
+        .badge {
+            padding: 0.2rem 0.6rem; border-radius: 4px;
+            font-size: 0.73rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-critical { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .badge-high { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid #f97316; }
+        .badge-medium { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid #eab308; }
+        .badge-low { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
+
+        /* Expanded Detail */
+        .alert-detail {
+            display: none;
+            background: #1a1a2e;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid #1a5276;
+        }
+        .alert-detail.open { display: table-row; }
+        .alert-detail td { padding: 1rem 1.5rem; }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        .detail-section h4 {
+            font-size: 0.8rem; color: #7f8c9b; text-transform: uppercase;
+            margin-bottom: 0.5rem;
+        }
+        .concept-bar {
+            display: flex; align-items: center; gap: 0.5rem; margin: 0.3rem 0;
+        }
+        .concept-bar .bar-fill {
+            height: 6px; border-radius: 3px; min-width: 4px;
+        }
+        .concept-bar .bar-label { font-size: 0.8rem; color: #cbd5e1; min-width: 120px; }
+        .concept-bar .bar-value { font-size: 0.8rem; color: #7f8c9b; }
+
+        .mitre-tag {
+            display: inline-block; background: rgba(139, 92, 246, 0.2); border: 1px solid #8b5cf6;
+            color: #a78bfa; padding: 0.2rem 0.5rem; border-radius: 4px;
+            font-size: 0.75rem; margin: 0.2rem;
+        }
+        .entity-link { color: #00d4ff; text-decoration: none; }
+        .entity-link:hover { text-decoration: underline; }
+        .loading { text-align: center; padding: 2rem; color: #7f8c9b; }
+        .error {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
+            border-radius: 8px; padding: 1rem; color: #ef4444; margin: 1rem 0;
+        }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">Cyber UEBA <span>| Behavioral Intelligence</span></div>
+        <a href="index.html">Dashboard</a>
+        <a href="entity_detail.html">Entities</a>
+        <a href="alerts.html" class="active">Alerts</a>
+        <a href="kill_chains.html">Kill Chains</a>
+    </nav>
+
+    <div class="container">
+        <div class="filter-bar">
+            <label>Severity:</label>
+            <select id="filter-severity">
+                <option value="">All</option>
+                <option value="critical">Critical</option>
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+            </select>
+            <label>Entity Type:</label>
+            <select id="filter-type">
+                <option value="">All</option>
+                <option value="user">User</option>
+                <option value="device">Device</option>
+                <option value="application">Application</option>
+                <option value="network">Network</option>
+            </select>
+            <label>Status:</label>
+            <select id="filter-status">
+                <option value="">All</option>
+                <option value="open">Open</option>
+                <option value="investigating">Investigating</option>
+                <option value="resolved">Resolved</option>
+            </select>
+            <button onclick="loadAlerts()">Apply</button>
+            <span class="count" id="alert-count"></span>
+        </div>
+
+        <div class="table-container">
+            <table>
+                <thead>
+                    <tr>
+                        <th data-sort="timestamp">Time <span class="sort-arrow">▼</span></th>
+                        <th data-sort="entity_id">Entity</th>
+                        <th data-sort="severity">Severity</th>
+                        <th data-sort="title">Title</th>
+                        <th data-sort="method">Method</th>
+                        <th data-sort="drift_magnitude">Drift</th>
+                        <th data-sort="status">Status</th>
+                    </tr>
+                </thead>
+                <tbody id="alerts-body">
+                    <tr><td colspan="7" class="loading">Loading alerts...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api/v1';
+        let allAlerts = [];
+        let sortField = 'timestamp';
+        let sortDir = -1;
+
+        async function fetchJSON(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+        }
+
+        function formatTime(ts) {
+            if (!ts) return '—';
+            const d = new Date(ts);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        async function loadAlerts() {
+            const severity = document.getElementById('filter-severity').value;
+            const tbody = document.getElementById('alerts-body');
+            tbody.innerHTML = '<tr><td colspan="7" class="loading">Loading...</td></tr>';
+
+            try {
+                let url = `${API_BASE}/detection/alerts?limit=50`;
+                if (severity) url += `&severity=${severity}`;
+
+                const data = await fetchJSON(url);
+                allAlerts = Array.isArray(data) ? data : (data.alerts || data.items || []);
+
+                // Client-side filters
+                const typeFilter = document.getElementById('filter-type').value;
+                const statusFilter = document.getElementById('filter-status').value;
+
+                let filtered = allAlerts;
+                if (typeFilter) filtered = filtered.filter(a => (a.entity_type || '') === typeFilter);
+                if (statusFilter) filtered = filtered.filter(a => (a.status || '') === statusFilter);
+
+                document.getElementById('alert-count').textContent = `${filtered.length} alerts`;
+                renderAlerts(filtered);
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="7" class="error">Failed: ${err.message}</td></tr>`;
+            }
+        }
+
+        function renderAlerts(alerts) {
+            const tbody = document.getElementById('alerts-body');
+
+            // Sort
+            const sevOrder = { critical: 0, high: 1, medium: 2, low: 3 };
+            alerts.sort((a, b) => {
+                let va = a[sortField] || '';
+                let vb = b[sortField] || '';
+                if (sortField === 'severity') { va = sevOrder[va] ?? 4; vb = sevOrder[vb] ?? 4; }
+                if (sortField === 'drift_magnitude') { va = va || 0; vb = vb || 0; }
+                if (va < vb) return -1 * sortDir;
+                if (va > vb) return 1 * sortDir;
+                return 0;
+            });
+
+            if (!alerts.length) {
+                tbody.innerHTML = '<tr><td colspan="7" class="loading">No alerts match filters</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = alerts.map((a, i) => `
+                <tr class="expandable" onclick="toggleDetail(${i})">
+                    <td>${formatTime(a.created_at || a.timestamp)}</td>
+                    <td><a class="entity-link" href="entity_detail.html?type=${a.entity_type || 'user'}&id=${a.entity_id}">${a.entity_id || '—'}</a></td>
+                    <td><span class="badge badge-${a.severity || 'low'}">${a.severity || 'low'}</span></td>
+                    <td>${a.title || a.description || '—'}</td>
+                    <td>${a.detection_method || a.method || '—'}</td>
+                    <td>${a.drift_magnitude != null ? a.drift_magnitude.toFixed(3) : '—'}</td>
+                    <td>${a.status || 'open'}</td>
+                </tr>
+                <tr class="alert-detail" id="detail-${i}">
+                    <td colspan="7">
+                        <div class="detail-grid">
+                            <div class="detail-section">
+                                <h4>Concept Alignments</h4>
+                                <div id="concepts-${i}">${renderConcepts(a)}</div>
+                            </div>
+                            <div class="detail-section">
+                                <h4>MITRE Techniques</h4>
+                                <div>${renderMitre(a)}</div>
+                            </div>
+                            <div class="detail-section">
+                                <h4>Related Entities</h4>
+                                <div>${renderRelated(a)}</div>
+                            </div>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderConcepts(alert) {
+            const concepts = alert.concept_alignments || alert.concepts || [];
+            if (Array.isArray(concepts) && concepts.length) {
+                return concepts.map(c => {
+                    const name = c.concept || c.name || '';
+                    const score = c.alignment || c.score || 0;
+                    const pct = Math.abs(score) * 100;
+                    const color = score > 0.3 ? '#ef4444' : score > 0 ? '#eab308' : '#4ade80';
+                    return `<div class="concept-bar">
+                        <span class="bar-label">${name}</span>
+                        <div style="flex:1;background:#1a5276;border-radius:3px;height:6px;">
+                            <div class="bar-fill" style="width:${pct}%;background:${color};"></div>
+                        </div>
+                        <span class="bar-value">${score.toFixed(2)}</span>
+                    </div>`;
+                }).join('');
+            }
+            return '<span style="color:#7f8c9b">—</span>';
+        }
+
+        function renderMitre(alert) {
+            const techniques = alert.mitre_techniques || alert.techniques || [];
+            if (techniques.length) {
+                return techniques.map(t => `<span class="mitre-tag">${t}</span>`).join('');
+            }
+            return '<span style="color:#7f8c9b">—</span>';
+        }
+
+        function renderRelated(alert) {
+            const related = alert.related_entities || [];
+            if (related.length) {
+                return related.map(r => {
+                    const id = r.entity_id || r.id || r;
+                    const type = r.entity_type || 'user';
+                    return `<a class="entity-link" href="entity_detail.html?type=${type}&id=${id}">${id}</a>`;
+                }).join(', ');
+            }
+            return '<span style="color:#7f8c9b">—</span>';
+        }
+
+        function toggleDetail(idx) {
+            const row = document.getElementById(`detail-${idx}`);
+            if (row) row.classList.toggle('open');
+        }
+
+        // Sorting
+        document.querySelectorAll('th[data-sort]').forEach(th => {
+            th.addEventListener('click', () => {
+                const field = th.dataset.sort;
+                if (sortField === field) sortDir *= -1;
+                else { sortField = field; sortDir = -1; }
+                loadAlerts();
+            });
+        });
+
+        loadAlerts();
+    </script>
+</body>
+</html>

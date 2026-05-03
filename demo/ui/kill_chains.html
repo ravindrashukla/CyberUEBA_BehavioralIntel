@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kill Chains — Cyber UEBA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        nav {
+            background: #0f3460;
+            border-bottom: 1px solid #1a5276;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+        nav .brand { font-size: 1.2rem; font-weight: 700; color: #00d4ff; margin-right: 3rem; }
+        nav .brand span { color: #4ade80; }
+        nav a {
+            color: #a0aec0; text-decoration: none; padding: 0.5rem 1rem;
+            border-radius: 4px; font-size: 0.9rem; transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #fff; background: rgba(0, 212, 255, 0.1); }
+        nav a.active { border-bottom: 2px solid #00d4ff; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+        .page-title {
+            font-size: 1.3rem; color: #cbd5e1; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.8rem;
+        }
+        .page-title .count {
+            background: rgba(0, 212, 255, 0.15); color: #00d4ff;
+            padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem;
+        }
+
+        /* Chain Card */
+        .chain-card {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            overflow: hidden;
+            transition: box-shadow 0.2s;
+        }
+        .chain-card:hover { box-shadow: 0 2px 16px rgba(0, 212, 255, 0.08); }
+
+        .chain-header {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            cursor: pointer;
+            user-select: none;
+        }
+        .chain-header:hover { background: rgba(0, 212, 255, 0.03); }
+
+        .chain-header .expand-icon {
+            color: #7f8c9b; font-size: 0.9rem; transition: transform 0.2s;
+        }
+        .chain-card.open .expand-icon { transform: rotate(90deg); }
+
+        .chain-header .chain-title {
+            flex: 1; font-weight: 600; font-size: 1rem; color: #e0e0e0;
+        }
+        .chain-header .chain-meta {
+            display: flex; gap: 1rem; align-items: center; font-size: 0.85rem; color: #7f8c9b;
+        }
+
+        .badge {
+            padding: 0.2rem 0.6rem; border-radius: 4px;
+            font-size: 0.73rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-critical { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .badge-high { background: rgba(249, 115, 22, 0.2); color: #f97316; border: 1px solid #f97316; }
+        .badge-medium { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid #eab308; }
+        .badge-low { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
+
+        /* Chain Detail */
+        .chain-detail {
+            display: none;
+            border-top: 1px solid #1a5276;
+            padding: 1.5rem;
+        }
+        .chain-card.open .chain-detail { display: block; }
+
+        /* Timeline */
+        .timeline {
+            display: flex;
+            align-items: flex-start;
+            overflow-x: auto;
+            padding: 1.5rem 0;
+            gap: 0;
+            position: relative;
+        }
+        .timeline::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 2rem;
+            right: 2rem;
+            height: 2px;
+            background: linear-gradient(to right, #1a5276, #0f3460, #1a5276);
+            z-index: 0;
+        }
+
+        .timeline-node {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-width: 160px;
+            padding: 0 0.5rem;
+        }
+        .timeline-node .node-dot {
+            width: 36px; height: 36px;
+            border-radius: 50%;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: 700; color: #fff;
+            margin-bottom: 0.5rem;
+            border: 2px solid;
+        }
+        .node-dot.recon { background: rgba(59, 130, 246, 0.3); border-color: #3b82f6; }
+        .node-dot.weaponize { background: rgba(139, 92, 246, 0.3); border-color: #8b5cf6; }
+        .node-dot.deliver { background: rgba(234, 179, 8, 0.3); border-color: #eab308; }
+        .node-dot.exploit { background: rgba(249, 115, 22, 0.3); border-color: #f97316; }
+        .node-dot.install { background: rgba(239, 68, 68, 0.3); border-color: #ef4444; }
+        .node-dot.c2 { background: rgba(220, 38, 38, 0.3); border-color: #dc2626; }
+        .node-dot.action { background: rgba(185, 28, 28, 0.3); border-color: #b91c1c; }
+        .node-dot.default { background: rgba(0, 212, 255, 0.3); border-color: #00d4ff; }
+
+        .timeline-node .node-label {
+            font-size: 0.78rem; color: #cbd5e1; text-align: center;
+            font-weight: 600; margin-bottom: 0.3rem;
+        }
+        .timeline-node .node-entity {
+            font-size: 0.72rem; color: #00d4ff; text-align: center;
+        }
+        .timeline-node .node-time {
+            font-size: 0.68rem; color: #7f8c9b; text-align: center; margin-top: 0.2rem;
+        }
+
+        /* Connector */
+        .timeline-connector {
+            display: flex; align-items: center; padding-top: 18px;
+        }
+        .timeline-connector .arrow {
+            width: 30px; height: 2px; background: #1a5276; position: relative;
+        }
+        .timeline-connector .arrow::after {
+            content: ''; position: absolute; right: 0; top: -4px;
+            border: 4px solid transparent; border-left: 6px solid #1a5276;
+        }
+
+        /* Narrative */
+        .narrative {
+            background: #1a1a2e;
+            border: 1px solid #1a5276;
+            border-radius: 6px;
+            padding: 1rem;
+            margin-top: 1rem;
+            font-size: 0.88rem;
+            line-height: 1.6;
+            color: #a0aec0;
+        }
+        .narrative strong { color: #cbd5e1; }
+
+        .loading { text-align: center; padding: 2rem; color: #7f8c9b; }
+        .error {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
+            border-radius: 8px; padding: 1rem; color: #ef4444; margin: 1rem 0;
+        }
+        .entity-link { color: #00d4ff; text-decoration: none; }
+        .entity-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">Cyber UEBA <span>| Behavioral Intelligence</span></div>
+        <a href="index.html">Dashboard</a>
+        <a href="entity_detail.html">Entities</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="kill_chains.html" class="active">Kill Chains</a>
+    </nav>
+
+    <div class="container">
+        <div class="page-title">
+            Kill Chain Analysis
+            <span class="count" id="chain-count">—</span>
+        </div>
+        <div id="chains-container">
+            <div class="loading">Loading kill chains...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api/v1';
+
+        async function fetchJSON(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+        }
+
+        function formatTime(ts) {
+            if (!ts) return '';
+            const d = new Date(ts);
+            return d.toLocaleDateString() + ' ' + d.toLocaleTimeString([], {hour:'2-digit', minute:'2-digit'});
+        }
+
+        // Map tactic to CSS class
+        function tacticClass(tactic) {
+            const t = (tactic || '').toLowerCase();
+            if (t.includes('recon')) return 'recon';
+            if (t.includes('weapon')) return 'weaponize';
+            if (t.includes('deliver')) return 'deliver';
+            if (t.includes('exploit')) return 'exploit';
+            if (t.includes('install') || t.includes('persist')) return 'install';
+            if (t.includes('c2') || t.includes('command')) return 'c2';
+            if (t.includes('action') || t.includes('exfil') || t.includes('impact')) return 'action';
+            if (t.includes('lateral') || t.includes('discovery')) return 'exploit';
+            if (t.includes('initial') || t.includes('access')) return 'deliver';
+            if (t.includes('privilege') || t.includes('escal')) return 'install';
+            return 'default';
+        }
+
+        // MITRE tactic order for sorting
+        const TACTIC_ORDER = [
+            'reconnaissance', 'resource_development', 'initial_access', 'execution',
+            'persistence', 'privilege_escalation', 'defense_evasion', 'credential_access',
+            'discovery', 'lateral_movement', 'collection', 'command_and_control',
+            'exfiltration', 'impact'
+        ];
+
+        function tacticSortKey(tactic) {
+            const t = (tactic || '').toLowerCase().replace(/[\s-]/g, '_');
+            const idx = TACTIC_ORDER.findIndex(o => t.includes(o) || o.includes(t));
+            return idx >= 0 ? idx : 99;
+        }
+
+        async function loadKillChains() {
+            const container = document.getElementById('chains-container');
+            try {
+                const data = await fetchJSON(`${API_BASE}/detection/kill-chains`);
+                const chains = Array.isArray(data) ? data : (data.kill_chains || data.chains || []);
+                document.getElementById('chain-count').textContent = `${chains.length} active`;
+
+                if (!chains.length) {
+                    container.innerHTML = '<div class="loading">No kill chains detected</div>';
+                    return;
+                }
+
+                container.innerHTML = chains.map((chain, i) => `
+                    <div class="chain-card" id="chain-${i}">
+                        <div class="chain-header" onclick="toggleChain(${i}, '${chain.id || chain.chain_id || ''}')">
+                            <span class="expand-icon">&#9654;</span>
+                            <span class="chain-title">${chain.title || chain.name || 'Kill Chain #' + (i+1)}</span>
+                            <div class="chain-meta">
+                                <span class="badge badge-${chain.severity || 'high'}">${chain.severity || 'high'}</span>
+                                <span>${chain.event_count || chain.events?.length || '?'} events</span>
+                                <span>${chain.entity_count || chain.entities?.length || '?'} entities</span>
+                            </div>
+                        </div>
+                        <div class="chain-detail" id="chain-detail-${i}">
+                            <div class="loading">Loading chain detail...</div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="error">Failed to load kill chains: ${err.message}</div>`;
+            }
+        }
+
+        async function toggleChain(idx, chainId) {
+            const card = document.getElementById(`chain-${idx}`);
+            const detail = document.getElementById(`chain-detail-${idx}`);
+
+            if (card.classList.contains('open')) {
+                card.classList.remove('open');
+                return;
+            }
+
+            card.classList.add('open');
+
+            // Only fetch if not already loaded
+            if (detail.dataset.loaded) return;
+
+            try {
+                let chainData;
+                if (chainId) {
+                    chainData = await fetchJSON(`${API_BASE}/detection/kill-chains/${chainId}`);
+                } else {
+                    // fallback: already have summary
+                    detail.innerHTML = '<div class="loading">No chain ID available for detail</div>';
+                    detail.dataset.loaded = 'true';
+                    return;
+                }
+
+                renderChainDetail(detail, chainData);
+                detail.dataset.loaded = 'true';
+            } catch (err) {
+                detail.innerHTML = `<div class="error">Failed to load: ${err.message}</div>`;
+                detail.dataset.loaded = 'true';
+            }
+        }
+
+        function renderChainDetail(container, chain) {
+            const events = chain.events || chain.stages || chain.steps || [];
+
+            // Sort by tactic order
+            events.sort((a, b) => tacticSortKey(a.tactic || a.stage) - tacticSortKey(b.tactic || b.stage));
+
+            let html = '<div class="timeline">';
+            events.forEach((evt, i) => {
+                const tactic = evt.tactic || evt.stage || evt.phase || 'unknown';
+                const cls = tacticClass(tactic);
+                const entity = evt.entity_id || evt.entity || '';
+                const ts = evt.timestamp || evt.detected_at || '';
+
+                if (i > 0) {
+                    html += `<div class="timeline-connector"><div class="arrow"></div></div>`;
+                }
+
+                html += `
+                    <div class="timeline-node">
+                        <div class="node-dot ${cls}">${i + 1}</div>
+                        <div class="node-label">${tactic}</div>
+                        <div class="node-entity">
+                            ${entity ? `<a class="entity-link" href="entity_detail.html?type=${evt.entity_type || 'user'}&id=${entity}">${entity}</a>` : '—'}
+                        </div>
+                        <div class="node-time">${formatTime(ts)}</div>
+                    </div>
+                `;
+            });
+            html += '</div>';
+
+            // Narrative
+            const narrative = chain.narrative || chain.description || chain.summary || '';
+            if (narrative) {
+                html += `<div class="narrative"><strong>Attack Narrative:</strong> ${narrative}</div>`;
+            }
+
+            container.innerHTML = html;
+        }
+
+        loadKillChains();
+    </script>
+</body>
+</html>

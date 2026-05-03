@@ -16,34 +16,27 @@ BATCH_SIZE = 1000
 ENTITY_TABLE_MAP = {
     "users.csv": {
         "table": "users",
-        "columns": ["username", "user_type", "department", "role", "clearance_level", "is_active"],
-        "transforms": {
-            "clearance": "clearance_level",
-            "user_type": "user_type",
-        },
+        "columns": ["user_id", "username", "user_type", "department", "role",
+                    "clearance_level", "manager_id", "tenure_days",
+                    "primary_device_id", "primary_location", "subnet"],
+        "rename": {"clearance": "clearance_level"},
     },
     "segments.csv": {
         "table": "network_segments",
-        "columns": ["segment_name", "subnet_cidr", "vlan_id", "zone_type", "trust_level", "connected_segments"],
-        "transforms": {
-            "segment_id": "segment_name",
-            "cidr": "subnet_cidr",
-            "vlan": "vlan_id",
-            "zone": "zone_type",
-            "adjacent_segments": "connected_segments",
-        },
+        "columns": ["segment_id", "cidr", "vlan", "zone", "trust_level", "adjacent_segments"],
+        "rename": {},
     },
     "devices.csv": {
         "table": "devices",
-        "columns": ["hostname", "device_type", "os_type", "ip_address"],
-        "transforms": {
-            "os": "os_type",
-        },
+        "columns": ["device_id", "hostname", "device_type", "os", "ip_address",
+                    "segment_id", "owner_user_id"],
+        "rename": {},
     },
     "applications.csv": {
         "table": "applications",
-        "columns": ["app_name", "app_type", "data_classification", "criticality"],
-        "transforms": {},
+        "columns": ["app_id", "app_name", "app_type", "data_classification",
+                    "hosting_segment", "criticality"],
+        "rename": {},
     },
 }
 
@@ -51,33 +44,45 @@ ENTITY_TABLE_MAP = {
 LOG_TABLE_MAP = {
     "auth": {
         "table": "auth_logs",
-        "columns": ["timestamp", "source_ip", "dest_system", "success", "auth_method",
-                    "failure_reason", "geo_location"],
+        "columns": ["timestamp", "user_id", "device_id", "source_ip", "dest_system",
+                    "success", "auth_method", "failure_reason", "geo_location"],
+        "required": ["timestamp", "user_id"],
     },
     "network": {
         "table": "network_flows",
         "columns": ["timestamp", "src_ip", "dst_ip", "src_port", "dst_port",
                     "protocol", "bytes_in", "bytes_out", "duration_ms", "tcp_flags"],
+        "required": ["timestamp", "src_ip"],
     },
     "dns": {
         "table": "dns_queries",
-        "columns": ["timestamp", "client_ip", "query_domain", "query_type",
+        "columns": ["timestamp", "device_id", "query_name", "record_type",
                     "response_code", "response_ip"],
+        "required": ["timestamp", "device_id"],
     },
     "endpoint": {
         "table": "endpoint_telemetry",
-        "columns": ["timestamp", "process_name", "parent_process", "command_line",
-                    "file_access_path", "registry_key", "event_type"],
+        "columns": ["timestamp", "device_id", "user_id", "event_type", "process_name",
+                    "parent_process", "command_line", "file_path", "risk_score"],
+        "required": ["timestamp", "device_id"],
+    },
+    "file_access": {
+        "table": "file_access_logs",
+        "columns": ["timestamp", "user_id", "file_path", "operation",
+                    "file_size_bytes", "data_classification", "success"],
+        "required": ["timestamp", "user_id"],
     },
     "app": {
         "table": "app_activity_logs",
-        "columns": ["timestamp", "action", "resource", "status_code",
-                    "response_time_ms", "data_volume_bytes"],
+        "columns": ["timestamp", "user_id", "app_id", "event_type",
+                    "data_volume_bytes", "response_code", "duration_ms"],
+        "required": ["timestamp", "user_id"],
     },
     "privilege": {
         "table": "privilege_operations",
-        "columns": ["timestamp", "operation", "target_resource", "previous_level",
-                    "new_level", "justification", "auto_approved"],
+        "columns": ["timestamp", "actor_user_id", "target_user_id", "operation",
+                    "resource", "justification", "approved"],
+        "required": ["timestamp", "actor_user_id"],
     },
 }
 
@@ -115,8 +120,9 @@ def seed_entities(cursor, data_dir: Path):
         columns = mapping["columns"]
 
         # Apply column renames
-        renames = mapping.get("transforms", {})
-        df = df.rename(columns=renames)
+        renames = mapping.get("rename", {})
+        if renames:
+            df = df.rename(columns=renames)
 
         # Filter to only columns that exist in both DataFrame and target
         available = [c for c in columns if c in df.columns]
@@ -124,14 +130,15 @@ def seed_entities(cursor, data_dir: Path):
             print(f"  Skipping {csv_name} (no matching columns)")
             continue
 
-        # Handle array columns (pipe-separated -> PostgreSQL array)
-        for col in available:
-            if col == "connected_segments":
-                df[col] = df[col].apply(
-                    lambda x: x.split("|") if isinstance(x, str) else None
-                )
+        # Convert to records and sanitize NaN/None values for SQL
+        def _sanitize(val):
+            if val is None:
+                return None
+            if isinstance(val, float) and pd.isna(val):
+                return None
+            return val
 
-        rows = df[available].values.tolist()
+        rows = [[_sanitize(v) for v in row] for row in df[available].values.tolist()]
         _insert_batch(cursor, table, available, rows)
         print(f"  {table}: {len(rows)} rows inserted")
 
@@ -160,6 +167,12 @@ def seed_logs(cursor, data_dir: Path):
             available = [c for c in columns if c in df.columns]
             if not available:
                 continue
+
+            # Drop rows with null values in required columns (first 2 are typically required)
+            required = mapping.get("required", [])
+            req_available = [c for c in required if c in df.columns]
+            if req_available:
+                df = df.dropna(subset=req_available)
 
             # Replace NaN with None for SQL compatibility
             df = df.where(pd.notnull(df), None)

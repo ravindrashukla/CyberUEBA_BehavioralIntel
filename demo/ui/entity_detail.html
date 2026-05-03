@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Entity Detail — Cyber UEBA</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        nav {
+            background: #0f3460;
+            border-bottom: 1px solid #1a5276;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+        nav .brand {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #00d4ff;
+            margin-right: 3rem;
+        }
+        nav .brand span { color: #4ade80; }
+        nav a {
+            color: #a0aec0;
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #fff; background: rgba(0, 212, 255, 0.1); }
+        nav a.active { border-bottom: 2px solid #00d4ff; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+        /* Entity Picker */
+        .picker {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .picker label { color: #7f8c9b; font-size: 0.85rem; text-transform: uppercase; }
+        .picker select, .picker input {
+            background: #1a1a2e;
+            border: 1px solid #1a5276;
+            color: #e0e0e0;
+            padding: 0.5rem 0.8rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+        .picker button {
+            background: #00d4ff;
+            color: #1a1a2e;
+            border: none;
+            padding: 0.5rem 1.2rem;
+            border-radius: 4px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .picker button:hover { background: #00b8d4; }
+
+        /* Info Card */
+        .info-card {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .info-card h2 {
+            color: #00d4ff;
+            font-size: 1.3rem;
+            margin-bottom: 0.8rem;
+        }
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 0.8rem;
+        }
+        .info-item .label { font-size: 0.75rem; color: #7f8c9b; text-transform: uppercase; }
+        .info-item .value { font-size: 1rem; color: #e0e0e0; margin-top: 0.2rem; }
+
+        /* Charts Grid */
+        .charts-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        @media (max-width: 900px) { .charts-grid { grid-template-columns: 1fr; } }
+
+        .chart-card {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+        .chart-card h3 {
+            font-size: 1rem;
+            color: #cbd5e1;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid #1a5276;
+        }
+        .chart-card canvas { max-height: 280px; }
+
+        /* Similar Entities */
+        .similar-list {
+            list-style: none;
+        }
+        .similar-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #1a5276;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .similar-list li:last-child { border-bottom: none; }
+        .sim-score {
+            background: rgba(0, 212, 255, 0.15);
+            color: #00d4ff;
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        /* MITRE Tags */
+        .mitre-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 0.5rem; }
+        .mitre-tag {
+            background: rgba(139, 92, 246, 0.2);
+            border: 1px solid #8b5cf6;
+            color: #a78bfa;
+            padding: 0.3rem 0.6rem;
+            border-radius: 4px;
+            font-size: 0.78rem;
+        }
+
+        .loading { text-align: center; padding: 2rem; color: #7f8c9b; }
+        .error {
+            background: rgba(239, 68, 68, 0.1);
+            border: 1px solid #ef4444;
+            border-radius: 8px;
+            padding: 1rem;
+            color: #ef4444;
+            margin: 1rem 0;
+        }
+        .entity-link { color: #00d4ff; text-decoration: none; cursor: pointer; }
+        .entity-link:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">Cyber UEBA <span>| Behavioral Intelligence</span></div>
+        <a href="index.html">Dashboard</a>
+        <a href="entity_detail.html" class="active">Entities</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="kill_chains.html">Kill Chains</a>
+    </nav>
+
+    <div class="container">
+        <div class="picker">
+            <label>Type:</label>
+            <select id="entity-type">
+                <option value="user">User</option>
+                <option value="device">Device</option>
+                <option value="application">Application</option>
+                <option value="network">Network</option>
+            </select>
+            <label>Entity:</label>
+            <select id="entity-select"><option value="">— select —</option></select>
+            <button onclick="loadEntity()">Load</button>
+        </div>
+
+        <div id="content">
+            <div class="loading">Select an entity above or use URL params (?type=user&id=xxx)</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api/v1';
+
+        async function fetchJSON(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+        }
+
+        // Parse URL params
+        const params = new URLSearchParams(window.location.search);
+        const urlType = params.get('type');
+        const urlId = params.get('id');
+
+        if (urlType) document.getElementById('entity-type').value = urlType;
+
+        // Load entity list on type change
+        document.getElementById('entity-type').addEventListener('change', loadEntityList);
+
+        async function loadEntityList() {
+            const type = document.getElementById('entity-type').value;
+            const select = document.getElementById('entity-select');
+            try {
+                const data = await fetchJSON(`${API_BASE}/entities/?entity_type=${type}&limit=50`);
+                const entities = Array.isArray(data) ? data : (data.entities || data.items || []);
+                select.innerHTML = '<option value="">— select —</option>' +
+                    entities.map(e => {
+                        const id = e.entity_id || e.id;
+                        return `<option value="${id}">${id}</option>`;
+                    }).join('');
+                if (urlId) {
+                    select.value = urlId;
+                }
+            } catch (err) {
+                select.innerHTML = `<option value="">Error loading</option>`;
+            }
+        }
+
+        async function loadEntity() {
+            const type = document.getElementById('entity-type').value;
+            const id = document.getElementById('entity-select').value || urlId;
+            if (!id) return;
+
+            const content = document.getElementById('content');
+            content.innerHTML = '<div class="loading">Loading entity data...</div>';
+
+            try {
+                const [detail, embeddings, similar, driftSeries, drift] = await Promise.allSettled([
+                    fetchJSON(`${API_BASE}/entities/${type}/${id}`),
+                    fetchJSON(`${API_BASE}/entities/${type}/${id}/embeddings`),
+                    fetchJSON(`${API_BASE}/entities/${type}/${id}/similar?top_k=10`),
+                    fetchJSON(`${API_BASE}/trajectories/${type}/${id}/drift-series`),
+                    fetchJSON(`${API_BASE}/trajectories/${type}/${id}/drift`)
+                ]);
+
+                renderEntityDetail(
+                    type, id,
+                    detail.status === 'fulfilled' ? detail.value : null,
+                    embeddings.status === 'fulfilled' ? embeddings.value : null,
+                    similar.status === 'fulfilled' ? similar.value : null,
+                    driftSeries.status === 'fulfilled' ? driftSeries.value : null,
+                    drift.status === 'fulfilled' ? drift.value : null
+                );
+            } catch (err) {
+                content.innerHTML = `<div class="error">Failed to load entity: ${err.message}</div>`;
+            }
+        }
+
+        function renderEntityDetail(type, id, detail, embeddings, similar, driftSeries, drift) {
+            const content = document.getElementById('content');
+            let html = '';
+
+            // Info Card
+            html += `<div class="info-card">
+                <h2>${type.toUpperCase()}: ${id}</h2>
+                <div class="info-grid">
+                    <div class="info-item"><div class="label">Entity Type</div><div class="value">${type}</div></div>
+                    <div class="info-item"><div class="label">Entity ID</div><div class="value">${id}</div></div>`;
+            if (detail) {
+                if (detail.risk_score != null) html += `<div class="info-item"><div class="label">Risk Score</div><div class="value">${detail.risk_score.toFixed(3)}</div></div>`;
+                if (detail.department) html += `<div class="info-item"><div class="label">Department</div><div class="value">${detail.department}</div></div>`;
+                if (detail.status) html += `<div class="info-item"><div class="label">Status</div><div class="value">${detail.status}</div></div>`;
+                if (detail.last_seen) html += `<div class="info-item"><div class="label">Last Seen</div><div class="value">${new Date(detail.last_seen).toLocaleDateString()}</div></div>`;
+            }
+            html += `</div>`;
+
+            // MITRE Techniques
+            const techniques = drift?.mitre_techniques || detail?.mitre_techniques || [];
+            if (techniques.length) {
+                html += `<div class="mitre-tags">${techniques.map(t => `<span class="mitre-tag">${t}</span>`).join('')}</div>`;
+            }
+            html += `</div>`;
+
+            // Charts
+            html += `<div class="charts-grid">
+                <div class="chart-card"><h3>Drift Trajectory</h3><canvas id="drift-chart"></canvas></div>
+                <div class="chart-card"><h3>Signal Breakdown</h3><canvas id="signal-chart"></canvas></div>
+                <div class="chart-card"><h3>Concept Alignment</h3><canvas id="concept-chart"></canvas></div>
+                <div class="chart-card"><h3>Similar Entities</h3><ul class="similar-list" id="similar-list"></ul></div>
+            </div>`;
+
+            content.innerHTML = html;
+
+            // Drift Trajectory Chart
+            renderDriftChart(driftSeries);
+            // Signal Radar
+            renderSignalChart(embeddings);
+            // Concept Alignment
+            renderConceptChart(drift);
+            // Similar Entities
+            renderSimilarList(similar, type);
+        }
+
+        function renderDriftChart(driftSeries) {
+            const canvas = document.getElementById('drift-chart');
+            if (!canvas) return;
+            const series = Array.isArray(driftSeries) ? driftSeries : (driftSeries?.series || driftSeries?.snapshots || []);
+            if (!series.length) {
+                canvas.parentElement.innerHTML += '<p class="loading">No drift series data</p>';
+                return;
+            }
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: series.map(s => s.month || s.period || s.timestamp || ''),
+                    datasets: [{
+                        label: 'Drift Magnitude',
+                        data: series.map(s => s.drift_magnitude || s.magnitude || 0),
+                        borderColor: '#00d4ff',
+                        backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                        fill: true,
+                        tension: 0.3,
+                        pointRadius: 4,
+                        pointBackgroundColor: '#00d4ff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1a5276' }, ticks: { color: '#7f8c9b', maxRotation: 45 } },
+                        y: { grid: { color: '#1a5276' }, ticks: { color: '#7f8c9b' }, beginAtZero: true }
+                    }
+                }
+            });
+        }
+
+        function renderSignalChart(embeddings) {
+            const canvas = document.getElementById('signal-chart');
+            if (!canvas) return;
+            const signals = Array.isArray(embeddings) ? embeddings : (embeddings?.signals || embeddings?.embeddings || []);
+
+            // Extract signal names and magnitudes
+            let labels = [], values = [];
+            if (signals.length) {
+                signals.forEach(s => {
+                    labels.push(s.signal_name || s.name || s.type || 'signal');
+                    // magnitude = L2 norm of embedding or provided magnitude
+                    values.push(s.magnitude || s.norm || 0);
+                });
+            } else if (embeddings && typeof embeddings === 'object') {
+                // Try dict format
+                for (const [k, v] of Object.entries(embeddings)) {
+                    if (k === 'entity_id' || k === 'entity_type') continue;
+                    if (typeof v === 'number') { labels.push(k); values.push(v); }
+                    else if (v && v.magnitude) { labels.push(k); values.push(v.magnitude); }
+                }
+            }
+
+            if (!labels.length) {
+                canvas.parentElement.innerHTML += '<p class="loading">No signal data</p>';
+                return;
+            }
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'radar',
+                data: {
+                    labels: labels.slice(0, 8),
+                    datasets: [{
+                        label: 'Signal Magnitude',
+                        data: values.slice(0, 8),
+                        borderColor: '#4ade80',
+                        backgroundColor: 'rgba(74, 222, 128, 0.15)',
+                        pointBackgroundColor: '#4ade80',
+                        pointRadius: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        r: {
+                            grid: { color: '#1a5276' },
+                            pointLabels: { color: '#cbd5e1', font: { size: 11 } },
+                            ticks: { display: false },
+                            beginAtZero: true
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderConceptChart(drift) {
+            const canvas = document.getElementById('concept-chart');
+            if (!canvas) return;
+            const concepts = drift?.concept_alignments || drift?.concepts || drift?.alignment || [];
+
+            let labels = [], values = [], colors = [];
+            if (Array.isArray(concepts)) {
+                concepts.forEach(c => {
+                    labels.push(c.concept || c.name || 'concept');
+                    values.push(c.alignment || c.score || c.similarity || 0);
+                    const isThreat = (c.concept || c.name || '').toLowerCase().includes('threat') ||
+                                     (c.concept || c.name || '').toLowerCase().includes('attack') ||
+                                     (c.concept || c.name || '').toLowerCase().includes('exfil');
+                    colors.push(isThreat ? 'rgba(239, 68, 68, 0.7)' : 'rgba(74, 222, 128, 0.7)');
+                });
+            } else if (typeof concepts === 'object') {
+                for (const [k, v] of Object.entries(concepts)) {
+                    labels.push(k);
+                    values.push(typeof v === 'number' ? v : v.score || 0);
+                    const isThreat = k.toLowerCase().includes('threat') || k.toLowerCase().includes('attack');
+                    colors.push(isThreat ? 'rgba(239, 68, 68, 0.7)' : 'rgba(74, 222, 128, 0.7)');
+                }
+            }
+
+            if (!labels.length) {
+                canvas.parentElement.innerHTML += '<p class="loading">No concept alignment data</p>';
+                return;
+            }
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Alignment',
+                        data: values,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1a5276' }, ticks: { color: '#7f8c9b' }, min: -1, max: 1 },
+                        y: { grid: { display: false }, ticks: { color: '#cbd5e1' } }
+                    }
+                }
+            });
+        }
+
+        function renderSimilarList(similar, type) {
+            const list = document.getElementById('similar-list');
+            if (!list) return;
+            const entities = Array.isArray(similar) ? similar : (similar?.similar || similar?.entities || []);
+
+            if (!entities.length) {
+                list.innerHTML = '<li class="loading">No similar entities found</li>';
+                return;
+            }
+
+            list.innerHTML = entities.map(e => {
+                const eid = e.entity_id || e.id;
+                const score = e.similarity || e.score || e.distance || 0;
+                return `<li>
+                    <a class="entity-link" href="entity_detail.html?type=${e.entity_type || type}&id=${eid}">${eid}</a>
+                    <span class="sim-score">${(score * 100).toFixed(1)}%</span>
+                </li>`;
+            }).join('');
+        }
+
+        // Init
+        loadEntityList().then(() => {
+            if (urlType && urlId) loadEntity();
+        });
+    </script>
+</body>
+</html>

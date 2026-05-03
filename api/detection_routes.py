@@ -2,7 +2,7 @@
 from fastapi import APIRouter, HTTPException, Query
 from pydantic import BaseModel
 
-from api.store import get_store
+from api import backend
 
 router = APIRouter()
 
@@ -115,8 +115,7 @@ async def list_alerts(
     limit: int = Query(50, le=200),
 ):
     """List alerts with filtering."""
-    store = get_store()
-    alerts = store.list_alerts(
+    alerts = backend.get_alerts(
         severity=severity,
         entity_type=entity_type,
         status=status,
@@ -128,8 +127,7 @@ async def list_alerts(
 @router.get("/alerts/{alert_id}", response_model=AlertDetail)
 async def get_alert(alert_id: str):
     """Get alert details including concept alignments and MITRE mapping."""
-    store = get_store()
-    alert = store.get_alert(alert_id)
+    alert = backend.get_alert(alert_id)
     if alert is None:
         raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
     return AlertDetail(**alert)
@@ -144,8 +142,7 @@ async def update_alert_status(alert_id: str, status: str = Query(...)):
             detail=f"Invalid status. Must be one of: {sorted(VALID_STATUSES)}",
         )
 
-    store = get_store()
-    updated = store.update_alert_status(alert_id, status)
+    updated = backend.update_alert_status(alert_id, status)
     if not updated:
         raise HTTPException(status_code=404, detail=f"Alert {alert_id} not found")
 
@@ -155,16 +152,14 @@ async def update_alert_status(alert_id: str, status: str = Query(...)):
 @router.get("/kill-chains", response_model=list[KillChainSummary])
 async def list_kill_chains(status: str = Query(None)):
     """List reconstructed attack kill-chains."""
-    store = get_store()
-    chains = store.list_kill_chains(status=status)
+    chains = backend.get_kill_chains(status=status)
     return [KillChainSummary(**c) for c in chains]
 
 
 @router.get("/kill-chains/{chain_id}", response_model=KillChainDetail)
 async def get_kill_chain(chain_id: str):
     """Get kill-chain details with event timeline and MITRE tactic progression."""
-    store = get_store()
-    chain = store.get_kill_chain(chain_id)
+    chain = backend.get_kill_chain(chain_id)
     if chain is None:
         raise HTTPException(status_code=404, detail=f"Kill-chain {chain_id} not found")
     return KillChainDetail(**chain)
@@ -173,22 +168,11 @@ async def get_kill_chain(chain_id: str):
 @router.get("/concepts", response_model=list[ConceptInfo])
 async def list_concepts():
     """List all reference concepts with their descriptions and MITRE mappings."""
-    from detection.reference_concepts import ALL_CONCEPTS
-
-    return [
-        ConceptInfo(
-            name=c.name,
-            category=c.category,
-            description=c.description,
-            mitre_techniques=c.mitre_techniques,
-            severity=c.severity,
-        )
-        for c in ALL_CONCEPTS
-    ]
+    concepts = backend.get_concepts()
+    return [ConceptInfo(**c) for c in concepts]
 
 
 @router.get("/dashboard", response_model=DashboardSummary)
 async def dashboard_summary():
     """Dashboard aggregate: entity counts, active alerts by severity, active kill-chains, recent drift events."""
-    store = get_store()
-    return DashboardSummary(**store.dashboard_summary())
+    return DashboardSummary(**backend.get_dashboard())
