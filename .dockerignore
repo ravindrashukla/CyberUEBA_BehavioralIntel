@@ -1,0 +1,9 @@
+data/generated/
+data/embedding_cache/
+__pycache__/
+*.pyc
+.git/
+.env
+.venv/
+*.egg-info/
+.pytest_cache/
