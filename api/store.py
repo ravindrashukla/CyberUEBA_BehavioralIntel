@@ -171,13 +171,11 @@ class DemoStore:
         statuses = ["new", "investigating", "confirmed", "false_positive", "resolved"]
 
         # Pick ~20% of entities to have alerts
-        entities_with_alerts = _RNG.choice(
-            list(self._entity_index.keys()),
-            size=min(40, len(self._entity_index)),
-            replace=False,
-        )
+        all_keys = list(self._entity_index.keys())
+        indices = _RNG.choice(len(all_keys), size=min(40, len(all_keys)), replace=False)
 
-        for key in entities_with_alerts:
+        for idx in indices:
+            key = all_keys[idx]
             entity = self._entity_index[key]
             n_alerts = int(_RNG.integers(1, 4))
             for _ in range(n_alerts):

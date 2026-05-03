@@ -8,7 +8,7 @@ import pandas as pd
 import psycopg2
 from psycopg2.extras import execute_values
 
-DB_URL = os.environ.get("DATABASE_URL", "postgresql://ueba:ueba_dev@localhost:5433/ueba")
+DB_URL = os.environ.get("DATABASE_URL", "postgresql://cyber_ueba:password@localhost:5433/cyber_ueba")
 
 BATCH_SIZE = 1000
 
