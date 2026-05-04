@@ -165,6 +165,35 @@ async def get_kill_chain(chain_id: str):
     return KillChainDetail(**chain)
 
 
+class CohortMemberInfo(BaseModel):
+    entity_type: str
+    entity_id: str
+    drift_magnitude: float
+
+
+class CohortResult(BaseModel):
+    cohort_id: int
+    size: int
+    mean_drift_magnitude: float
+    coherence: float
+    members: list[CohortMemberInfo]
+
+
+@router.get("/cohorts", response_model=list[CohortResult])
+async def detect_cohorts(
+    entity_type: str = Query(None, description="Filter: user, device, segment, app"),
+    similarity_threshold: float = Query(0.3, ge=0.0, le=1.0),
+    min_cluster_size: int = Query(3, ge=2),
+):
+    """Detect co-drifting entity cohorts (potential coordinated attacks)."""
+    cohorts = backend.get_cohorts(
+        entity_type=entity_type,
+        similarity_threshold=similarity_threshold,
+        min_cluster_size=min_cluster_size,
+    )
+    return [CohortResult(**c) for c in cohorts]
+
+
 @router.get("/concepts", response_model=list[ConceptInfo])
 async def list_concepts():
     """List all reference concepts with their descriptions and MITRE mappings."""

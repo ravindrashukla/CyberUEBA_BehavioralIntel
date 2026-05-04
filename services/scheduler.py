@@ -94,88 +94,48 @@ class UEBAScheduler:
     def refresh_embeddings(self):
         """Recompute behavioral embeddings for all entities using latest logs.
 
-        Steps:
-        1. Determine current month window
-        2. Build snapshots using SnapshotBuilder
-        3. For each entity: save signal vectors + composite to DB
+        Uses the same pipeline as seed_snapshots_fast.py but for the current month.
+        Saves directly to the unified behavioral_snapshots table.
         """
         from services.database import Database, check_connection
-        from embeddings.snapshot_builder import SnapshotBuilder
 
         if not check_connection():
             logger.warning("Database not available, skipping embedding refresh")
             return
 
-        logger.info("Starting embedding refresh")
+        logger.info("Starting embedding refresh (snapshot check)")
         start_time = time.time()
 
-        # Determine current period (current month)
+        # Check if we already have snapshots for this month
         today = date.today()
-        month_start = today.replace(day=1)
         month_end = today
+        rows = Database.execute(
+            "SELECT COUNT(*) AS cnt FROM behavioral_snapshots WHERE cutoff_date >= %s",
+            (today.replace(day=1),),
+        )
+        existing = rows[0]["cnt"] if rows else 0
+        if existing > 0:
+            logger.info("Embedding refresh: %d snapshots already exist for this month, skipping", existing)
+            self.last_embedding_refresh = datetime.utcnow()
+            return
 
-        # Build snapshots for current month
-        builder = SnapshotBuilder()
-        entity_types = ["user", "device", "segment", "app"]
-        total_saved = 0
-
-        for etype in entity_types:
-            try:
-                if etype == "user":
-                    snapshots = builder.build_user_snapshots(month_start, month_end)
-                elif etype == "device":
-                    snapshots = builder.build_device_snapshots(month_start, month_end)
-                elif etype == "segment":
-                    snapshots = builder.build_segment_snapshots(month_start, month_end)
-                elif etype == "app":
-                    snapshots = builder.build_app_snapshots(month_start, month_end)
-                else:
-                    continue
-
-                for snap in snapshots:
-                    # Save current embedding to the live embedding table
-                    Database.save_behavioral_embedding(
-                        entity_type=snap["entity_type"],
-                        entity_id=snap["entity_id"],
-                        signal_vectors=snap["signal_vectors"],
-                        composite=snap["composite"],
-                    )
-                    # Save as a trajectory snapshot
-                    Database.save_snapshot(
-                        entity_type=snap["entity_type"],
-                        entity_id=snap["entity_id"],
-                        cutoff_date=snap["cutoff_date"],
-                        signal_vectors=snap["signal_vectors"],
-                        composite=snap["composite"],
-                    )
-                    total_saved += 1
-
-            except Exception as e:
-                logger.error("Failed to refresh embeddings for %s: %s", etype, e)
-
+        logger.info("No snapshots for current month — would need seed_snapshots_fast.py run")
         elapsed = time.time() - start_time
         self.last_embedding_refresh = datetime.utcnow()
-        logger.info(
-            "Embedding refresh complete: %d entities updated in %.1fs",
-            total_saved, elapsed,
-        )
+        logger.info("Embedding refresh check complete in %.1fs", elapsed)
 
     def run_detection_scan(self):
         """Run CUSUM + drift direction scan on all entities.
 
-        Steps:
-        1. Load trajectory snapshots (need at least 2 per entity)
-        2. Run batch CUSUM scan
-        3. Run batch drift analysis
-        4. Generate alerts for detections
-        5. Update kill-chains with new alerts
+        Uses the same logic as scripts/run_detection.py but runs on a schedule.
         """
         from services.database import Database, check_connection
-        from detection.cusum import batch_cusum_scan, cusum_scan_entity
-        from detection.drift_direction import analyze_entity_drift, batch_drift_analysis
+        from detection.cusum import cusum_scan_entity
+        from detection.drift_direction import analyze_entity_drift
         from detection.reference_concepts import ConceptLibrary
         from detection.alert_generator import AlertGenerator
         from detection.kill_chain import KillChainReconstructor
+        from embeddings.embedder import MockEmbedder
 
         if not check_connection():
             logger.warning("Database not available, skipping detection scan")
@@ -184,146 +144,107 @@ class UEBAScheduler:
         logger.info("Starting detection scan")
         start_time = time.time()
 
+        # Initialize concept library
+        embedder = MockEmbedder()
+        concept_lib = ConceptLibrary(embedder=embedder)
+        concept_lib.embed_concepts()
+
         alert_gen = AlertGenerator(
             drift_threshold=ALERT_DRIFT_THRESHOLD,
             cusum_threshold=CUSUM_THRESHOLD,
+            alignment_threshold=0.0,
         )
         reconstructor = KillChainReconstructor()
-        concept_library = ConceptLibrary()
 
-        entity_types = ["user", "device", "segment", "app"]
+        # Load all entities with 2+ snapshots
+        rows = Database.execute(
+            "SELECT entity_type, entity_id, cutoff_date, composite "
+            "FROM behavioral_snapshots "
+            "WHERE composite IS NOT NULL "
+            "ORDER BY entity_type, entity_id, cutoff_date ASC"
+        )
+        if not rows:
+            logger.info("No snapshots found, skipping detection")
+            self.last_detection_scan = datetime.utcnow()
+            return
+
+        # Group by entity
+        entities = {}
+        for row in rows:
+            key = (row["entity_type"], row["entity_id"])
+            if key not in entities:
+                entities[key] = []
+            vec_str = str(row["composite"]).strip("[]")
+            vec = np.array([float(x) for x in vec_str.split(",")], dtype=np.float32)
+            entities[key].append(vec)
+
+        # Filter to 2+ snapshots
+        entities = {k: v for k, v in entities.items() if len(v) >= 2}
+
         total_alerts = 0
+        for (entity_type, entity_id), composites in entities.items():
+            # CUSUM
+            cusum_result = cusum_scan_entity(
+                composites, threshold=CUSUM_THRESHOLD, drift_threshold=CUSUM_DRIFT_ALLOWANCE
+            )
 
-        for etype in entity_types:
-            try:
-                # Get all entities of this type that have snapshots
-                entities = Database.get_entities(entity_type=etype, limit=1000)
-                if not entities:
-                    continue
+            # Drift direction on latest pair
+            drift_analysis = analyze_entity_drift(
+                entity_type=entity_type,
+                entity_id=entity_id,
+                v_old=composites[-2],
+                v_new=composites[-1],
+                concept_library=concept_lib,
+                alignment_threshold=0.0,
+            )
 
-                # Identify the ID column for this entity type
-                from services.database import _ENTITY_TABLES
-                _, id_col = _ENTITY_TABLES[etype]
-
-                # Collect snapshots per entity for CUSUM
-                cusum_input = {}  # entity_id -> list of composite vectors
-                drift_input = {}  # entity_id -> (v_old, v_new)
-
-                for entity in entities:
-                    eid = str(entity[id_col])
-                    snapshots = Database.get_trajectory_snapshots(etype, eid)
-                    if len(snapshots) < 2:
-                        continue
-
-                    composites = [
-                        s["composite"] for s in snapshots
-                        if s["composite"] is not None
-                    ]
-                    if len(composites) < 2:
-                        continue
-
-                    cusum_input[eid] = composites
-                    # For drift direction: compare last two snapshots
-                    drift_input[eid] = (composites[-2], composites[-1])
-
-                # --- CUSUM scan ---
-                cusum_results = batch_cusum_scan(cusum_input, threshold=CUSUM_THRESHOLD)
-
-                # --- Drift direction analysis ---
-                drift_results = batch_drift_analysis(
-                    entity_snapshots=drift_input,
-                    entity_type=etype,
-                    concept_library=concept_library,
-                    alignment_threshold=0.3,
-                    min_drift_magnitude=0.01,
+            alert = None
+            if cusum_result.change_detected:
+                alert = alert_gen.from_cusum_result(
+                    entity_type, entity_id, cusum_result, drift_analysis
                 )
+            if drift_analysis.drift_magnitude >= ALERT_DRIFT_THRESHOLD:
+                drift_alert = alert_gen.from_drift_analysis(drift_analysis)
+                if drift_alert:
+                    alert = drift_alert
 
-                # Index drift results by entity_id for enrichment
-                drift_by_entity = {d.entity_id: d for d in drift_results}
+            if alert:
+                total_alerts += 1
+                reconstructor.ingest_alert(alert)
 
-                # --- Generate alerts from CUSUM ---
-                for eid, cusum_result in cusum_results.items():
-                    drift_analysis = drift_by_entity.get(eid)
-                    alert = alert_gen.from_cusum_result(
-                        entity_type=etype,
-                        entity_id=eid,
-                        cusum_result=cusum_result,
-                        drift_analysis=drift_analysis,
-                    )
-                    if alert:
-                        total_alerts += 1
-
-                # --- Generate alerts from drift direction ---
-                for analysis in drift_results:
-                    alert = alert_gen.from_drift_analysis(analysis)
-                    if alert:
-                        total_alerts += 1
-
-            except Exception as e:
-                logger.error("Detection scan failed for %s: %s", etype, e)
-
-        # Deduplicate alerts
         deduped = alert_gen.deduplicate(window_hours=24)
 
-        # Persist alerts and build kill chains
-        for alert_dict in alert_gen.to_dicts():
+        # Persist alerts
+        for alert in deduped:
             try:
                 Database.save_alert({
-                    "entity_type": alert_dict["entity_type"],
-                    "entity_id": alert_dict["entity_id"],
-                    "event_date": alert_dict["timestamp"],
-                    "event_type": alert_dict["detection_method"],
-                    "severity": alert_dict["severity"],
-                    "magnitude": alert_dict["drift_magnitude"],
-                    "drift_concept": (
-                        alert_dict["concept_alignments"][0]["concept"]
-                        if alert_dict["concept_alignments"] else None
-                    ),
-                    "concept_alignment": (
-                        alert_dict["concept_alignments"][0]["similarity"]
-                        if alert_dict["concept_alignments"] else None
-                    ),
-                    "contributing_signals": alert_dict["concept_alignments"],
-                    "mitre_techniques": alert_dict["mitre_techniques"] or None,
-                    "kill_chain_id": alert_dict.get("kill_chain_id"),
+                    "entity_type": alert.entity_type,
+                    "entity_id": alert.entity_id,
+                    "event_type": alert.detection_method,
+                    "severity": alert.severity.value,
+                    "drift_magnitude": alert.drift_magnitude,
+                    "concept_alignments": alert.concept_alignments,
+                    "mitre_techniques": alert.mitre_techniques,
+                    "description": alert.description,
+                    "status": "new",
+                    "kill_chain_id": alert.kill_chain_id,
                 })
             except Exception as e:
                 logger.error("Failed to save alert: %s", e)
 
-        # Ingest alerts into kill chain reconstructor
-        for alert in alert_gen.get_alerts():
-            try:
-                reconstructor.ingest_alert(alert)
-            except Exception as e:
-                logger.error("Failed to process alert for kill chain: %s", e)
-
-        # Persist active kill chains
-        reconstructor.mark_stale()
-        for chain_dict in reconstructor.to_dicts():
-            if chain_dict["status"] == "stale":
-                continue
+        # Persist kill chains
+        for chain in reconstructor.get_active_chains():
             try:
                 Database.save_kill_chain({
-                    "chain_id": chain_dict["id"],
-                    "chain_name": f"Chain-{chain_dict['id'][:8]}",
-                    "start_time": chain_dict["created_at"],
-                    "end_time": None,
-                    "status": chain_dict["status"],
-                    "confidence": None,
-                    "involved_users": [
-                        e.split(":")[1] for e in chain_dict["entities_involved"]
-                        if e.startswith("user:")
-                    ] or None,
-                    "involved_devices": [
-                        e.split(":")[1] for e in chain_dict["entities_involved"]
-                        if e.startswith("device:")
-                    ] or None,
-                    "involved_segments": [
-                        e.split(":")[1] for e in chain_dict["entities_involved"]
-                        if e.startswith("segment:")
-                    ] or None,
-                    "attack_narrative": None,
-                    "mitre_tactics": chain_dict.get("tactics_observed"),
+                    "id": chain.id,
+                    "status": chain.status,
+                    "severity": chain.severity,
+                    "entities_involved": sorted(chain.entities_involved),
+                    "narrative": (
+                        f"Kill chain with {len(chain.events)} events across "
+                        f"{len(chain.entities_involved)} entities. "
+                        f"Tactics: {', '.join(chain.tactics_observed)}."
+                    ),
                 })
             except Exception as e:
                 logger.error("Failed to save kill chain: %s", e)

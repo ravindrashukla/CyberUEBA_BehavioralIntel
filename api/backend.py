@@ -48,7 +48,28 @@ def get_entities(entity_type=None, limit=50, offset=0):
 def get_entity(entity_type, entity_id):
     """Get single entity by type and ID. Returns dict or None."""
     if use_database():
-        from services.database import Database
+        from services.database import Database, _ENTITY_TABLES
+
+        # Session entities don't have a dedicated table — derive from snapshots
+        if entity_type == "session":
+            rows = Database.execute(
+                "SELECT entity_id, MIN(cutoff_date) as first_seen, MAX(cutoff_date) as last_seen, COUNT(*) as months "
+                "FROM behavioral_snapshots WHERE entity_type = 'session' AND entity_id = %s "
+                "GROUP BY entity_id",
+                (entity_id,),
+            )
+            if not rows:
+                return None
+            r = rows[0]
+            return {
+                "entity_type": "session",
+                "entity_id": entity_id,
+                "name": entity_id,
+                "metadata": {"first_seen": str(r["first_seen"]), "last_seen": str(r["last_seen"]), "months": r["months"]},
+                "has_embeddings": True,
+                "computed_at": str(r["last_seen"]),
+            }
+
         row = Database.get_entity(entity_type, entity_id)
         if row is None:
             return None
@@ -81,6 +102,22 @@ def get_entity_stats():
                 "count": count,
                 "with_embeddings": emb_count,
             })
+
+        # Session entities (derived from behavioral_snapshots, no dedicated table)
+        try:
+            rows = Database.execute(
+                "SELECT COUNT(DISTINCT entity_id) AS cnt FROM behavioral_snapshots WHERE entity_type = 'session'"
+            )
+            session_count = rows[0]["cnt"] if rows else 0
+            if session_count > 0:
+                stats.append({
+                    "entity_type": "session",
+                    "count": session_count,
+                    "with_embeddings": session_count,
+                })
+        except Exception:
+            pass
+
         return stats
     from api.store import get_store
     return get_store().entity_stats()
@@ -429,6 +466,19 @@ def get_kill_chain(chain_id):
     return get_store().get_kill_chain(chain_id)
 
 
+def get_cohorts(entity_type=None, similarity_threshold=0.3, min_cluster_size=3):
+    """Detect co-drifting cohorts. Returns list of cohort dicts."""
+    if use_database():
+        from detection.cohort_analysis import detect_cohorts_from_db
+        cohorts = detect_cohorts_from_db(
+            entity_type=entity_type,
+            similarity_threshold=similarity_threshold,
+            min_cluster_size=min_cluster_size,
+        )
+        return [c.to_dict() for c in cohorts]
+    return []
+
+
 def get_concepts():
     """Get all reference concepts. Returns list of concept dicts."""
     from detection.reference_concepts import ALL_CONCEPTS
@@ -454,12 +504,33 @@ def get_dashboard():
             for etype in ("user", "device", "segment", "app")
         }
         alerts_by_severity = stats.get("alerts_7d", {})
+
+        # Top threats: entities with highest drift magnitude
+        top_threats = []
+        try:
+            rows = Database.execute(
+                "SELECT entity_type, entity_id, severity, drift_magnitude "
+                "FROM trajectory_events WHERE status = 'new' "
+                "ORDER BY drift_magnitude DESC LIMIT 10"
+            )
+            if rows:
+                top_threats = [
+                    {
+                        "entity_id": f"{r['entity_type']}:{r['entity_id']}",
+                        "severity": r["severity"],
+                        "drift_magnitude": float(r["drift_magnitude"] or 0),
+                    }
+                    for r in rows
+                ]
+        except Exception:
+            pass
+
         return {
             "entity_counts": entity_counts,
             "alerts_by_severity": alerts_by_severity,
             "active_kill_chains": stats.get("active_kill_chains", 0),
             "recent_drift_events": sum(alerts_by_severity.values()) if alerts_by_severity else 0,
-            "top_threats": [],
+            "top_threats": top_threats,
         }
     from api.store import get_store
     return get_store().dashboard_summary()

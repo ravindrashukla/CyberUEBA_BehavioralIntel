@@ -90,8 +90,11 @@ class SnapshotBuilder:
             user_auth = auth_df[auth_df["user_id"] == uid] if len(auth_df) > 0 else pd.DataFrame()
             auth_text = _summarize_user_auth(uid, user, user_auth)
 
-            # Privilege signal
-            user_priv = priv_df[priv_df["user_id"] == uid] if len(priv_df) > 0 and "user_id" in priv_df.columns else pd.DataFrame()
+            # Privilege signal (actor_user_id or target_user_id)
+            if len(priv_df) > 0 and "actor_user_id" in priv_df.columns:
+                user_priv = priv_df[(priv_df["actor_user_id"] == uid) | (priv_df["target_user_id"] == uid)]
+            else:
+                user_priv = pd.DataFrame()
             priv_text = _summarize_user_privilege(uid, user, user_priv)
 
             # Data access signal
@@ -148,7 +151,7 @@ class SnapshotBuilder:
             process_text = _summarize_device_process(did, device, dev_endpoint)
 
             # Traffic signal (network flows)
-            dev_net = net_df[net_df["src_device_id"] == did] if len(net_df) > 0 and "src_device_id" in net_df.columns else pd.DataFrame()
+            dev_net = net_df[net_df["device_id"] == did] if len(net_df) > 0 and "device_id" in net_df.columns else pd.DataFrame()
             traffic_text = _summarize_device_traffic(did, device, dev_net)
 
             # Resource signal
@@ -202,7 +205,7 @@ class SnapshotBuilder:
             seg_devices = devices_df[devices_df["segment_id"] == sid]["device_id"].tolist()
 
             # Volume signal
-            seg_net = net_df[net_df["src_device_id"].isin(seg_devices)] if len(net_df) > 0 and "src_device_id" in net_df.columns else pd.DataFrame()
+            seg_net = net_df[net_df["device_id"].isin(seg_devices)] if len(net_df) > 0 and "device_id" in net_df.columns else pd.DataFrame()
             volume_text = _summarize_segment_volume(sid, seg, seg_net)
 
             # Connections signal
@@ -404,7 +407,7 @@ def _summarize_user_privilege(uid: str, user: pd.Series, priv_df: pd.DataFrame) 
         )
 
     op_types = priv_df["operation"].value_counts().to_dict() if "operation" in priv_df.columns else {}
-    targets = priv_df["target"].nunique() if "target" in priv_df.columns else 0
+    targets = priv_df["target_user_id"].nunique() if "target_user_id" in priv_df.columns else 0
 
     return (
         f"User {uid} ({user.get('role', 'unknown')}): "
@@ -423,13 +426,13 @@ def _summarize_user_data_access(uid: str, user: pd.Series, file_df: pd.DataFrame
             f"no file access events this period."
         )
 
-    actions = file_df["action"].value_counts().to_dict() if "action" in file_df.columns else {}
-    classifications = file_df["classification"].value_counts().to_dict() if "classification" in file_df.columns else {}
+    actions = file_df["operation"].value_counts().to_dict() if "operation" in file_df.columns else {}
+    classifications = file_df["data_classification"].value_counts().to_dict() if "data_classification" in file_df.columns else {}
 
     return (
         f"User {uid} ({user.get('role', 'unknown')}): "
         f"{n_events} file accesses. "
-        f"Actions: {actions}. "
+        f"Operations: {actions}. "
         f"Data classifications: {classifications}."
     )
 
@@ -437,21 +440,21 @@ def _summarize_user_data_access(uid: str, user: pd.Series, file_df: pd.DataFrame
 def _summarize_user_network(uid: str, user: pd.Series, net_df: pd.DataFrame) -> str:
     """Summarize user network activity (via their primary device)."""
     device_id = user.get("primary_device_id", "")
-    if len(net_df) == 0 or "src_device_id" not in net_df.columns:
+    if len(net_df) == 0 or "device_id" not in net_df.columns:
         return (
             f"User {uid} ({user.get('role', 'unknown')}): "
             f"no network activity observed from device {device_id}."
         )
 
-    dev_net = net_df[net_df["src_device_id"] == device_id]
+    dev_net = net_df[net_df["device_id"] == device_id]
     n_flows = len(dev_net)
-    total_bytes = dev_net["bytes_sent"].sum() if "bytes_sent" in dev_net.columns else 0
+    total_bytes_out = dev_net["bytes_out"].sum() if "bytes_out" in dev_net.columns else 0
     unique_dests = dev_net["dst_ip"].nunique() if "dst_ip" in dev_net.columns else 0
     protocols = dev_net["protocol"].value_counts().to_dict() if "protocol" in dev_net.columns else {}
 
     return (
         f"User {uid} device {device_id}: "
-        f"{n_flows} network flows, {total_bytes} bytes sent, "
+        f"{n_flows} network flows, {total_bytes_out} bytes sent, "
         f"{unique_dests} unique destinations. "
         f"Protocols: {protocols}."
     )
@@ -510,7 +513,7 @@ def _summarize_device_traffic(did: str, device: pd.Series, net_df: pd.DataFrame)
             f"no outbound network flows this period."
         )
 
-    total_bytes = net_df["bytes_sent"].sum() if "bytes_sent" in net_df.columns else 0
+    total_bytes = net_df["bytes_out"].sum() if "bytes_out" in net_df.columns else 0
     unique_dests = net_df["dst_ip"].nunique() if "dst_ip" in net_df.columns else 0
     protocols = net_df["protocol"].value_counts().to_dict() if "protocol" in net_df.columns else {}
     ports = net_df["dst_port"].value_counts().head(5).to_dict() if "dst_port" in net_df.columns else {}
@@ -585,7 +588,7 @@ def _summarize_segment_volume(sid: str, seg: pd.Series, net_df: pd.DataFrame) ->
     if n_flows == 0:
         return f"Segment {sid} (zone={zone}): no network traffic observed."
 
-    total_bytes = net_df["bytes_sent"].sum() if "bytes_sent" in net_df.columns else 0
+    total_bytes = net_df["bytes_out"].sum() if "bytes_out" in net_df.columns else 0
 
     return (
         f"Segment {sid} (zone={zone}): "
@@ -603,7 +606,7 @@ def _summarize_segment_connections(
         return f"Segment {sid} (zone={zone}): no connection data."
 
     unique_external_dests = net_df["dst_ip"].nunique() if "dst_ip" in net_df.columns else 0
-    active_devices = net_df["src_device_id"].nunique() if "src_device_id" in net_df.columns else 0
+    active_devices = net_df["device_id"].nunique() if "device_id" in net_df.columns else 0
 
     return (
         f"Segment {sid} (zone={zone}): "
@@ -636,14 +639,13 @@ def _summarize_segment_threats(sid: str, seg: pd.Series, dns_df: pd.DataFrame) -
         return f"Segment {sid} (zone={zone}): no DNS queries observed."
 
     n_queries = len(dns_df)
-    unique_domains = dns_df["domain"].nunique() if "domain" in dns_df.columns else 0
-    # Flag suspicious if present
-    suspicious = len(dns_df[dns_df["suspicious"] == True]) if "suspicious" in dns_df.columns else 0
+    unique_domains = dns_df["query_name"].nunique() if "query_name" in dns_df.columns else 0
+    nxdomain = len(dns_df[dns_df["response_code"] == "NXDOMAIN"]) if "response_code" in dns_df.columns else 0
 
     return (
         f"Segment {sid} (zone={zone}): "
         f"{n_queries} DNS queries, {unique_domains} unique domains, "
-        f"{suspicious} flagged suspicious."
+        f"{nxdomain} NXDOMAIN responses."
     )
 
 
@@ -757,6 +759,97 @@ def _summarize_app_config(aid: str, app: pd.Series, app_df: pd.DataFrame) -> str
         f"App {aid} ({app_name}, data_class={classification}): "
         f"{len(config_changes)} config changes, "
         f"{len(perm_requests)} permission requests."
+    )
+
+
+# ---------------------------------------------------------------------------
+# Session signals (relationship entity: user + device + time window)
+# ---------------------------------------------------------------------------
+
+
+def _summarize_session_activity(
+    session_id: str, user_id: str, device_id: str,
+    auth_df: pd.DataFrame, app_df: pd.DataFrame,
+) -> str:
+    """Summarize session activity patterns."""
+    n_auth = len(auth_df)
+    n_app = len(app_df)
+    if n_auth == 0 and n_app == 0:
+        return f"Session {session_id} (user={user_id}, device={device_id}): no activity."
+
+    success = len(auth_df[auth_df["status"] == "success"]) if "status" in auth_df.columns else 0
+    fail = n_auth - success
+
+    return (
+        f"Session {session_id} (user={user_id}, device={device_id}): "
+        f"{n_auth} auth events ({success} success, {fail} fail), "
+        f"{n_app} app events."
+    )
+
+
+def _summarize_session_risk(
+    session_id: str, user_id: str, device_id: str,
+    auth_df: pd.DataFrame, priv_df: pd.DataFrame,
+) -> str:
+    """Summarize risk accumulation in session."""
+    fail = len(auth_df[auth_df["status"] == "failure"]) if "status" in auth_df.columns and len(auth_df) > 0 else 0
+    priv_ops = len(priv_df)
+
+    return (
+        f"Session {session_id} risk: {fail} failed auths, "
+        f"{priv_ops} privilege operations."
+    )
+
+
+def _summarize_session_data_movement(
+    session_id: str, user_id: str, device_id: str,
+    file_df: pd.DataFrame, net_df: pd.DataFrame,
+) -> str:
+    """Summarize data movement within session."""
+    n_files = len(file_df)
+    bytes_out = net_df["bytes_out"].sum() if "bytes_out" in net_df.columns and len(net_df) > 0 else 0
+
+    return (
+        f"Session {session_id} data movement: {n_files} file accesses, "
+        f"{bytes_out:.0f} bytes outbound network."
+    )
+
+
+def _summarize_session_lateral(
+    session_id: str, user_id: str, device_id: str,
+    auth_df: pd.DataFrame,
+) -> str:
+    """Summarize lateral movement indicators in session."""
+    if len(auth_df) == 0 or "device_id" not in auth_df.columns:
+        return f"Session {session_id}: no lateral movement data."
+
+    other_devices = auth_df[auth_df["device_id"] != device_id]["device_id"].nunique()
+    return (
+        f"Session {session_id} lateral: user {user_id} authenticated to "
+        f"{other_devices} other devices besides {device_id}."
+    )
+
+
+def _summarize_session_temporal(
+    session_id: str, user_id: str, device_id: str,
+    auth_df: pd.DataFrame,
+) -> str:
+    """Summarize temporal patterns in session."""
+    if len(auth_df) == 0 or "timestamp" not in auth_df.columns:
+        return f"Session {session_id}: no temporal data."
+
+    timestamps = pd.to_datetime(auth_df["timestamp"], errors="coerce")
+    valid = timestamps.dropna()
+    if len(valid) == 0:
+        return f"Session {session_id}: no parseable timestamps."
+
+    hours = valid.dt.hour
+    off_hours = ((hours < 6) | (hours > 22)).sum()
+    span_days = (valid.max() - valid.min()).days + 1
+
+    return (
+        f"Session {session_id} temporal: {len(valid)} events over {span_days} days, "
+        f"{off_hours} off-hours events."
     )
 
 

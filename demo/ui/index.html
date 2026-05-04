@@ -178,6 +178,7 @@
         <a href="entity_detail.html">Entities</a>
         <a href="alerts.html">Alerts</a>
         <a href="kill_chains.html">Kill Chains</a>
+        <a href="cohorts.html">Cohorts</a>
     </nav>
 
     <div class="container">
@@ -251,21 +252,19 @@
 
         function renderStats(stats, dashboard) {
             const grid = document.getElementById('stat-grid');
-            const entityTotal = stats.total_entities || Object.values(stats.by_type || stats || {}).reduce((a,b) => a + (typeof b === 'number' ? b : 0), 0);
-            const severities = dashboard.alerts_by_severity || dashboard.severity_counts || {};
+            const severities = dashboard.alerts_by_severity || {};
+
+            // stats is a list of {entity_type, count, with_embeddings}
+            const entityCounts = dashboard.entity_counts || {};
+            const entityTotal = Object.values(entityCounts).reduce((a,b) => a + b, 0);
 
             let html = `
                 <div class="stat-card"><div class="value">${entityTotal}</div><div class="label">Total Entities</div></div>
             `;
 
-            // Entity type breakdown
-            const byType = stats.by_type || stats.entity_counts || stats;
-            if (typeof byType === 'object') {
-                for (const [type, count] of Object.entries(byType)) {
-                    if (type === 'total_entities' || type === 'total') continue;
-                    if (typeof count !== 'number') continue;
-                    html += `<div class="stat-card"><div class="value">${count}</div><div class="label">${type}s</div></div>`;
-                }
+            // Entity type breakdown from dashboard.entity_counts
+            for (const [type, count] of Object.entries(entityCounts)) {
+                html += `<div class="stat-card"><div class="value">${count}</div><div class="label">${type}s</div></div>`;
             }
 
             // Alert severity cards

@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cohorts — Cyber UEBA</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        nav {
+            background: #0f3460;
+            border-bottom: 1px solid #1a5276;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+        nav .brand { font-size: 1.2rem; font-weight: 700; color: #00d4ff; margin-right: 3rem; }
+        nav .brand span { color: #4ade80; }
+        nav a {
+            color: #a0aec0; text-decoration: none; padding: 0.5rem 1rem;
+            border-radius: 4px; font-size: 0.9rem; transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #fff; background: rgba(0, 212, 255, 0.1); }
+        nav a.active { border-bottom: 2px solid #00d4ff; }
+
+        .container { max-width: 1400px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+        .page-title {
+            font-size: 1.3rem; color: #cbd5e1; margin-bottom: 1.5rem;
+            display: flex; align-items: center; gap: 0.8rem;
+        }
+        .page-title .count {
+            background: rgba(0, 212, 255, 0.15); color: #00d4ff;
+            padding: 0.2rem 0.6rem; border-radius: 4px; font-size: 0.85rem;
+        }
+
+        .filter-bar {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1rem 1.5rem;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+        }
+        .filter-bar label { color: #7f8c9b; font-size: 0.8rem; text-transform: uppercase; }
+        .filter-bar select, .filter-bar input {
+            background: #1a1a2e; border: 1px solid #1a5276; color: #e0e0e0;
+            padding: 0.5rem 0.8rem; border-radius: 4px; font-size: 0.9rem;
+        }
+        .filter-bar input { width: 80px; }
+        .filter-bar button {
+            background: #00d4ff; color: #1a1a2e; border: none;
+            padding: 0.5rem 1.2rem; border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        .filter-bar button:hover { background: #00b8d4; }
+
+        .cohort-card {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            margin-bottom: 1rem;
+            padding: 1.5rem;
+            transition: box-shadow 0.2s;
+        }
+        .cohort-card:hover { box-shadow: 0 4px 20px rgba(0, 212, 255, 0.1); }
+
+        .cohort-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .cohort-header h3 { color: #00d4ff; font-size: 1.1rem; }
+        .cohort-stats {
+            display: flex; gap: 1.5rem;
+        }
+        .cohort-stat { text-align: center; }
+        .cohort-stat .val { font-size: 1.2rem; font-weight: 700; color: #4ade80; }
+        .cohort-stat .lbl { font-size: 0.7rem; color: #7f8c9b; text-transform: uppercase; }
+
+        .member-list {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+        .member-chip {
+            background: rgba(0, 212, 255, 0.1);
+            border: 1px solid #1a5276;
+            color: #cbd5e1;
+            padding: 0.3rem 0.7rem;
+            border-radius: 4px;
+            font-size: 0.82rem;
+        }
+        .member-chip .drift {
+            color: #f97316;
+            margin-left: 0.4rem;
+            font-weight: 600;
+        }
+
+        .loading { text-align: center; padding: 2rem; color: #7f8c9b; }
+        .error {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
+            border-radius: 8px; padding: 1rem; color: #ef4444; margin: 1rem 0;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 3rem;
+            color: #7f8c9b;
+        }
+        .empty-state h3 { color: #4ade80; margin-bottom: 0.5rem; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">Cyber UEBA <span>| Behavioral Intelligence</span></div>
+        <a href="index.html">Dashboard</a>
+        <a href="entity_detail.html">Entities</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="kill_chains.html">Kill Chains</a>
+        <a href="cohorts.html" class="active">Cohorts</a>
+    </nav>
+
+    <div class="container">
+        <div class="page-title">
+            Co-Drifting Entity Cohorts
+            <span class="count" id="cohort-count">0</span>
+        </div>
+
+        <div class="filter-bar">
+            <label>Entity Type:</label>
+            <select id="filter-type">
+                <option value="">All</option>
+                <option value="user">User</option>
+                <option value="device">Device</option>
+                <option value="segment">Segment</option>
+                <option value="app">Application</option>
+            </select>
+            <label>Similarity Threshold:</label>
+            <input type="number" id="threshold" value="0.3" step="0.05" min="0" max="1">
+            <label>Min Size:</label>
+            <input type="number" id="min-size" value="3" min="2" max="20">
+            <button onclick="loadCohorts()">Detect</button>
+        </div>
+
+        <div id="cohorts-container">
+            <div class="loading">Click "Detect" to run cohort analysis...</div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = 'http://localhost:8001/api/v1';
+
+        async function loadCohorts() {
+            const container = document.getElementById('cohorts-container');
+            container.innerHTML = '<div class="loading">Analyzing drift vectors...</div>';
+
+            const entityType = document.getElementById('filter-type').value;
+            const threshold = document.getElementById('threshold').value;
+            const minSize = document.getElementById('min-size').value;
+
+            let url = `${API_BASE}/detection/cohorts?similarity_threshold=${threshold}&min_cluster_size=${minSize}`;
+            if (entityType) url += `&entity_type=${entityType}`;
+
+            try {
+                const resp = await fetch(url);
+                if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+                const cohorts = await resp.json();
+
+                document.getElementById('cohort-count').textContent = cohorts.length;
+
+                if (!cohorts.length) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>No Cohorts Detected</h3>
+                            <p>No groups of entities are drifting in the same direction at this threshold.</p>
+                            <p style="margin-top:0.5rem;font-size:0.85rem;">Try lowering the similarity threshold or reducing the minimum cluster size.</p>
+                        </div>`;
+                    return;
+                }
+
+                container.innerHTML = cohorts.map(c => renderCohort(c)).join('');
+            } catch (err) {
+                container.innerHTML = `<div class="error">Failed to load cohorts: ${err.message}</div>`;
+            }
+        }
+
+        function renderCohort(cohort) {
+            const members = cohort.members || [];
+            return `
+                <div class="cohort-card">
+                    <div class="cohort-header">
+                        <h3>Cohort #${cohort.cohort_id + 1}</h3>
+                        <div class="cohort-stats">
+                            <div class="cohort-stat"><div class="val">${cohort.size}</div><div class="lbl">Members</div></div>
+                            <div class="cohort-stat"><div class="val">${cohort.coherence.toFixed(3)}</div><div class="lbl">Coherence</div></div>
+                            <div class="cohort-stat"><div class="val">${cohort.mean_drift_magnitude.toFixed(3)}</div><div class="lbl">Mean Drift</div></div>
+                        </div>
+                    </div>
+                    <div class="member-list">
+                        ${members.slice(0, 20).map(m => `
+                            <span class="member-chip">
+                                ${m.entity_type}:${m.entity_id}
+                                <span class="drift">${m.drift_magnitude.toFixed(2)}</span>
+                            </span>
+                        `).join('')}
+                        ${members.length > 20 ? `<span class="member-chip">+${members.length - 20} more</span>` : ''}
+                    </div>
+                </div>
+            `;
+        }
+    </script>
+</body>
+</html>

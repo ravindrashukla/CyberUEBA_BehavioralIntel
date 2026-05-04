@@ -193,34 +193,37 @@ class Database:
     def get_behavioral_embedding(cls, entity_type, entity_id):
         """Get current behavioral embeddings (5 signals + composite).
 
+        Uses the most recent snapshot from behavioral_snapshots.
         Returns dict with keys: signal_vectors (dict), composite (ndarray),
         computed_at (datetime), or None if not found.
         """
-        if entity_type not in _EMBEDDING_TABLES:
+        if entity_type not in _ENTITY_TABLES:
             return None
-        table, id_col = _EMBEDDING_TABLES[entity_type]
-        signal_cols = _SIGNAL_COLUMNS[entity_type]
-        signal_keys = _SIGNAL_KEYS[entity_type]
 
-        cols_str = ", ".join(signal_cols + ["beh_composite", "computed_at"])
+        signal_keys = _SIGNAL_KEYS.get(entity_type, [])
+
         rows = cls.execute(
-            f"SELECT {cols_str} FROM {table} WHERE {id_col} = %s",
-            (entity_id,),
+            "SELECT signal_1, signal_2, signal_3, signal_4, signal_5, "
+            "composite, created_at "
+            "FROM behavioral_snapshots "
+            "WHERE entity_type = %s AND entity_id = %s "
+            "ORDER BY cutoff_date DESC LIMIT 1",
+            (entity_type, entity_id),
         )
         if not rows:
             return None
 
         row = rows[0]
         signal_vectors = {}
-        for col, key in zip(signal_cols, signal_keys):
-            vec = _parse_vector(row[col])
+        for i, key in enumerate(signal_keys):
+            vec = _parse_vector(row[f"signal_{i+1}"])
             if vec is not None:
                 signal_vectors[key] = vec
 
         return {
             "signal_vectors": signal_vectors,
-            "composite": _parse_vector(row["beh_composite"]),
-            "computed_at": row["computed_at"],
+            "composite": _parse_vector(row["composite"]),
+            "computed_at": row["created_at"],
         }
 
     @classmethod
@@ -288,32 +291,41 @@ class Database:
     def find_similar(cls, entity_type, entity_id, top_k=10):
         """Find similar entities using pgvector cosine similarity on composite.
 
+        Uses the most recent snapshot for each entity.
         Returns list of dicts with entity_id and distance.
         """
-        if entity_type not in _EMBEDDING_TABLES:
+        if entity_type not in _ENTITY_TABLES:
             return []
 
-        table, id_col = _EMBEDDING_TABLES[entity_type]
+        _, id_col = _ENTITY_TABLES[entity_type]
 
-        # Get the target entity's composite embedding
+        # Get the target entity's most recent composite
         rows = cls.execute(
-            f"SELECT beh_composite FROM {table} WHERE {id_col} = %s",
-            (entity_id,),
+            "SELECT composite FROM behavioral_snapshots "
+            "WHERE entity_type = %s AND entity_id = %s "
+            "ORDER BY cutoff_date DESC LIMIT 1",
+            (entity_type, entity_id),
         )
-        if not rows or rows[0]["beh_composite"] is None:
+        if not rows or rows[0]["composite"] is None:
             return []
 
-        target_vec = rows[0]["beh_composite"]
+        target_vec = rows[0]["composite"]
 
-        # Cosine distance search (1 - cosine_similarity)
+        # Find most recent snapshot per entity and rank by cosine distance
         results = cls.execute(
-            f"SELECT {id_col}, beh_composite <=> %s AS distance "
-            f"FROM {table} "
-            f"WHERE {id_col} != %s AND beh_composite IS NOT NULL "
-            f"ORDER BY distance ASC LIMIT %s",
-            (target_vec, entity_id, top_k),
+            "SELECT DISTINCT ON (entity_id) entity_id, "
+            "composite <=> %s AS distance "
+            "FROM behavioral_snapshots "
+            "WHERE entity_type = %s AND entity_id != %s AND composite IS NOT NULL "
+            "ORDER BY entity_id, cutoff_date DESC",
+            (target_vec, entity_type, entity_id),
         )
-        return [dict(r) for r in results] if results else []
+        if not results:
+            return []
+
+        # Sort by distance and take top_k
+        sorted_results = sorted(results, key=lambda r: r["distance"])[:top_k]
+        return [{id_col: r["entity_id"], "distance": r["distance"]} for r in sorted_results]
 
     # =========================================================================
     # Trajectory queries
@@ -326,9 +338,9 @@ class Database:
         Returns list of dicts with cutoff_date, signal vectors, composite.
         """
         query = (
-            "SELECT snapshot_id, cutoff_date, "
-            "beh_signal_1, beh_signal_2, beh_signal_3, beh_signal_4, beh_signal_5, "
-            "beh_composite, computed_at "
+            "SELECT id, cutoff_date, "
+            "signal_1, signal_2, signal_3, signal_4, signal_5, "
+            "composite, created_at "
             "FROM behavioral_snapshots "
             "WHERE entity_type = %s AND entity_id = %s"
         )
@@ -350,17 +362,17 @@ class Database:
         results = []
         for row in rows:
             results.append({
-                "snapshot_id": row["snapshot_id"],
+                "snapshot_id": row["id"],
                 "cutoff_date": row["cutoff_date"],
                 "signals": [
-                    _parse_vector(row["beh_signal_1"]),
-                    _parse_vector(row["beh_signal_2"]),
-                    _parse_vector(row["beh_signal_3"]),
-                    _parse_vector(row["beh_signal_4"]),
-                    _parse_vector(row["beh_signal_5"]),
+                    _parse_vector(row["signal_1"]),
+                    _parse_vector(row["signal_2"]),
+                    _parse_vector(row["signal_3"]),
+                    _parse_vector(row["signal_4"]),
+                    _parse_vector(row["signal_5"]),
                 ],
-                "composite": _parse_vector(row["beh_composite"]),
-                "computed_at": row["computed_at"],
+                "composite": _parse_vector(row["composite"]),
+                "computed_at": row["created_at"],
             })
         return results
 
@@ -393,17 +405,16 @@ class Database:
         cls.execute(
             "INSERT INTO behavioral_snapshots "
             "(entity_type, entity_id, cutoff_date, "
-            "beh_signal_1, beh_signal_2, beh_signal_3, beh_signal_4, beh_signal_5, "
-            "beh_composite) "
+            "signal_1, signal_2, signal_3, signal_4, signal_5, "
+            "composite) "
             "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s) "
             "ON CONFLICT (entity_type, entity_id, cutoff_date) DO UPDATE SET "
-            "beh_signal_1 = EXCLUDED.beh_signal_1, "
-            "beh_signal_2 = EXCLUDED.beh_signal_2, "
-            "beh_signal_3 = EXCLUDED.beh_signal_3, "
-            "beh_signal_4 = EXCLUDED.beh_signal_4, "
-            "beh_signal_5 = EXCLUDED.beh_signal_5, "
-            "beh_composite = EXCLUDED.beh_composite, "
-            "computed_at = now()",
+            "signal_1 = EXCLUDED.signal_1, "
+            "signal_2 = EXCLUDED.signal_2, "
+            "signal_3 = EXCLUDED.signal_3, "
+            "signal_4 = EXCLUDED.signal_4, "
+            "signal_5 = EXCLUDED.signal_5, "
+            "composite = EXCLUDED.composite",
             (entity_type, entity_id, cutoff_date,
              vec_literals[0], vec_literals[1], vec_literals[2],
              vec_literals[3], vec_literals[4], composite_literal),
@@ -440,38 +451,37 @@ class Database:
         """Insert a new alert into trajectory_events.
 
         Args:
-            alert_dict: dict with keys matching trajectory_events columns:
-                entity_type, entity_id, event_date, event_type, severity,
-                magnitude, drift_concept, concept_alignment,
-                contributing_signals (JSONB), mitre_techniques (text[]),
-                kill_chain_id (optional UUID)
+            alert_dict: dict with keys:
+                entity_type, entity_id, event_type, severity,
+                drift_magnitude, concept_alignments (JSONB),
+                mitre_techniques (list), description, status,
+                kill_chain_id (optional)
         """
         cls.execute(
             "INSERT INTO trajectory_events "
-            "(entity_type, entity_id, event_date, event_type, severity, "
-            "magnitude, drift_concept, concept_alignment, "
-            "contributing_signals, mitre_techniques, kill_chain_id) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+            "(entity_type, entity_id, event_type, severity, "
+            "drift_magnitude, concept_alignments, "
+            "mitre_techniques, description, status, kill_chain_id) "
+            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
             (
                 alert_dict["entity_type"],
                 alert_dict["entity_id"],
-                alert_dict.get("event_date"),
                 alert_dict.get("event_type", "behavioral_shift"),
                 alert_dict.get("severity", "medium"),
-                alert_dict.get("magnitude"),
-                alert_dict.get("drift_concept"),
-                alert_dict.get("concept_alignment"),
-                json.dumps(alert_dict.get("contributing_signals")) if alert_dict.get("contributing_signals") else None,
+                alert_dict.get("drift_magnitude"),
+                json.dumps(alert_dict.get("concept_alignments")) if alert_dict.get("concept_alignments") else None,
                 alert_dict.get("mitre_techniques"),
+                alert_dict.get("description"),
+                alert_dict.get("status", "new"),
                 alert_dict.get("kill_chain_id"),
             ),
         )
 
     @classmethod
     def update_alert_status(cls, alert_id, status):
-        """Update alert event_type (used as status proxy)."""
+        """Update alert status."""
         cls.execute(
-            "UPDATE trajectory_events SET event_type = %s WHERE event_id = %s",
+            "UPDATE trajectory_events SET status = %s WHERE id = %s",
             (status, alert_id),
         )
 
@@ -493,37 +503,23 @@ class Database:
 
         Args:
             chain_dict: dict with keys:
-                chain_id, chain_name, start_time, end_time, status,
-                confidence, involved_users, involved_devices,
-                involved_segments, attack_narrative, mitre_tactics
+                id, status, severity, entities_involved (list), narrative
         """
         cls.execute(
             "INSERT INTO kill_chain_sequences "
-            "(chain_id, chain_name, start_time, end_time, status, confidence, "
-            "involved_users, involved_devices, involved_segments, "
-            "attack_narrative, mitre_tactics) "
-            "VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
-            "ON CONFLICT (chain_id) DO UPDATE SET "
-            "end_time = EXCLUDED.end_time, "
+            "(id, status, severity, entities_involved, narrative) "
+            "VALUES (%s, %s, %s, %s, %s) "
+            "ON CONFLICT (id) DO UPDATE SET "
             "status = EXCLUDED.status, "
-            "confidence = EXCLUDED.confidence, "
-            "involved_users = EXCLUDED.involved_users, "
-            "involved_devices = EXCLUDED.involved_devices, "
-            "involved_segments = EXCLUDED.involved_segments, "
-            "attack_narrative = EXCLUDED.attack_narrative, "
-            "mitre_tactics = EXCLUDED.mitre_tactics",
+            "severity = EXCLUDED.severity, "
+            "entities_involved = EXCLUDED.entities_involved, "
+            "narrative = EXCLUDED.narrative",
             (
-                chain_dict["chain_id"],
-                chain_dict.get("chain_name", "Unnamed Chain"),
-                chain_dict.get("start_time"),
-                chain_dict.get("end_time"),
+                chain_dict["id"],
                 chain_dict.get("status", "active"),
-                chain_dict.get("confidence"),
-                chain_dict.get("involved_users"),
-                chain_dict.get("involved_devices"),
-                chain_dict.get("involved_segments"),
-                chain_dict.get("attack_narrative"),
-                chain_dict.get("mitre_tactics"),
+                chain_dict.get("severity", "high"),
+                chain_dict.get("entities_involved"),
+                chain_dict.get("narrative"),
             ),
         )
 

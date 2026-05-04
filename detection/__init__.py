@@ -17,6 +17,7 @@ from detection.drift_direction import (
 )
 from detection.alert_generator import AlertSeverity, AlertStatus, Alert, AlertGenerator
 from detection.kill_chain import KillChainEvent, KillChain, KillChainReconstructor
+from detection.cohort_analysis import Cohort, CohortMember, detect_cohorts, detect_cohorts_from_db
 from detection.mitre_mapper import (
     TechniqueInfo,
     TECHNIQUE_DB,
@@ -55,6 +56,11 @@ __all__ = [
     "KillChainEvent",
     "KillChain",
     "KillChainReconstructor",
+    # cohort_analysis
+    "Cohort",
+    "CohortMember",
+    "detect_cohorts",
+    "detect_cohorts_from_db",
     # mitre_mapper
     "TechniqueInfo",
     "TECHNIQUE_DB",

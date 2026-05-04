@@ -171,6 +171,7 @@
         <a href="entity_detail.html" class="active">Entities</a>
         <a href="alerts.html">Alerts</a>
         <a href="kill_chains.html">Kill Chains</a>
+        <a href="cohorts.html">Cohorts</a>
     </nav>
 
     <div class="container">
@@ -179,8 +180,9 @@
             <select id="entity-type">
                 <option value="user">User</option>
                 <option value="device">Device</option>
-                <option value="application">Application</option>
-                <option value="network">Network</option>
+                <option value="segment">Segment</option>
+                <option value="app">Application</option>
+                <option value="session">Session</option>
             </select>
             <label>Entity:</label>
             <select id="entity-select"><option value="">— select —</option></select>
@@ -278,8 +280,9 @@
             }
             html += `</div>`;
 
-            // MITRE Techniques
-            const techniques = drift?.mitre_techniques || detail?.mitre_techniques || [];
+            // MITRE Techniques (extracted from top concept alignments)
+            const alignments = drift?.top_alignments || [];
+            const techniques = alignments.flatMap(a => a.mitre_techniques || []).filter((v,i,a) => a.indexOf(v) === i);
             if (techniques.length) {
                 html += `<div class="mitre-tags">${techniques.map(t => `<span class="mitre-tag">${t}</span>`).join('')}</div>`;
             }
@@ -317,7 +320,7 @@
             new Chart(canvas.getContext('2d'), {
                 type: 'line',
                 data: {
-                    labels: series.map(s => s.month || s.period || s.timestamp || ''),
+                    labels: series.map(s => s.cutoff_date || s.month || s.period || s.timestamp || ''),
                     datasets: [{
                         label: 'Drift Magnitude',
                         data: series.map(s => s.drift_magnitude || s.magnitude || 0),
@@ -398,16 +401,15 @@
         function renderConceptChart(drift) {
             const canvas = document.getElementById('concept-chart');
             if (!canvas) return;
-            const concepts = drift?.concept_alignments || drift?.concepts || drift?.alignment || [];
+            const concepts = drift?.top_alignments || drift?.concept_alignments || drift?.concepts || drift?.alignment || [];
 
             let labels = [], values = [], colors = [];
             if (Array.isArray(concepts)) {
                 concepts.forEach(c => {
-                    labels.push(c.concept || c.name || 'concept');
-                    values.push(c.alignment || c.score || c.similarity || 0);
-                    const isThreat = (c.concept || c.name || '').toLowerCase().includes('threat') ||
-                                     (c.concept || c.name || '').toLowerCase().includes('attack') ||
-                                     (c.concept || c.name || '').toLowerCase().includes('exfil');
+                    labels.push(c.concept_name || c.concept || c.name || 'concept');
+                    values.push(c.alignment_score || c.alignment || c.score || c.similarity || 0);
+                    const cat = c.category || '';
+                    const isThreat = cat === 'threat' || (c.concept_name || c.concept || '').includes('exfil');
                     colors.push(isThreat ? 'rgba(239, 68, 68, 0.7)' : 'rgba(74, 222, 128, 0.7)');
                 });
             } else if (typeof concepts === 'object') {

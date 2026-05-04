@@ -132,6 +132,7 @@
         <a href="entity_detail.html">Entities</a>
         <a href="alerts.html" class="active">Alerts</a>
         <a href="kill_chains.html">Kill Chains</a>
+        <a href="cohorts.html">Cohorts</a>
     </nav>
 
     <div class="container">
@@ -149,14 +150,16 @@
                 <option value="">All</option>
                 <option value="user">User</option>
                 <option value="device">Device</option>
-                <option value="application">Application</option>
-                <option value="network">Network</option>
+                <option value="segment">Segment</option>
+                <option value="app">Application</option>
             </select>
             <label>Status:</label>
             <select id="filter-status">
                 <option value="">All</option>
-                <option value="open">Open</option>
+                <option value="new">New</option>
                 <option value="investigating">Investigating</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="false_positive">False Positive</option>
                 <option value="resolved">Resolved</option>
             </select>
             <button onclick="loadAlerts()">Apply</button>
