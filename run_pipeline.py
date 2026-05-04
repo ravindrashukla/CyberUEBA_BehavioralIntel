@@ -171,7 +171,11 @@ def main():
         month_end = (current.replace(day=28) + timedelta(days=4)).replace(day=1) - timedelta(days=1)
         month_end = min(month_end, last_date)
         months.append((current, month_end))
-        current = (month_end + timedelta(days=1)).replace(day=1)
+        # Advance to first day of next month (from current, not month_end)
+        if current.month == 12:
+            current = current.replace(year=current.year + 1, month=1)
+        else:
+            current = current.replace(month=current.month + 1)
 
     if args.months > 0:
         months = months[:args.months]
