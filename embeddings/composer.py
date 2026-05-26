@@ -116,3 +116,64 @@ def drift_magnitude(v_old: np.ndarray, v_new: np.ndarray) -> float:
     Returns value in [0, 2]: 0 = identical, 1 = orthogonal, 2 = opposite.
     """
     return 1.0 - cosine_similarity(v_old, v_new)
+
+
+# ── Tier 3 extensions ────────────────────────────────────────────────────────
+
+
+def compose_with_attention(
+    signal_vectors: dict[str, np.ndarray],
+    entity_type: str,
+    context_weights: dict[str, float] | None = None,
+) -> tuple[np.ndarray, dict[str, float]]:
+    """Softmax attention-weighted composition (Tier 3).
+
+    Instead of fixed weights, uses softmax(||zone|| * context_bias) to
+    determine how much each signal contributes. Context weights bias
+    attention toward investigation-relevant signals.
+
+    Returns (composite_vector, attention_weights_dict).
+    """
+    import math
+
+    if not signal_vectors:
+        raise ValueError("No signal vectors provided")
+
+    if context_weights is None:
+        uniform = 1.0 / len(signal_vectors)
+        context_weights = {k: uniform for k in signal_vectors}
+
+    logits = {}
+    for name, vec in signal_vectors.items():
+        energy = float(np.linalg.norm(vec))
+        bias = context_weights.get(name, 0.2)
+        logits[name] = energy * bias
+
+    max_logit = max(logits.values()) if logits else 0.0
+    exp_logits = {k: math.exp(v - max_logit) for k, v in logits.items()}
+    total = sum(exp_logits.values())
+
+    if total == 0:
+        uniform = 1.0 / len(signal_vectors)
+        alphas = {k: uniform for k in signal_vectors}
+    else:
+        alphas = {k: v / total for k, v in exp_logits.items()}
+
+    composite = np.zeros_like(next(iter(signal_vectors.values())), dtype=np.float64)
+    for name, vec in signal_vectors.items():
+        composite += alphas[name] * vec.astype(np.float64)
+
+    norm = np.linalg.norm(composite)
+    if norm > 1e-10:
+        composite = composite / norm
+
+    return composite.astype(np.float32), alphas
+
+
+def hadamard_compose(a: np.ndarray, b: np.ndarray) -> np.ndarray:
+    """Element-wise product, L2-normalized. For relationship embeddings."""
+    product = a.astype(np.float64) * b.astype(np.float64)
+    norm = np.linalg.norm(product)
+    if norm < 1e-8:
+        return np.zeros_like(product, dtype=np.float32)
+    return (product / norm).astype(np.float32)

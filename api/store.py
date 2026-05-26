@@ -1,8 +1,10 @@
 """In-memory data store for demo API.
 
-Loads pipeline results (alerts, kill-chains, drift series) when available,
-fills remaining data with synthetic generation. Replace with PostgreSQL for production.
+Loads pipeline results (alerts, kill-chains, drift series, tier3 comparison)
+when available, fills remaining data with synthetic generation.
+Replace with PostgreSQL for production.
 """
+import csv
 import json
 import uuid
 import numpy as np
@@ -15,6 +17,7 @@ from embeddings.composer import cosine_similarity, drift_magnitude
 
 _RNG = np.random.default_rng(42)
 _RESULTS_DIR = Path(__file__).parent.parent / "data" / "pipeline_results"
+_TIER3_DIR = Path(__file__).parent.parent / "data" / "tier3_results"
 
 # Signal names per entity type (matches schema column naming)
 SIGNAL_NAMES = {
@@ -62,12 +65,15 @@ class DemoStore:
         self._alert_index: dict[str, dict] = {}
         self._kill_chains: list[dict] = []
         self._chain_index: dict[str, dict] = {}
+        self._tier3_results: list[dict] = []
+        self._tier3_index: dict[str, dict] = {}
 
         self._generate_entities()
         self._generate_embeddings()
         self._generate_trajectories()
         self._generate_alerts()
         self._generate_kill_chains()
+        self._load_tier3_results()
 
     # --- Generation ---
 
@@ -553,6 +559,184 @@ class DemoStore:
             "active_kill_chains": active_chains,
             "recent_drift_events": recent,
             "top_threats": top_threats,
+        }
+
+    # --- Tier 3 ---
+
+    def _load_tier3_results(self):
+        csv_file = _TIER3_DIR / "tier3_comparison.csv"
+        if not csv_file.exists():
+            return
+
+        with open(csv_file, newline="", encoding="utf-8") as f:
+            reader = csv.DictReader(f)
+            for row in reader:
+                uid = row.get("user_id", "")
+                if not uid:
+                    continue
+
+                def _float(key, default=0.0):
+                    try:
+                        return float(row.get(key, default))
+                    except (ValueError, TypeError):
+                        return default
+
+                def _bool(key):
+                    return row.get(key, "").strip().lower() == "true"
+
+                def _str(key, default=""):
+                    return row.get(key, default).strip()
+
+                entry = {
+                    "user_id": uid,
+                    "is_attack": _bool("is_attack"),
+                    "attack_name": _str("attack_name", "Normal"),
+                    # Tier 1
+                    "t1_iforest": _bool("iforest_anomaly"),
+                    "t1_ocsvm": _bool("ocsvm_anomaly"),
+                    "t1_lof": _bool("lof_anomaly"),
+                    "t1_zscore": _bool("zscore_anomaly"),
+                    "t1_temporal": _bool("temporal_anomaly"),
+                    "t1_feat_cusum": _bool("feat_cusum_detected"),
+                    "t1_feat_cusum_top10": _bool("feat_cusum_top10pct"),
+                    "t1_top_feature": _str("feat_top_feature"),
+                    "t1_top_feature_z": _float("feat_top_feature_z"),
+                    # Tier 2
+                    "t2_cusum_detected": _bool("acecard_cusum_detected"),
+                    "t2_direction_detected": _bool("acecard_direction_detected"),
+                    "t2_top10pct": _bool("acecard_top10pct"),
+                    "t2_total_drift": _float("acecard_total_drift"),
+                    "t2_threat_consistency": _float("acecard_threat_consistency"),
+                    "t2_primary_threat": _str("acecard_primary_threat"),
+                    "t2_max_weekly_threat": _float("acecard_max_weekly_threat"),
+                    "combined_detected": _bool("combined_detected"),
+                    # Tier 3 - Phase State
+                    "t3_velocity_magnitude": _float("t3_velocity_magnitude"),
+                    "t3_acceleration": _float("t3_acceleration"),
+                    "t3_stability": _float("t3_stability"),
+                    "t3_trend_consistency": _float("t3_trend_consistency"),
+                    "t3_total_drift": _float("t3_total_drift"),
+                    "t3_regime": _str("t3_regime"),
+                    # Tier 3 - Detection Methods
+                    "t3_velocity_score": _float("t3_velocity_score"),
+                    "t3_velocity_detected": _bool("t3_velocity_detected"),
+                    "t3_regime_shifts": _float("t3_regime_shifts"),
+                    "t3_regime_score": _float("t3_regime_score"),
+                    "t3_regime_detected": _bool("t3_regime_detected"),
+                    # Tier 3 - Zone Drifts
+                    "t3_identity_drift": _float("t3_identity_drift"),
+                    "t3_data_drift": _float("t3_data_drift"),
+                    "t3_network_drift": _float("t3_network_drift"),
+                    "t3_risk_drift": _float("t3_risk_drift"),
+                    "t3_access_drift": _float("t3_access_drift"),
+                    "t3_zone_divergence_score": _float("t3_zone_divergence_score"),
+                    "t3_zone_diagnostics": _str("t3_zone_diagnostics"),
+                    "t3_zone_divergence_detected": _bool("t3_zone_divergence_detected"),
+                    # Tier 3 - Relationship & Contextual
+                    "t3_rel_drift": _float("t3_rel_drift"),
+                    "t3_rel_detected": _bool("t3_rel_detected"),
+                    "t3_ctx_best_context": _str("t3_ctx_best_context"),
+                    "t3_ctx_best_consistency": _float("t3_ctx_best_consistency"),
+                    "t3_ctx_detected": _bool("t3_ctx_detected"),
+                    "t3_cohort_member": _bool("t3_cohort_member"),
+                    # Tier 3 - Combined
+                    "t3_composite_score": _float("t3_composite_score"),
+                    "t3_combined_detected": _bool("t3_combined_detected"),
+                    "all_tiers_combined": _bool("all_tiers_combined"),
+                }
+                self._tier3_results.append(entry)
+                self._tier3_index[uid] = entry
+
+    def get_tier3_comparison(self) -> list[dict]:
+        return self._tier3_results
+
+    def get_tier3_entity(self, user_id: str) -> dict | None:
+        return self._tier3_index.get(user_id)
+
+    def get_tier3_summary(self) -> dict:
+        if not self._tier3_results:
+            return {"loaded": False, "total_entities": 0}
+
+        total = len(self._tier3_results)
+        attacks = [r for r in self._tier3_results if r["is_attack"]]
+        normals = [r for r in self._tier3_results if not r["is_attack"]]
+
+        def _count(lst, key):
+            return sum(1 for r in lst if r.get(key))
+
+        def _fp_rate(key):
+            flagged_normals = _count(normals, key)
+            return flagged_normals / len(normals) if normals else 0.0
+
+        attack_ids = [a["user_id"] for a in attacks]
+
+        t1_methods = {
+            "IForest": "t1_iforest",
+            "OCSVM": "t1_ocsvm",
+            "LOF": "t1_lof",
+            "Z-Score": "t1_zscore",
+            "Temporal Z": "t1_temporal",
+            "Feature CUSUM": "t1_feat_cusum",
+        }
+        t3_methods = {
+            "Velocity/Accel": "t3_velocity_detected",
+            "Regime Shift": "t3_regime_detected",
+            "Zone Divergence": "t3_zone_divergence_detected",
+            "Relationship": "t3_rel_detected",
+            "Contextual": "t3_ctx_detected",
+        }
+
+        tiers = []
+        for name, key in t1_methods.items():
+            detects = [a["user_id"] for a in attacks if a.get(key)]
+            tiers.append({
+                "tier": 1, "method": name,
+                "detects_attacks": detects,
+                "fp_rate": round(_fp_rate(key) * 100, 1),
+                "total_flagged": _count(self._tier3_results, key),
+            })
+        # Tier 2
+        for name, key in [("ACECARD Direction", "t2_direction_detected"), ("ACECARD Top-10%", "t2_top10pct")]:
+            detects = [a["user_id"] for a in attacks if a.get(key)]
+            tiers.append({
+                "tier": 2, "method": name,
+                "detects_attacks": detects,
+                "fp_rate": round(_fp_rate(key) * 100, 1),
+                "total_flagged": _count(self._tier3_results, key),
+            })
+        tiers.append({
+            "tier": "1+2", "method": "Combined (T1 OR T2)",
+            "detects_attacks": [a["user_id"] for a in attacks if a.get("combined_detected")],
+            "fp_rate": round(_fp_rate("combined_detected") * 100, 1),
+            "total_flagged": _count(self._tier3_results, "combined_detected"),
+        })
+        # Tier 3
+        for name, key in t3_methods.items():
+            detects = [a["user_id"] for a in attacks if a.get(key)]
+            tiers.append({
+                "tier": 3, "method": name,
+                "detects_attacks": detects,
+                "fp_rate": round(_fp_rate(key) * 100, 1),
+                "total_flagged": _count(self._tier3_results, key),
+            })
+        tiers.append({
+            "tier": 3, "method": "T3 Combined",
+            "detects_attacks": [a["user_id"] for a in attacks if a.get("t3_combined_detected")],
+            "fp_rate": round(_fp_rate("t3_combined_detected") * 100, 1),
+            "total_flagged": _count(self._tier3_results, "t3_combined_detected"),
+        })
+        tiers.append({
+            "tier": "All", "method": "All Tiers Combined",
+            "detects_attacks": [a["user_id"] for a in attacks if a.get("all_tiers_combined")],
+            "fp_rate": round(_fp_rate("all_tiers_combined") * 100, 1),
+            "total_flagged": _count(self._tier3_results, "all_tiers_combined"),
+        })
+
+        return {
+            "loaded": True,
+            "total_entities": total,
+            "attack_entities": [{"user_id": a["user_id"], "attack_name": a["attack_name"]} for a in attacks],
+            "methods": tiers,
         }
 
 

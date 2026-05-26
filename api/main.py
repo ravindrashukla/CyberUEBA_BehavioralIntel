@@ -23,10 +23,12 @@ def create_app() -> FastAPI:
     from api.entity_routes import router as entity_router
     from api.trajectory_routes import router as trajectory_router
     from api.detection_routes import router as detection_router
+    from api.tier3_routes import router as tier3_router
 
     app.include_router(entity_router, prefix="/api/v1/entities", tags=["entities"])
     app.include_router(trajectory_router, prefix="/api/v1/trajectories", tags=["trajectories"])
     app.include_router(detection_router, prefix="/api/v1/detection", tags=["detection"])
+    app.include_router(tier3_router, prefix="/api/v1/tier3", tags=["tier3"])
 
     @app.get("/health")
     def health():

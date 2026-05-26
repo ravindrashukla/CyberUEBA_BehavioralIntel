@@ -729,3 +729,25 @@ def _serialize_value(val):
     if hasattr(val, "tolist"):
         return val.tolist()
     return val
+
+
+# =============================================================================
+# Tier 3 functions
+# =============================================================================
+
+def get_tier3_comparison():
+    """Get three-tier comparison data for all entities. Returns list of dicts."""
+    from api.store import get_store
+    return get_store().get_tier3_comparison()
+
+
+def get_tier3_entity(user_id):
+    """Get Tier 3 detail for a single entity. Returns dict or None."""
+    from api.store import get_store
+    return get_store().get_tier3_entity(user_id)
+
+
+def get_tier3_summary():
+    """Get Tier 3 summary with detection method comparison. Returns dict."""
+    from api.store import get_store
+    return get_store().get_tier3_summary()

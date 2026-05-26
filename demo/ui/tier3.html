@@ -1,0 +1,756 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tier 3 Digital Entity — Cyber UEBA</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Segoe UI', -apple-system, sans-serif;
+            background: #1a1a2e;
+            color: #e0e0e0;
+            min-height: 100vh;
+        }
+        nav {
+            background: #0f3460;
+            border-bottom: 1px solid #1a5276;
+            padding: 0 2rem;
+            display: flex;
+            align-items: center;
+            height: 60px;
+        }
+        nav .brand { font-size: 1.2rem; font-weight: 700; color: #00d4ff; margin-right: 3rem; }
+        nav .brand span { color: #4ade80; }
+        nav a {
+            color: #a0aec0; text-decoration: none; padding: 0.5rem 1rem;
+            border-radius: 4px; font-size: 0.9rem; transition: all 0.2s;
+        }
+        nav a:hover, nav a.active { color: #fff; background: rgba(0, 212, 255, 0.1); }
+        nav a.active { border-bottom: 2px solid #00d4ff; }
+
+        .container { max-width: 1500px; margin: 0 auto; padding: 1.5rem 2rem; }
+
+        /* Page Header */
+        .page-header {
+            margin-bottom: 1.5rem;
+        }
+        .page-header h1 {
+            font-size: 1.5rem; color: #00d4ff; font-weight: 700;
+        }
+        .page-header p { color: #7f8c9b; margin-top: 0.3rem; font-size: 0.9rem; }
+
+        /* Summary Cards */
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        .summary-card {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1.2rem;
+            text-align: center;
+        }
+        .summary-card .value { font-size: 1.8rem; font-weight: 700; color: #00d4ff; }
+        .summary-card .label { font-size: 0.78rem; color: #7f8c9b; margin-top: 0.3rem; text-transform: uppercase; letter-spacing: 0.5px; }
+        .summary-card.success .value { color: #4ade80; }
+        .summary-card.warning .value { color: #eab308; }
+        .summary-card.danger .value { color: #ef4444; }
+
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid #1a5276;
+        }
+        .tab {
+            padding: 0.7rem 1.5rem;
+            cursor: pointer;
+            color: #7f8c9b;
+            font-size: 0.9rem;
+            font-weight: 600;
+            border-bottom: 2px solid transparent;
+            transition: all 0.2s;
+        }
+        .tab:hover { color: #cbd5e1; }
+        .tab.active { color: #00d4ff; border-bottom-color: #00d4ff; }
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Section Headers */
+        .section-title {
+            font-size: 1.05rem; font-weight: 600; color: #cbd5e1;
+            margin-bottom: 1rem; padding-bottom: 0.5rem;
+            border-bottom: 1px solid #1a5276;
+        }
+
+        /* Method Comparison Table */
+        .table-container {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            overflow-x: auto;
+            margin-bottom: 2rem;
+        }
+        table { width: 100%; border-collapse: collapse; }
+        th {
+            background: #0f3460;
+            padding: 0.7rem 0.8rem;
+            text-align: left;
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            color: #7f8c9b;
+            white-space: nowrap;
+        }
+        td {
+            padding: 0.6rem 0.8rem;
+            border-top: 1px solid #1a5276;
+            font-size: 0.85rem;
+            white-space: nowrap;
+        }
+        tr:hover { background: rgba(0, 212, 255, 0.03); }
+
+        /* Tier label badges */
+        .tier-badge {
+            display: inline-block;
+            padding: 0.15rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            text-transform: uppercase;
+        }
+        .tier-1 { background: rgba(59, 130, 246, 0.2); color: #3b82f6; border: 1px solid #3b82f6; }
+        .tier-2 { background: rgba(139, 92, 246, 0.2); color: #a78bfa; border: 1px solid #8b5cf6; }
+        .tier-12 { background: rgba(234, 179, 8, 0.2); color: #eab308; border: 1px solid #eab308; }
+        .tier-3 { background: rgba(74, 222, 128, 0.2); color: #4ade80; border: 1px solid #4ade80; }
+        .tier-all { background: rgba(0, 212, 255, 0.2); color: #00d4ff; border: 1px solid #00d4ff; }
+
+        /* Detection markers */
+        .detected { color: #4ade80; font-weight: 600; }
+        .missed { color: #ef4444; }
+        .fp-low { color: #4ade80; }
+        .fp-medium { color: #eab308; }
+        .fp-high { color: #ef4444; }
+
+        /* Badge indicators */
+        .badge {
+            padding: 0.2rem 0.6rem; border-radius: 4px;
+            font-size: 0.73rem; font-weight: 600; text-transform: uppercase;
+        }
+        .badge-attack { background: rgba(239, 68, 68, 0.2); color: #ef4444; border: 1px solid #ef4444; }
+        .badge-normal { background: rgba(74, 222, 128, 0.15); color: #4ade80; border: 1px solid #4ade80; }
+        .badge-true { background: rgba(74, 222, 128, 0.2); color: #4ade80; }
+        .badge-false { background: rgba(100, 116, 139, 0.2); color: #64748b; }
+
+        /* Charts */
+        .chart-container {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .chart-container canvas { max-height: 350px; }
+
+        .two-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+        .three-col {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 1.5rem;
+        }
+        @media (max-width: 1100px) { .three-col { grid-template-columns: 1fr; } }
+        @media (max-width: 900px) { .two-col { grid-template-columns: 1fr; } }
+
+        /* Entity Detail Panel */
+        .detail-panel {
+            background: #16213e;
+            border: 1px solid #1a5276;
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        .detail-panel h3 { color: #00d4ff; margin-bottom: 1rem; font-size: 1.1rem; }
+        .detail-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 0.8rem;
+        }
+        .detail-item .label { font-size: 0.72rem; color: #7f8c9b; text-transform: uppercase; }
+        .detail-item .value { font-size: 0.95rem; color: #e0e0e0; margin-top: 0.15rem; }
+
+        /* Zone Heatmap */
+        .zone-bar {
+            display: flex; align-items: center; gap: 0.8rem; margin: 0.5rem 0;
+        }
+        .zone-bar .zone-label {
+            min-width: 140px; font-size: 0.82rem; color: #cbd5e1;
+        }
+        .zone-bar .bar-track {
+            flex: 1; height: 24px; background: #1a1a2e; border-radius: 4px;
+            position: relative; overflow: hidden;
+        }
+        .zone-bar .bar-fill {
+            height: 100%; border-radius: 4px;
+            transition: width 0.3s;
+        }
+        .zone-bar .bar-value {
+            min-width: 60px; text-align: right; font-size: 0.82rem;
+            color: #7f8c9b; font-family: monospace;
+        }
+
+        /* Regime badge */
+        .regime-stable { color: #4ade80; }
+        .regime-drifting { color: #eab308; }
+        .regime-regime_shift { color: #ef4444; }
+        .regime-accelerating { color: #f97316; }
+
+        .entity-link { color: #00d4ff; text-decoration: none; cursor: pointer; }
+        .entity-link:hover { text-decoration: underline; }
+        .loading { text-align: center; padding: 2rem; color: #7f8c9b; }
+        .error {
+            background: rgba(239, 68, 68, 0.1); border: 1px solid #ef4444;
+            border-radius: 8px; padding: 1rem; color: #ef4444; margin: 1rem 0;
+        }
+        .note {
+            background: rgba(59, 130, 246, 0.1); border: 1px solid #3b82f6;
+            border-radius: 8px; padding: 0.8rem 1rem; color: #93c5fd;
+            font-size: 0.85rem; margin-bottom: 1.5rem;
+        }
+
+        /* Entity picker */
+        .picker-inline {
+            display: flex; align-items: center; gap: 0.8rem;
+            margin-bottom: 1.5rem;
+        }
+        .picker-inline select {
+            background: #1a1a2e; border: 1px solid #1a5276; color: #e0e0e0;
+            padding: 0.5rem 0.8rem; border-radius: 4px; font-size: 0.9rem;
+            min-width: 200px;
+        }
+        .picker-inline button {
+            background: #00d4ff; color: #1a1a2e; border: none;
+            padding: 0.5rem 1.2rem; border-radius: 4px; font-weight: 600; cursor: pointer;
+        }
+        .picker-inline button:hover { background: #00b8d4; }
+    </style>
+</head>
+<body>
+    <nav>
+        <div class="brand">Cyber UEBA <span>| Behavioral Intelligence</span></div>
+        <a href="index.html">Dashboard</a>
+        <a href="entity_detail.html">Entities</a>
+        <a href="alerts.html">Alerts</a>
+        <a href="kill_chains.html">Kill Chains</a>
+        <a href="cohorts.html">Cohorts</a>
+        <a href="tier3.html" class="active">Tier 3</a>
+    </nav>
+
+    <div class="container">
+        <div class="page-header">
+            <h1>Tier 3: Digital Entity Detection</h1>
+            <p>Hierarchical zone embeddings, relationship embeddings, and velocity vector analysis compared across all three detection tiers</p>
+        </div>
+
+        <div class="summary-grid" id="summary-cards">
+            <div class="loading">Loading summary...</div>
+        </div>
+
+        <div class="tabs">
+            <div class="tab active" data-tab="methods">Method Comparison</div>
+            <div class="tab" data-tab="entities">Entity Results</div>
+            <div class="tab" data-tab="detail">Entity Detail</div>
+        </div>
+
+        <!-- Tab 1: Method Comparison -->
+        <div class="tab-panel active" id="panel-methods">
+            <div class="two-col">
+                <div class="chart-container">
+                    <h3 class="section-title">Detection Rate by Method</h3>
+                    <canvas id="detection-chart"></canvas>
+                </div>
+                <div class="chart-container">
+                    <h3 class="section-title">False Positive Rate by Method</h3>
+                    <canvas id="fp-chart"></canvas>
+                </div>
+            </div>
+
+            <h3 class="section-title">Detection Method Comparison</h3>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Tier</th>
+                            <th>Method</th>
+                            <th>Attacks Detected</th>
+                            <th>Total Flagged</th>
+                            <th>FP Rate</th>
+                        </tr>
+                    </thead>
+                    <tbody id="methods-body">
+                        <tr><td colspan="5" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 2: Entity Results -->
+        <div class="tab-panel" id="panel-entities">
+            <div class="note">
+                Showing all entities with their three-tier detection results. Attack entities are highlighted. Click a row to view detail.
+            </div>
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Entity</th>
+                            <th>Type</th>
+                            <th>T1 IForest</th>
+                            <th>T1 OCSVM</th>
+                            <th>T1 Temporal</th>
+                            <th>T2 Direction</th>
+                            <th>T2 Top-10%</th>
+                            <th>T3 Velocity</th>
+                            <th>T3 Regime</th>
+                            <th>T3 Zone Div</th>
+                            <th>T3 Context</th>
+                            <th>T3 Combined</th>
+                            <th>All Tiers</th>
+                        </tr>
+                    </thead>
+                    <tbody id="entities-body">
+                        <tr><td colspan="13" class="loading">Loading...</td></tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Tab 3: Entity Detail -->
+        <div class="tab-panel" id="panel-detail">
+            <div class="picker-inline">
+                <label style="color:#7f8c9b;font-size:0.85rem;">Select Entity:</label>
+                <select id="detail-select"><option value="">-- select --</option></select>
+                <button onclick="loadEntityDetail()">Load Detail</button>
+            </div>
+            <div id="detail-content">
+                <div class="loading">Select an entity to view Tier 3 detail</div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = (window.location.origin === 'null' || window.location.protocol === 'file:')
+            ? 'http://localhost:8003/api/v1'
+            : window.location.origin + '/api/v1';
+        let allResults = [];
+        let summaryData = null;
+
+        async function fetchJSON(url) {
+            const resp = await fetch(url);
+            if (!resp.ok) throw new Error(`HTTP ${resp.status}`);
+            return resp.json();
+        }
+
+        // Tab switching
+        document.querySelectorAll('.tab').forEach(tab => {
+            tab.addEventListener('click', () => {
+                document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+                document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById('panel-' + tab.dataset.tab).classList.add('active');
+            });
+        });
+
+        function tierBadge(tier) {
+            const cls = tier === 1 ? 'tier-1' : tier === 2 ? 'tier-2' : tier === 3 ? 'tier-3' : tier === '1+2' ? 'tier-12' : 'tier-all';
+            return `<span class="tier-badge ${cls}">Tier ${tier}</span>`;
+        }
+
+        function detBadge(val) {
+            return val ? '<span class="badge badge-true">YES</span>' : '<span class="badge badge-false">no</span>';
+        }
+
+        function fpClass(rate) {
+            if (rate <= 5) return 'fp-low';
+            if (rate <= 10) return 'fp-medium';
+            return 'fp-high';
+        }
+
+        function regimeClass(regime) {
+            return 'regime-' + (regime || 'stable').toLowerCase().replace(' ', '_');
+        }
+
+        function zoneDriftColor(drift) {
+            if (drift <= 0.01) return '#4ade80';
+            if (drift <= 0.5) return '#eab308';
+            return '#ef4444';
+        }
+
+        function zoneDriftPct(drift) {
+            return Math.min(100, drift * 100);
+        }
+
+        // ── Load all data ──────────────────────────────────────────────────────
+
+        async function loadAll() {
+            try {
+                const [summary, comparison] = await Promise.all([
+                    fetchJSON(`${API_BASE}/tier3/summary`),
+                    fetchJSON(`${API_BASE}/tier3/comparison`)
+                ]);
+
+                summaryData = summary;
+                allResults = comparison;
+
+                renderSummaryCards(summary);
+                renderMethodsTable(summary);
+                renderDetectionChart(summary);
+                renderFPChart(summary);
+                renderEntitiesTable(comparison);
+                populateDetailSelect(comparison);
+            } catch (err) {
+                document.getElementById('summary-cards').innerHTML =
+                    `<div class="error">Failed to load Tier 3 data: ${err.message}. Ensure the API is running and <code>python -m comparison.run_tier3</code> has been executed.</div>`;
+            }
+        }
+
+        // ── Summary Cards ──────────────────────────────────────────────────────
+
+        function renderSummaryCards(summary) {
+            const el = document.getElementById('summary-cards');
+            if (!summary.loaded) {
+                el.innerHTML = '<div class="error">No Tier 3 results found. Run <code>python -m comparison.run_tier3 --users 50</code> first.</div>';
+                return;
+            }
+
+            const attacks = summary.attack_entities || [];
+            const methods = summary.methods || [];
+            const t3Combined = methods.find(m => m.method === 'T3 Combined') || {};
+            const allCombined = methods.find(m => m.method === 'All Tiers Combined') || {};
+
+            el.innerHTML = `
+                <div class="summary-card"><div class="value">${summary.total_entities}</div><div class="label">Total Entities</div></div>
+                <div class="summary-card danger"><div class="value">${attacks.length}</div><div class="label">Attack Entities</div></div>
+                <div class="summary-card success"><div class="value">${(t3Combined.detects_attacks || []).length}/${attacks.length}</div><div class="label">T3 Detections</div></div>
+                <div class="summary-card"><div class="value">${t3Combined.fp_rate || 0}%</div><div class="label">T3 FP Rate</div></div>
+                <div class="summary-card success"><div class="value">${(allCombined.detects_attacks || []).length}/${attacks.length}</div><div class="label">All Tiers Detections</div></div>
+                <div class="summary-card warning"><div class="value">${allCombined.fp_rate || 0}%</div><div class="label">All Tiers FP Rate</div></div>
+            `;
+        }
+
+        // ── Methods Table ──────────────────────────────────────────────────────
+
+        function renderMethodsTable(summary) {
+            const tbody = document.getElementById('methods-body');
+            const methods = summary.methods || [];
+            const attacks = summary.attack_entities || [];
+            const attackIds = attacks.map(a => a.user_id);
+
+            if (!methods.length) {
+                tbody.innerHTML = '<tr><td colspan="5" class="loading">No data</td></tr>';
+                return;
+            }
+
+            tbody.innerHTML = methods.map(m => {
+                const detected = m.detects_attacks || [];
+                const detStr = attackIds.map(id =>
+                    detected.includes(id)
+                        ? `<span class="detected">${id}</span>`
+                        : `<span class="missed">${id}</span>`
+                ).join(', ') || '—';
+
+                return `<tr>
+                    <td>${tierBadge(m.tier)}</td>
+                    <td>${m.method}</td>
+                    <td>${detStr}</td>
+                    <td>${m.total_flagged}</td>
+                    <td><span class="${fpClass(m.fp_rate)}">${m.fp_rate}%</span></td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ── Detection Chart ────────────────────────────────────────────────────
+
+        function renderDetectionChart(summary) {
+            const canvas = document.getElementById('detection-chart');
+            if (!canvas) return;
+            const methods = summary.methods || [];
+            const attacks = (summary.attack_entities || []).length || 1;
+
+            const labels = methods.map(m => m.method);
+            const data = methods.map(m => ((m.detects_attacks || []).length / attacks) * 100);
+            const colors = methods.map(m => {
+                if (m.tier === 1) return 'rgba(59, 130, 246, 0.7)';
+                if (m.tier === 2) return 'rgba(139, 92, 246, 0.7)';
+                if (m.tier === 3) return 'rgba(74, 222, 128, 0.7)';
+                if (m.tier === '1+2') return 'rgba(234, 179, 8, 0.7)';
+                return 'rgba(0, 212, 255, 0.7)';
+            });
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'Detection Rate %',
+                        data,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1a5276' }, ticks: { color: '#7f8c9b' }, min: 0, max: 100, title: { display: true, text: 'Detection Rate (%)', color: '#7f8c9b' } },
+                        y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        function renderFPChart(summary) {
+            const canvas = document.getElementById('fp-chart');
+            if (!canvas) return;
+            const methods = summary.methods || [];
+
+            const labels = methods.map(m => m.method);
+            const data = methods.map(m => m.fp_rate || 0);
+            const colors = methods.map(m => {
+                if (m.fp_rate <= 5) return 'rgba(74, 222, 128, 0.7)';
+                if (m.fp_rate <= 10) return 'rgba(234, 179, 8, 0.7)';
+                return 'rgba(239, 68, 68, 0.7)';
+            });
+
+            new Chart(canvas.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels,
+                    datasets: [{
+                        label: 'FP Rate %',
+                        data,
+                        backgroundColor: colors,
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#1a5276' }, ticks: { color: '#7f8c9b' }, min: 0, title: { display: true, text: 'False Positive Rate (%)', color: '#7f8c9b' } },
+                        y: { grid: { display: false }, ticks: { color: '#cbd5e1', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+        // ── Entities Table ─────────────────────────────────────────────────────
+
+        function renderEntitiesTable(results) {
+            const tbody = document.getElementById('entities-body');
+            if (!results.length) {
+                tbody.innerHTML = '<tr><td colspan="13" class="loading">No data</td></tr>';
+                return;
+            }
+
+            // Sort: attacks first, then by composite score desc
+            const sorted = [...results].sort((a, b) => {
+                if (a.is_attack !== b.is_attack) return a.is_attack ? -1 : 1;
+                return (b.t3_composite_score || 0) - (a.t3_composite_score || 0);
+            });
+
+            tbody.innerHTML = sorted.map(r => {
+                const rowClass = r.is_attack ? 'style="background:rgba(239,68,68,0.06)"' : '';
+                const typeLabel = r.is_attack
+                    ? `<span class="badge badge-attack">${r.attack_name || 'Attack'}</span>`
+                    : '<span class="badge badge-normal">Normal</span>';
+
+                return `<tr ${rowClass} style="cursor:pointer" onclick="showDetail('${r.user_id}')">
+                    <td><span class="entity-link">${r.user_id}</span></td>
+                    <td>${typeLabel}</td>
+                    <td>${detBadge(r.t1_iforest)}</td>
+                    <td>${detBadge(r.t1_ocsvm)}</td>
+                    <td>${detBadge(r.t1_temporal)}</td>
+                    <td>${detBadge(r.t2_direction_detected)}</td>
+                    <td>${detBadge(r.t2_top10pct)}</td>
+                    <td>${detBadge(r.t3_velocity_detected)}</td>
+                    <td>${detBadge(r.t3_regime_detected)}</td>
+                    <td>${detBadge(r.t3_zone_divergence_detected)}</td>
+                    <td>${detBadge(r.t3_ctx_detected)}</td>
+                    <td>${detBadge(r.t3_combined_detected)}</td>
+                    <td>${detBadge(r.all_tiers_combined)}</td>
+                </tr>`;
+            }).join('');
+        }
+
+        // ── Entity Detail ──────────────────────────────────────────────────────
+
+        function populateDetailSelect(results) {
+            const sel = document.getElementById('detail-select');
+            // Put attacks first
+            const sorted = [...results].sort((a, b) => {
+                if (a.is_attack !== b.is_attack) return a.is_attack ? -1 : 1;
+                return a.user_id.localeCompare(b.user_id);
+            });
+            sel.innerHTML = '<option value="">-- select --</option>' +
+                sorted.map(r => {
+                    const label = r.is_attack ? `${r.user_id} [${r.attack_name}]` : r.user_id;
+                    return `<option value="${r.user_id}">${label}</option>`;
+                }).join('');
+        }
+
+        function showDetail(userId) {
+            // Switch to detail tab
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+            document.querySelector('[data-tab="detail"]').classList.add('active');
+            document.getElementById('panel-detail').classList.add('active');
+            document.getElementById('detail-select').value = userId;
+            loadEntityDetail();
+        }
+
+        async function loadEntityDetail() {
+            const uid = document.getElementById('detail-select').value;
+            if (!uid) return;
+            const container = document.getElementById('detail-content');
+            container.innerHTML = '<div class="loading">Loading...</div>';
+
+            try {
+                const data = await fetchJSON(`${API_BASE}/tier3/entity/${uid}`);
+                renderEntityDetail(data);
+            } catch (err) {
+                container.innerHTML = `<div class="error">Failed to load: ${err.message}</div>`;
+            }
+        }
+
+        function renderEntityDetail(d) {
+            const container = document.getElementById('detail-content');
+            const typeLabel = d.is_attack
+                ? `<span class="badge badge-attack">${d.attack_name}</span>`
+                : '<span class="badge badge-normal">Normal</span>';
+
+            let html = '';
+
+            // Header
+            html += `<div class="detail-panel">
+                <h3>${d.user_id} ${typeLabel}</h3>
+                <div class="detail-grid">
+                    <div class="detail-item"><div class="label">Regime</div><div class="value"><span class="${regimeClass(d.t3_regime)}">${d.t3_regime || '—'}</span></div></div>
+                    <div class="detail-item"><div class="label">Velocity</div><div class="value">${(d.t3_velocity_magnitude || 0).toFixed(4)}</div></div>
+                    <div class="detail-item"><div class="label">Acceleration</div><div class="value">${(d.t3_acceleration || 0).toFixed(6)}</div></div>
+                    <div class="detail-item"><div class="label">Stability</div><div class="value">${(d.t3_stability || 0).toFixed(4)}</div></div>
+                    <div class="detail-item"><div class="label">Total Drift</div><div class="value">${(d.t3_total_drift || 0).toFixed(4)}</div></div>
+                    <div class="detail-item"><div class="label">Trend Consistency</div><div class="value">${(d.t3_trend_consistency || 0).toFixed(4)}</div></div>
+                    <div class="detail-item"><div class="label">Best Context</div><div class="value">${d.t3_ctx_best_context || '—'}</div></div>
+                    <div class="detail-item"><div class="label">T3 Composite Score</div><div class="value">${(d.t3_composite_score || 0).toFixed(4)}</div></div>
+                </div>
+            </div>`;
+
+            // Zone Drift Heatmap
+            const zones = [
+                { name: 'Identity', key: 't3_identity_drift' },
+                { name: 'Data Behavior', key: 't3_data_drift' },
+                { name: 'Network Footprint', key: 't3_network_drift' },
+                { name: 'Risk Posture', key: 't3_risk_drift' },
+                { name: 'Access Pattern', key: 't3_access_drift' },
+            ];
+
+            html += `<div class="detail-panel">
+                <h3>Zone Drift Analysis</h3>`;
+            zones.forEach(z => {
+                const val = d[z.key] || 0;
+                const absVal = Math.abs(val);
+                const pct = zoneDriftPct(absVal);
+                const color = zoneDriftColor(absVal);
+                html += `<div class="zone-bar">
+                    <span class="zone-label">${z.name}</span>
+                    <div class="bar-track">
+                        <div class="bar-fill" style="width:${pct}%;background:${color}"></div>
+                    </div>
+                    <span class="bar-value">${val.toFixed(4)}</span>
+                </div>`;
+            });
+            html += `<div style="margin-top:0.8rem;font-size:0.82rem;color:#7f8c9b;">
+                Zone Divergence Score: <strong style="color:#e0e0e0">${(d.t3_zone_divergence_score || 0).toFixed(4)}</strong>
+                &nbsp;|&nbsp; ${d.t3_zone_diagnostics || 'No divergence detected'}
+            </div>`;
+            html += `</div>`;
+
+            // Detection Summary
+            html += `<div class="detail-panel">
+                <h3>Detection Results Across Tiers</h3>
+                <div class="three-col">
+                    <div>
+                        <h4 style="color:#3b82f6;font-size:0.85rem;margin-bottom:0.5rem;">Tier 1 — Traditional</h4>
+                        <div style="font-size:0.85rem;line-height:1.8;">
+                            IForest: ${detBadge(d.t1_iforest)}<br>
+                            OCSVM: ${detBadge(d.t1_ocsvm)}<br>
+                            LOF: ${detBadge(d.t1_lof)}<br>
+                            Z-Score: ${detBadge(d.t1_zscore)}<br>
+                            Temporal: ${detBadge(d.t1_temporal)}<br>
+                            Feature CUSUM: ${detBadge(d.t1_feat_cusum)}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color:#a78bfa;font-size:0.85rem;margin-bottom:0.5rem;">Tier 2 — ACECARD</h4>
+                        <div style="font-size:0.85rem;line-height:1.8;">
+                            CUSUM: ${detBadge(d.t2_cusum_detected)}<br>
+                            Direction: ${detBadge(d.t2_direction_detected)}<br>
+                            Top-10%: ${detBadge(d.t2_top10pct)}<br>
+                            Threat: ${d.t2_primary_threat || '—'}<br>
+                            Consistency: ${(d.t2_threat_consistency || 0).toFixed(4)}
+                        </div>
+                    </div>
+                    <div>
+                        <h4 style="color:#4ade80;font-size:0.85rem;margin-bottom:0.5rem;">Tier 3 — Digital Entity</h4>
+                        <div style="font-size:0.85rem;line-height:1.8;">
+                            Velocity: ${detBadge(d.t3_velocity_detected)}<br>
+                            Regime: ${detBadge(d.t3_regime_detected)}<br>
+                            Zone Divergence: ${detBadge(d.t3_zone_divergence_detected)}<br>
+                            Relationship: ${detBadge(d.t3_rel_detected)}<br>
+                            Contextual: ${detBadge(d.t3_ctx_detected)}<br>
+                            Cohort: ${detBadge(d.t3_cohort_member)}
+                        </div>
+                    </div>
+                </div>
+            </div>`;
+
+            // Relationship & Contextual
+            html += `<div class="two-col">
+                <div class="detail-panel">
+                    <h3>Relationship Embedding</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="label">UserDevice Drift</div><div class="value">${(d.t3_rel_drift || 0).toFixed(4)}</div></div>
+                        <div class="detail-item"><div class="label">Detected</div><div class="value">${detBadge(d.t3_rel_detected)}</div></div>
+                    </div>
+                </div>
+                <div class="detail-panel">
+                    <h3>Contextual Analysis</h3>
+                    <div class="detail-grid">
+                        <div class="detail-item"><div class="label">Best Context</div><div class="value">${d.t3_ctx_best_context || '—'}</div></div>
+                        <div class="detail-item"><div class="label">Best Consistency</div><div class="value">${(d.t3_ctx_best_consistency || 0).toFixed(4)}</div></div>
+                        <div class="detail-item"><div class="label">Detected</div><div class="value">${detBadge(d.t3_ctx_detected)}</div></div>
+                    </div>
+                </div>
+            </div>`;
+
+            container.innerHTML = html;
+        }
+
+        // ── Init ───────────────────────────────────────────────────────────────
+
+        loadAll();
+    </script>
+</body>
+</html>

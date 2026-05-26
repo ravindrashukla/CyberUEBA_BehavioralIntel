@@ -208,3 +208,20 @@ def detect_cohorts_from_db(
         ))
 
     return detect_cohorts(entity_drifts, similarity_threshold, min_cluster_size)
+
+
+# ── Tier 3: relationship-based cohort detection ──────────────────────────────
+
+
+def detect_relationship_cohorts(
+    relationship_drifts: list[CohortMember],
+    similarity_threshold: float = 0.5,
+    min_cluster_size: int = 3,
+) -> list[Cohort]:
+    """Detect co-drifting relationship embeddings (coordinated attack).
+
+    Same algorithm as detect_cohorts but applied to relationship drift
+    vectors (e.g., UserDevice Hadamard products). Multiple users whose
+    UserDevice relationships co-drift = coordinated compromise.
+    """
+    return detect_cohorts(relationship_drifts, similarity_threshold, min_cluster_size)

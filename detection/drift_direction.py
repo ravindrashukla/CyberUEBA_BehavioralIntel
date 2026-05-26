@@ -179,3 +179,74 @@ def batch_drift_analysis(
 
     results.sort(key=lambda a: a.drift_magnitude, reverse=True)
     return results
+
+
+# ── Tier 3 zone-specific drift analysis ──────────────────────────────────────
+
+
+def analyze_zone_drift(
+    entity_type: str,
+    entity_id: str,
+    zone_old: dict[str, np.ndarray],
+    zone_new: dict[str, np.ndarray],
+    concept_library: ConceptLibrary,
+    alignment_threshold: float = 0.3,
+) -> dict[str, DriftAnalysis]:
+    """Per-zone drift analysis. Returns {zone_name: DriftAnalysis}.
+
+    Computes drift analysis independently per zone, enabling detection of
+    patterns like "identity stable but network_footprint drifting toward
+    c2_beacon."
+    """
+    results = {}
+    for zone_name in zone_old:
+        if zone_name not in zone_new:
+            continue
+        v_old = zone_old[zone_name]
+        v_new = zone_new[zone_name]
+        analysis = analyze_entity_drift(
+            entity_type=entity_type,
+            entity_id=f"{entity_id}:{zone_name}",
+            v_old=v_old,
+            v_new=v_new,
+            concept_library=concept_library,
+            alignment_threshold=alignment_threshold,
+        )
+        results[zone_name] = analysis
+    return results
+
+
+def detect_zone_divergence(
+    zone_drift_results: dict[str, DriftAnalysis],
+    stable_threshold: float = 0.02,
+    drift_threshold: float = 0.05,
+) -> list[str]:
+    """Find zones drifting while others are stable.
+
+    Returns diagnostic strings like:
+    "identity STABLE (0.003), network_footprint DRIFTING (0.082) toward c2_beacon"
+    """
+    stable_zones = []
+    drifting_zones = []
+
+    for zone_name, analysis in zone_drift_results.items():
+        if analysis.drift_magnitude < stable_threshold:
+            stable_zones.append((zone_name, analysis))
+        elif analysis.drift_magnitude >= drift_threshold:
+            drifting_zones.append((zone_name, analysis))
+
+    if not stable_zones or not drifting_zones:
+        return []
+
+    diagnostics = []
+    for sz_name, sz_analysis in stable_zones:
+        for dz_name, dz_analysis in drifting_zones:
+            direction = dz_analysis.primary_direction
+            msg = (
+                f"{sz_name} STABLE ({sz_analysis.drift_magnitude:.3f}), "
+                f"{dz_name} DRIFTING ({dz_analysis.drift_magnitude:.3f}) "
+                f"toward {direction}"
+            )
+            diagnostics.append(msg)
+
+    return diagnostics
