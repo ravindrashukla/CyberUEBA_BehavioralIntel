@@ -119,12 +119,14 @@ def _generate_response_ip(record_type, query_name, response_code, rng):
     return None
 
 
-def generate_dns_queries(devices_df, segments_df, current_date, rng) -> list[dict]:
+def generate_dns_queries(devices_df, segments_df, users_df, user_profiles, current_date, rng) -> list[dict]:
     """Generate DNS query log events for all devices on a given date.
 
     Args:
         devices_df: DataFrame with columns [device_id, device_type, ip_address, segment_id]
         segments_df: DataFrame with columns [segment_id, prefix, adjacent_segments]
+        users_df: DataFrame with user-device mapping (may be None)
+        user_profiles: dict mapping user_id to profile dicts (may be None)
         current_date: date object for event generation
         rng: numpy random Generator for reproducibility
 
@@ -133,14 +135,35 @@ def generate_dns_queries(devices_df, segments_df, current_date, rng) -> list[dic
     """
     events = []
 
+    # Build device -> owner lookup
+    device_owner = {}
+    if users_df is not None:
+        for _, user in users_df.iterrows():
+            device_owner[user["primary_device_id"]] = user["user_id"]
+
     for _, device in devices_df.iterrows():
-        n_queries = rng.poisson(DNS_QUERIES_PER_DEVICE_DAY)
+        # Look up owner profile for per-device variation
+        owner_uid = device_owner.get(device["device_id"])
+        owner_profile = user_profiles.get(owner_uid, {}) if owner_uid and user_profiles else {}
+        activity_mult = owner_profile.get("activity_multiplier", 1.0)
+        nxdomain_rate = owner_profile.get("dns_nxdomain_rate", 0.04)
+
+        n_queries = rng.poisson(max(1, int(DNS_QUERIES_PER_DEVICE_DAY * activity_mult)))
 
         for _ in range(n_queries):
             ts = _dns_timestamp(current_date, rng)
             record_type = _pick_record_type(rng)
-            response_code = _pick_response_code(rng)
             query_name = _generate_query_name(rng)
+
+            # Per-device response code based on NXDOMAIN rate
+            r = rng.random()
+            if r < (1.0 - nxdomain_rate - 0.01):
+                response_code = "NOERROR"
+            elif r < (1.0 - 0.01):
+                response_code = "NXDOMAIN"
+            else:
+                response_code = "SERVFAIL"
+
             response_ip = _generate_response_ip(record_type, query_name, response_code, rng)
             ttl = int(rng.choice([60, 300, 600, 1800, 3600, 7200, 86400]))
             server_ip = rng.choice(DNS_SERVERS)

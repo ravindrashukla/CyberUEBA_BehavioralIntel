@@ -16,6 +16,44 @@ def _rng():
     return np.random.default_rng(SEED)
 
 
+_ROLE_AUTH_POOLS = {
+    "basic": ["password", "mfa"],
+    "office": ["password", "mfa", "sso"],
+    "technical": ["password", "mfa", "sso", "certificate"],
+    "admin": ["password", "mfa", "sso", "certificate", "ssh_key"],
+    "security": ["password", "mfa", "sso", "certificate", "ssh_key", "smart_card"],
+}
+
+_ROLE_CATEGORY = {
+    "Sales Rep": "basic", "Account Manager": "basic", "Recruiter": "basic",
+    "HR Specialist": "office", "HR Manager": "office", "Accountant": "office",
+    "Financial Analyst": "office", "VP Sales": "office", "General Counsel": "office",
+    "Analyst": "office",
+    "Software Engineer": "technical", "Senior Engineer": "technical",
+    "Staff Engineer": "technical", "QA Engineer": "technical", "Test Lead": "technical",
+    "Data Scientist": "technical", "ML Engineer": "technical",
+    "Cloud Architect": "admin", "DevOps Engineer": "admin", "SRE": "admin",
+    "IT Admin": "admin", "Network Engineer": "admin", "SysAdmin": "admin", "DBA": "admin",
+    "Security Analyst": "security", "SOC Operator": "security", "CISO": "security",
+    "CEO": "office", "CTO": "technical", "COO": "office", "CFO": "office",
+}
+
+_CLEARANCE_SENSITIVITY = {
+    "public": "public",
+    "internal": "internal",
+    "confidential": "confidential",
+    "restricted": "restricted",
+    "top_secret": "restricted",
+}
+
+_SENSITIVITY_WEIGHTS = {
+    "public": [0.90, 0.10, 0.00, 0.00],
+    "internal": [0.40, 0.50, 0.10, 0.00],
+    "confidential": [0.25, 0.35, 0.30, 0.10],
+    "restricted": [0.20, 0.25, 0.30, 0.25],
+}
+
+
 def generate_users() -> pd.DataFrame:
     rng = _rng()
     n = N_USERS
@@ -144,11 +182,15 @@ def generate_devices(users_df: pd.DataFrame, segments_df: pd.DataFrame) -> pd.Da
         host = host_counters[seg]
         ips.append(f"{base}.{host}")
 
-    # Assign owner (endpoints → users, servers/appliances/iot → None or IT)
+    # Assign owner: 1:1 unique endpoints per human user, then extras get random owners
+    human_users = list(users_df[users_df["user_type"] != "service_account"]["user_id"].values)
+    rng.shuffle(np.array(human_users))
+    human_queue = list(human_users)
     owners = []
-    human_users = users_df[users_df["user_type"] != "service_account"]["user_id"].values
     for dtype in types:
-        if dtype == "endpoint" and len(human_users) > 0:
+        if dtype == "endpoint" and human_queue:
+            owners.append(human_queue.pop(0))
+        elif dtype == "endpoint":
             owners.append(rng.choice(human_users))
         else:
             owners.append(None)
@@ -433,6 +475,93 @@ def generate_role_profiles() -> dict:
             "privilege_level": "power_user",
         },
     }
+    return profiles
+
+
+def generate_behavioral_profiles(users_df: pd.DataFrame, role_profiles: dict,
+                                 rng) -> dict[str, dict]:
+    """Generate per-user behavioral profiles for realistic variety in log generation."""
+    profiles = {}
+    for _, user in users_df.iterrows():
+        uid = user["user_id"]
+        role = user["role"]
+        clearance = user["clearance"]
+        user_type = user["user_type"]
+        rp = role_profiles.get(role, {})
+
+        cat = _ROLE_CATEGORY.get(role, "office")
+
+        activity_mult = float(np.clip(rng.lognormal(0, 0.4), 0.3, 3.0))
+
+        base_start, base_end = rp.get("typical_login_hours", (8, 18))
+        work_start = int(np.clip(base_start + rng.integers(-2, 2), 0, 22))
+        work_end = int(np.clip(base_end + rng.integers(-1, 3), work_start + 4, 24))
+
+        if cat in ("admin", "security"):
+            off_hours_base = 0.20
+        elif cat == "technical":
+            off_hours_base = 0.12
+        else:
+            off_hours_base = 0.05
+        off_hours_pct = float(np.clip(rng.normal(off_hours_base, 0.05), 0.02, 0.40))
+
+        # Auth method pool — subset of role-appropriate methods
+        if user_type == "service_account":
+            selected = ["certificate"]
+            weights = [1.0]
+        else:
+            pool = _ROLE_AUTH_POOLS.get(cat, ["password", "mfa"])
+            n_methods = int(rng.integers(2, len(pool) + 1))
+            selected = list(rng.choice(pool, size=n_methods, replace=False))
+            if "password" not in selected:
+                selected[0] = "password"
+            raw_w = rng.dirichlet(np.ones(len(selected)) * 2)
+            weights = [float(w) for w in raw_w]
+
+        failure_rate = float(np.clip(rng.beta(2, 60), 0.005, 0.10))
+        travel_pct = float(np.clip(rng.beta(2, 30), 0.01, 0.20))
+
+        file_write_bias = float(rng.uniform(0.15, 0.45))
+
+        ceiling = _CLEARANCE_SENSITIVITY.get(clearance, "internal")
+        sens_weights = _SENSITIVITY_WEIGHTS.get(ceiling, [0.40, 0.50, 0.10, 0.00])
+
+        if cat in ("admin", "security"):
+            ext_base = 0.20
+        elif cat == "technical":
+            ext_base = 0.15
+        else:
+            ext_base = 0.10
+        external_traffic_ratio = float(np.clip(rng.normal(ext_base, 0.05), 0.03, 0.35))
+
+        if cat == "admin":
+            admin_tool_pct = float(rng.uniform(0.10, 0.25))
+        elif cat == "security":
+            admin_tool_pct = float(rng.uniform(0.08, 0.20))
+        elif cat == "technical":
+            admin_tool_pct = float(rng.uniform(0.03, 0.10))
+        else:
+            admin_tool_pct = float(rng.uniform(0.01, 0.04))
+
+        dns_nxdomain_rate = float(np.clip(rng.normal(0.04, 0.02), 0.005, 0.10))
+
+        profiles[uid] = {
+            "activity_multiplier": activity_mult,
+            "work_start": work_start,
+            "work_end": work_end,
+            "off_hours_pct": off_hours_pct,
+            "auth_methods": selected,
+            "auth_weights": weights,
+            "failure_rate": failure_rate,
+            "travel_pct": travel_pct,
+            "file_write_bias": file_write_bias,
+            "file_sensitivity_ceiling": ceiling,
+            "file_sensitivity_weights": sens_weights,
+            "external_traffic_ratio": external_traffic_ratio,
+            "admin_tool_pct": admin_tool_pct,
+            "dns_nxdomain_rate": dns_nxdomain_rate,
+            "role_category": cat,
+        }
     return profiles
 
 

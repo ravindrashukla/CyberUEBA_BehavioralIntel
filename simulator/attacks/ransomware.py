@@ -275,11 +275,13 @@ class Ransomware(AttackScenario):
 
                 file_events.append({
                     "timestamp": write_time.isoformat(),
-                    "device_id": device_id,
+                    "source_device_id": device_id,
                     "user_id": "SYSTEM",
-                    "event_type": "file_write",
-                    "path": f"{drive}\\{dept}\\{filename}",
-                    "bytes_written": int(rng.integers(1000, 5_000_000)),
+                    "operation": "write",
+                    "file_path": f"{drive}\\{dept}\\{filename}",
+                    "file_size_bytes": int(rng.integers(1000, 5_000_000)),
+                    "data_classification": "internal",
+                    "success": True,
                     "attack_id": self.id,
                     "label": "file_encryption",
                 })
@@ -315,11 +317,13 @@ class Ransomware(AttackScenario):
 
                 file_events.append({
                     "timestamp": drop_time.isoformat(),
-                    "device_id": device_id,
+                    "source_device_id": device_id,
                     "user_id": "SYSTEM",
-                    "event_type": "file_write",
-                    "path": path,
-                    "bytes_written": int(rng.integers(2000, 8000)),
+                    "operation": "write",
+                    "file_path": path,
+                    "file_size_bytes": int(rng.integers(2000, 8000)),
+                    "data_classification": "internal",
+                    "success": True,
                     "attack_id": self.id,
                     "label": "ransom_note",
                 })

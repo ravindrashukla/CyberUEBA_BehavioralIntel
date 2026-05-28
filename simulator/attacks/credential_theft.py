@@ -67,7 +67,10 @@ class CredentialTheftLateral(AttackScenario):
         super().__init__(config)
         self.duration_days = config.get("duration_days", 5)
         self.compromised_user = config.get("compromised_user", "USR-087")
-        self.compromised_device = config.get("compromised_device", "DEV-087")
+        # Resolve device from entity data if available, fall back to config/default
+        user_device_map = config.get("_user_device_map", {})
+        self.compromised_device = config.get("compromised_device",
+                                             user_device_map.get(self.compromised_user, "DEV-087"))
         self._start_date = (
             self.start if isinstance(self.start, date) else datetime.fromisoformat(self.start).date()
         )
@@ -206,10 +209,12 @@ class CredentialTheftLateral(AttackScenario):
             file_events.append({
                 "timestamp": access_time.isoformat(),
                 "user_id": self.compromised_user,
-                "device_id": self.compromised_device,
-                "event_type": "file_read",
-                "path": store,
-                "bytes_read": int(rng.integers(1000, 50000)),
+                "source_device_id": self.compromised_device,
+                "operation": "read",
+                "file_path": store,
+                "file_size_bytes": int(rng.integers(1000, 50000)),
+                "data_classification": "restricted",
+                "success": True,
                 "attack_id": self.id,
                 "label": "credential_store_access",
             })
@@ -295,11 +300,13 @@ class CredentialTheftLateral(AttackScenario):
             file_events.append({
                 "timestamp": copy_time.isoformat(),
                 "user_id": self.compromised_user,
-                "device_id": self.compromised_device,
-                "event_type": "file_copy",
-                "source_path": f"/shared/confidential/{filename}",
-                "destination_path": f"{staging_dir}{filename}",
-                "bytes_written": int(rng.integers(500_000, 50_000_000)),
+                "source_device_id": self.compromised_device,
+                "operation": "copy",
+                "file_path": f"/shared/confidential/{filename}",
+                "dest_path": f"{staging_dir}{filename}",
+                "file_size_bytes": int(rng.integers(500_000, 50_000_000)),
+                "data_classification": "confidential",
+                "success": True,
                 "attack_id": self.id,
                 "label": "data_staging",
             })

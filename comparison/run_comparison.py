@@ -28,6 +28,8 @@ RESULTS_DIR = Path("data/comparison_results")
 ATTACK_ENTITIES = {
     "USR-156": {"attack": "ATK-004", "name": "Insider Threat (8-month)", "start": date(2025, 3, 1)},
     "USR-234": {"attack": "ATK-003", "name": "Slow APT (180-day)", "start": date(2025, 4, 1)},
+    "USR-042": {"attack": "ATK-007", "name": "Volt Typhoon LOTL (115-day)", "start": date(2025, 1, 15)},
+    "USR-118": {"attack": "ATK-008", "name": "Salt Typhoon Telecom (100-day)", "start": date(2025, 1, 20)},
 }
 
 def _build_user_device_map() -> dict:
@@ -144,7 +146,9 @@ def _user_features(uid, auth_df, net_df, file_df, ep_df, dns_df, dev_ids=None) -
     # Endpoint features
     ue = ep_df[ep_df["user_id"] == uid] if not ep_df.empty and "user_id" in ep_df.columns else pd.DataFrame()
     features["endpoint_total"] = len(ue)
-    if not ue.empty and "event_type" in ue.columns:
+    if not ue.empty and "process_category" in ue.columns:
+        features["endpoint_suspicious_ratio"] = float((ue["process_category"] == "suspicious").sum()) / max(len(ue), 1)
+    elif not ue.empty and "event_type" in ue.columns:
         features["endpoint_suspicious_ratio"] = float((ue["event_type"] == "suspicious").sum()) / max(len(ue), 1)
     else:
         features["endpoint_suspicious_ratio"] = 0.0
@@ -198,50 +202,66 @@ FEATURE_COLS = [
 
 
 def run_traditional_detection(features_df: pd.DataFrame) -> pd.DataFrame:
-    """Run 4 traditional anomaly detection algorithms on per-user aggregated features."""
+    """Run 4 traditional anomaly detection algorithms with temporal train/test split.
+
+    Train on baseline period (first half of weeks), test on monitoring period
+    (second half). Fit scaler on baseline distribution, then score test-period
+    behavior as novel observations. Prevents data leakage from attack-period
+    features contaminating the training set.
+    """
     print("\n" + "=" * 60)
     print("RUNNING TRADITIONAL ANOMALY DETECTION")
     print("=" * 60)
 
     user_ids = features_df["user_id"].unique()
-    n_weeks = features_df["week_idx"].max() + 1
+    n_weeks = int(features_df["week_idx"].max()) + 1
+    split_week = n_weeks // 2
 
-    # Build per-user aggregated feature matrix (mean over all weeks)
-    user_features = features_df.groupby("user_id")[FEATURE_COLS].mean().reset_index()
+    print(f"  Temporal split: baseline weeks 0-{split_week - 1}, "
+          f"test weeks {split_week}-{n_weeks - 1}")
 
-    X = user_features[FEATURE_COLS].fillna(0).values
+    baseline = features_df[features_df["week_idx"] < split_week]
+    test = features_df[features_df["week_idx"] >= split_week]
+
+    baseline_agg = baseline.groupby("user_id")[FEATURE_COLS].mean().reindex(user_ids).fillna(0)
+    test_agg = test.groupby("user_id")[FEATURE_COLS].mean().reindex(user_ids).fillna(0)
+
     scaler = StandardScaler()
-    X_scaled = scaler.fit_transform(X)
+    X_baseline = scaler.fit_transform(baseline_agg.values)
+    X_test = scaler.transform(test_agg.values)
 
-    results = user_features[["user_id"]].copy()
+    results = pd.DataFrame({"user_id": user_ids})
 
-    # 1. Isolation Forest
+    # 1. Isolation Forest — fit on baseline, predict on test
     print("\n1. Isolation Forest...")
     iso = IsolationForest(contamination=0.05, random_state=42, n_estimators=200)
-    results["iforest_score"] = iso.fit_predict(X_scaled)
+    iso.fit(X_baseline)
+    results["iforest_score"] = iso.predict(X_test)
     results["iforest_anomaly"] = results["iforest_score"] == -1
     n_flagged = results["iforest_anomaly"].sum()
     print(f"   Flagged: {n_flagged}/{len(user_ids)} users ({100*n_flagged/len(user_ids):.1f}%)")
 
-    # 2. One-Class SVM
+    # 2. One-Class SVM — fit on baseline, predict on test
     print("2. One-Class SVM...")
     svm = OneClassSVM(kernel="rbf", gamma="scale", nu=0.05)
-    results["ocsvm_score"] = svm.fit_predict(X_scaled)
+    svm.fit(X_baseline)
+    results["ocsvm_score"] = svm.predict(X_test)
     results["ocsvm_anomaly"] = results["ocsvm_score"] == -1
     n_flagged = results["ocsvm_anomaly"].sum()
     print(f"   Flagged: {n_flagged}/{len(user_ids)} users ({100*n_flagged/len(user_ids):.1f}%)")
 
-    # 3. Local Outlier Factor
+    # 3. Local Outlier Factor — novelty=True for out-of-sample prediction
     print("3. Local Outlier Factor...")
-    lof = LocalOutlierFactor(n_neighbors=20, contamination=0.05)
-    results["lof_score"] = lof.fit_predict(X_scaled)
+    lof = LocalOutlierFactor(n_neighbors=20, contamination=0.05, novelty=True)
+    lof.fit(X_baseline)
+    results["lof_score"] = lof.predict(X_test)
     results["lof_anomaly"] = results["lof_score"] == -1
     n_flagged = results["lof_anomaly"].sum()
     print(f"   Flagged: {n_flagged}/{len(user_ids)} users ({100*n_flagged/len(user_ids):.1f}%)")
 
-    # 4. Statistical Z-score (flag if any feature > 3 std from mean)
+    # 4. Z-score — test features standardized against baseline distribution
     print("4. Z-score threshold (|z| > 3)...")
-    z_scores = np.abs(X_scaled)
+    z_scores = np.abs(X_test)
     results["zscore_max"] = z_scores.max(axis=1)
     results["zscore_anomaly"] = results["zscore_max"] > 3.0
     n_flagged = results["zscore_anomaly"].sum()
@@ -705,32 +725,40 @@ def print_report(merged: pd.DataFrame):
     print(f"Attack users in data window: {attack_users}")
     print()
 
-    # Header
-    print(f"{'Method':<22} {'USR-156':>10} {'USR-234':>10} {'True Pos':>10} {'False Pos':>10} {'FP Rate':>10}")
-    print(f"{'(Insider)':>34} {'(APT)':>10}")
-    print("-" * 72)
+    # Build dynamic header based on which attack users are present
+    attack_cols = []
+    for uid in ATTACK_ENTITIES:
+        if uid in merged["user_id"].values:
+            short = ATTACK_ENTITIES[uid]["name"].split("(")[0].strip()[:12]
+            attack_cols.append((uid, short))
+
+    header = f"{'Method':<22}"
+    label_line = f"{'':<22}"
+    for uid, short in attack_cols:
+        header += f" {uid:>10}"
+        label_line += f" {short:>10}"
+    header += f" {'True Pos':>10} {'False Pos':>10} {'FP Rate':>10}"
+    print(header)
+    print(label_line)
+    print("-" * (22 + 12 * len(attack_cols) + 32))
 
     for method_name, col in methods.items():
         if col not in merged.columns:
             continue
 
-        usr156 = merged.loc[merged["user_id"] == "USR-156", col].values
-        usr234 = merged.loc[merged["user_id"] == "USR-234", col].values
-
-        det_156 = bool(usr156[0]) if len(usr156) > 0 else False
-        det_234 = bool(usr234[0]) if len(usr234) > 0 else False
-
-        tp = sum(1 for uid in attack_users
-                 if not merged.loc[merged["user_id"] == uid, col].empty
-                 and bool(merged.loc[merged["user_id"] == uid, col].values[0]))
+        line = f"{method_name:<22}"
+        tp = 0
+        for uid, _ in attack_cols:
+            vals = merged.loc[merged["user_id"] == uid, col].values
+            det = bool(vals[0]) if len(vals) > 0 else False
+            if det:
+                tp += 1
+            line += f" {'DETECTED':>10}" if det else f" {'MISSED':>10}"
 
         fp = int(normal_users[col].sum()) if col in normal_users.columns else 0
         fp_rate = fp / max(len(normal_users), 1)
-
-        flag_156 = "DETECTED" if det_156 else "MISSED"
-        flag_234 = "DETECTED" if det_234 else "MISSED"
-
-        print(f"{method_name:<22} {flag_156:>10} {flag_234:>10} {tp:>10} {fp:>10} {fp_rate:>10.1%}")
+        line += f" {tp:>10} {fp:>10} {fp_rate:>10.1%}"
+        print(line)
 
     print()
     print("KEY FINDINGS:")
@@ -760,8 +788,8 @@ def print_report(merged: pd.DataFrame):
 
 def main():
     parser = argparse.ArgumentParser(description="Traditional vs ACECARD comparison")
-    parser.add_argument("--users", type=int, default=50,
-                        help="Number of users to analyze (default: 50)")
+    parser.add_argument("--users", type=int, default=250,
+                        help="Number of users to analyze (default: 250)")
     args = parser.parse_args()
 
     if not DATA_DIR.exists():

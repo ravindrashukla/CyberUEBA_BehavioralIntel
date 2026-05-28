@@ -151,12 +151,13 @@ def _generate_hash(rng):
     return "".join(f"{rng.integers(0, 256):02x}" for _ in range(32))
 
 
-def generate_endpoint_events(devices_df, users_df, current_date, rng) -> list[dict]:
+def generate_endpoint_events(devices_df, users_df, user_profiles, current_date, rng) -> list[dict]:
     """Generate endpoint telemetry events for all devices on a given date.
 
     Args:
         devices_df: DataFrame with columns [device_id, device_type, ip_address, segment_id]
         users_df: DataFrame with columns [user_id, primary_device_id]
+        user_profiles: dict mapping user_id to per-user behavioral profile
         current_date: date object for event generation
         rng: numpy random Generator for reproducibility
 
@@ -179,10 +180,28 @@ def generate_endpoint_events(devices_df, users_df, current_date, rng) -> list[di
         device_id = device["device_id"]
         user_id = device_to_user.get(device_id, "SYSTEM")
 
+        # Per-user admin tool rates
+        profile = user_profiles.get(user_id, {}) if user_profiles else {}
+        admin_pct = profile.get("admin_tool_pct", 0.12)
+        suspicious_pct = 0.03  # keep suspicious constant
+        benign_pct = 1.0 - admin_pct - suspicious_pct
+
         for _ in range(n_events):
             ts = _endpoint_timestamp(current_date, rng)
             event_type = _pick_event_type(rng)
-            process_name, process_path, category = _pick_process(event_type, rng)
+
+            # Inline category selection using per-user rates
+            r = rng.random()
+            if r < benign_pct:
+                category = "benign"
+            elif r < benign_pct + admin_pct:
+                category = "admin_tools"
+            else:
+                category = "suspicious"
+            proc_list = PROCESS_CATALOG[category]
+            idx = rng.integers(0, len(proc_list))
+            process_name, process_path = proc_list[idx][0], proc_list[idx][1]
+
             process_hash = _generate_hash(rng)
             parent_process = rng.choice(PARENT_PROCESSES)
             risk_score = _compute_risk_score(category, event_type, rng)
@@ -203,6 +222,7 @@ def generate_endpoint_events(devices_df, users_df, current_date, rng) -> list[di
                 "process_name": process_name,
                 "process_hash": process_hash,
                 "parent_process": parent_process,
+                "process_category": category,
                 "file_path": file_path,
                 "command_line": command_line,
                 "risk_score": risk_score,

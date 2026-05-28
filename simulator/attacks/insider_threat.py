@@ -114,7 +114,10 @@ class InsiderThreatAttack(AttackScenario):
         super().__init__(config)
         self.escalation_months = config.get("escalation_months", 8)
         self.target_user = config.get("user", "USR-156")
-        self.target_device = config.get("device", "DEV-156")
+        # Resolve device from entity data if available, fall back to config/default
+        user_device_map = config.get("_user_device_map", {})
+        self.target_device = config.get("device",
+                                        user_device_map.get(self.target_user, "DEV-156"))
         self._start_date = (
             self.start if isinstance(self.start, date) else datetime.fromisoformat(self.start).date()
         )
@@ -135,21 +138,21 @@ class InsiderThreatAttack(AttackScenario):
         Phase 3 (months 5-6): Reconnaissance
         Phase 4 (months 7-8): Exfiltration prep + action
         """
-        days = self._days_elapsed(current_date)
-        if days < 60:
+        progress = self._days_elapsed(current_date) / max(self._duration_days, 1)
+        if progress < 0.25:
             return 1
-        elif days < 120:
+        elif progress < 0.50:
             return 2
-        elif days < 180:
+        elif progress < 0.75:
             return 3
         else:
             return 4
 
     def _daily_anomaly_probability(self, current_date: date) -> float:
-        """Probability anomalous events fire today. Ramps slowly over time."""
+        """Probability anomalous events fire today. Ramps over time."""
         progress = self._days_elapsed(current_date) / self._duration_days
-        # 30% early -> 80% in final phase
-        return 0.30 + 0.50 * progress
+        # 60% early -> 95% in final phase
+        return 0.60 + 0.35 * progress
 
     def modify_auth_events(
         self, user_id: str, events: list[dict], current_date: date, rng
@@ -161,8 +164,9 @@ class InsiderThreatAttack(AttackScenario):
 
         phase = self._phase(current_date)
 
-        # Phase 1+: Off-hours logins (1-2 per week ~ 25% daily chance)
-        if rng.random() < 0.25:
+        # Phase 1+: Off-hours logins — ramps from ~2/week to ~4/week
+        off_hours_prob = {1: 0.20, 2: 0.30, 3: 0.40, 4: 0.50}[phase]
+        if rng.random() < off_hours_prob:
             direction = rng.choice(["early", "late"])
             ts = _off_hours_time(rng, current_date, direction)
             events.append({
@@ -180,7 +184,7 @@ class InsiderThreatAttack(AttackScenario):
 
         # Phase 3+: Permission elevation requests (~once per month)
         if phase >= 3:
-            days_into_phase3 = self._days_elapsed(current_date) - 120
+            days_into_phase3 = self._days_elapsed(current_date) - int(self._duration_days * 0.50)
             if days_into_phase3 > 0 and days_into_phase3 % 30 == 0:
                 ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                     hours=float(rng.uniform(9, 17))
@@ -202,8 +206,8 @@ class InsiderThreatAttack(AttackScenario):
                     "label": "insider_privilege_escalation",
                 })
 
-        # Phase 4: Logins from new/unusual devices (~15% of days)
-        if phase == 4 and rng.random() < 0.15:
+        # Phase 4: Logins from new/unusual devices (~5% of days)
+        if phase == 4 and rng.random() < 0.05:
             ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(19.0, 22.0))
             )
@@ -277,9 +281,9 @@ class InsiderThreatAttack(AttackScenario):
     # --- Phase-specific injection helpers ---
 
     def _inject_job_site_dns(self, current_date: date, phase: int, rng, dns_events: list):
-        """Phase 1+: Browse job sites during lunch. Frequency increases over time."""
-        # Phase 1: 1 query/day, Phase 2+: 1-2, Phase 3+: 1-3
-        max_queries = {1: 2, 2: 3, 3: 3, 4: 4}[phase]
+        """Phase 1+: Browse job sites during lunch. Low frequency to stay under radar."""
+        # 1 query per day max — blends with normal web browsing
+        max_queries = {1: 2, 2: 2, 3: 2, 4: 2}[phase]
         num_queries = int(rng.integers(1, max_queries))
         for _ in range(num_queries):
             # Lunch break or end-of-day browsing
@@ -301,46 +305,54 @@ class InsiderThreatAttack(AttackScenario):
 
     def _inject_scope_creep_files(self, current_date: date, phase: int, rng,
                                    file_events: list):
-        """Phase 2+: Access files outside normal scope. Sensitivity escalates."""
-        # Not every day — 50-60% of days in later phases
-        daily_prob = {2: 0.40, 3: 0.55, 4: 0.65}[phase]
+        """Phase 2+: Access files outside normal scope. Sensitivity escalates.
+
+        Volume and classification severity increase each phase to create
+        measurable drift in file_restricted_ratio and file_confidential_ratio.
+        """
+        daily_prob = {2: 0.75, 3: 0.85, 4: 0.95}[phase]
         if rng.random() > daily_prob:
             return
 
-        # Select appropriate file paths based on phase
         if phase == 2:
             paths = _FILE_PATHS["curious"]
-            num_files = int(rng.integers(1, 3))
+            num_files = int(rng.integers(5, 12))
+            classifications = ["confidential", "confidential", "confidential", "internal"]
+            write_prob = 0.10
+            size_range = (10_000, 200_000)
         elif phase == 3:
             paths = _FILE_PATHS["curious"] + _FILE_PATHS["recon"]
-            num_files = int(rng.integers(1, 4))
+            num_files = int(rng.integers(10, 20))
+            classifications = ["restricted", "restricted", "confidential", "confidential", "confidential"]
+            write_prob = 0.25
+            size_range = (50_000, 2_000_000)
         else:
             paths = _FILE_PATHS["recon"] + _FILE_PATHS["exfil"]
-            num_files = int(rng.integers(2, 5))
+            num_files = int(rng.integers(15, 30))
+            classifications = ["restricted", "restricted", "restricted", "confidential"]
+            write_prob = 0.40
+            size_range = (100_000, 10_000_000)
 
         for _ in range(num_files):
-            # Mix of work hours and slightly after hours
-            if rng.random() < 0.3:
-                hour = float(rng.uniform(18.0, 20.0))
+            if rng.random() < 0.35:
+                hour = float(rng.uniform(18.0, 22.0))
             else:
                 hour = float(rng.uniform(9.0, 17.5))
             ts = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=hour)
 
             chosen_dir = rng.choice(paths)
             filename = _random_filename(rng, _DOC_EXTENSIONS)
-
-            # File sizes grow with phase
-            size_ranges = {2: (5_000, 200_000), 3: (50_000, 2_000_000), 4: (100_000, 5_000_000)}
-            size_range = size_ranges[phase]
+            operation = "write" if rng.random() < write_prob else "read"
 
             file_events.append({
                 "timestamp": ts.isoformat(),
                 "user_id": self.target_user,
-                "device_id": self.target_device,
-                "event_type": "file_read",
-                "path": f"{chosen_dir}{filename}",
-                "bytes_read": int(rng.integers(*size_range)),
-                "classification": rng.choice(["confidential", "restricted", "internal"]),
+                "source_device_id": self.target_device,
+                "operation": operation,
+                "file_path": f"{chosen_dir}{filename}",
+                "file_size_bytes": int(rng.integers(*size_range)),
+                "data_classification": rng.choice(classifications),
+                "success": True,
                 "in_normal_scope": False,
                 "attack_id": self.id,
                 "label": "insider_scope_creep",
@@ -349,9 +361,8 @@ class InsiderThreatAttack(AttackScenario):
     def _inject_recon_activity(self, current_date: date, rng, file_events: list,
                                network_events: list):
         """Phase 3+: Map network shares, access sensitive directories."""
-        # SMB enumeration of cross-department shares (~35% of days)
-        if rng.random() < 0.35:
-            num_shares = int(rng.integers(1, 3))
+        if rng.random() < 0.55:
+            num_shares = int(rng.integers(2, 5))
             for _ in range(num_shares):
                 ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                     hours=float(rng.uniform(10.0, 16.0))
@@ -361,8 +372,8 @@ class InsiderThreatAttack(AttackScenario):
                     "src_ip": "10.0.3.156",
                     "dst_ip": f"10.0.1.{rng.integers(1, 10)}",
                     "dst_port": 445,
-                    "bytes_out": int(rng.integers(200, 2000)),
-                    "bytes_in": int(rng.integers(500, 5000)),
+                    "bytes_out": int(rng.integers(500, 10000)),
+                    "bytes_in": int(rng.integers(2000, 50000)),
                     "protocol": "tcp",
                     "duration_ms": int(rng.integers(100, 3000)),
                     "device_id": self.target_device,
@@ -375,34 +386,38 @@ class InsiderThreatAttack(AttackScenario):
                     "label": "insider_recon_smb",
                 })
 
-        # Classification-sensitive document access (~30% of days)
-        if rng.random() < 0.30:
-            ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
-                hours=float(rng.uniform(9.0, 17.0))
-            )
-            recon_dir = rng.choice(_FILE_PATHS["recon"])
-            filename = _random_filename(rng, _DOC_EXTENSIONS)
-            file_events.append({
-                "timestamp": ts.isoformat(),
-                "user_id": self.target_user,
-                "device_id": self.target_device,
-                "event_type": "file_read",
-                "path": f"{recon_dir}{filename}",
-                "bytes_read": int(rng.integers(50_000, 5_000_000)),
-                "classification": "restricted",
-                "in_normal_scope": False,
-                "attack_id": self.id,
-                "label": "insider_recon_sensitive_read",
-            })
+        # Multiple sensitive file reads per day during recon
+        n_recon_files = int(rng.integers(3, 8))
+        for _ in range(n_recon_files):
+            if rng.random() < 0.65:
+                ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
+                    hours=float(rng.uniform(9.0, 17.0))
+                )
+                recon_dir = rng.choice(_FILE_PATHS["recon"] + _FILE_PATHS["exfil"])
+                filename = _random_filename(rng, _DOC_EXTENSIONS)
+                operation = rng.choice(["read", "read", "read", "copy"])
+                file_events.append({
+                    "timestamp": ts.isoformat(),
+                    "user_id": self.target_user,
+                    "source_device_id": self.target_device,
+                    "operation": operation,
+                    "file_path": f"{recon_dir}{filename}",
+                    "file_size_bytes": int(rng.integers(100_000, 10_000_000)),
+                    "data_classification": rng.choice(["restricted", "restricted", "confidential"]),
+                    "success": True,
+                    "in_normal_scope": False,
+                    "attack_id": self.id,
+                    "label": "insider_recon_sensitive_read",
+                })
 
     def _inject_exfil_activity(self, current_date: date, rng, file_events: list,
                                network_events: list, endpoint_events: list,
                                dns_events: list):
         """Phase 4: USB, large copies, email to personal, cloud uploads, bulk transfer."""
-        days_into_phase4 = self._days_elapsed(current_date) - 180
+        days_into_phase4 = self._days_elapsed(current_date) - int(self._duration_days * 0.75)
 
-        # --- USB device connections (~20% of days) ---
-        if rng.random() < 0.20:
+        # --- USB device connections (~25% of days) ---
+        if rng.random() < 0.25:
             ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(17.5, 21.0))
             )
@@ -418,8 +433,7 @@ class InsiderThreatAttack(AttackScenario):
                 "attack_id": self.id,
                 "label": "insider_usb_connect",
             })
-            # File copies to USB
-            num_copies = int(rng.integers(2, 7))
+            num_copies = int(rng.integers(3, 8))
             for i in range(num_copies):
                 copy_ts = ts + timedelta(minutes=float(rng.uniform(1, 12) * (i + 1)))
                 src_dir = rng.choice(_FILE_PATHS["exfil"] + _FILE_PATHS["recon"])
@@ -427,12 +441,13 @@ class InsiderThreatAttack(AttackScenario):
                 file_events.append({
                     "timestamp": copy_ts.isoformat(),
                     "user_id": self.target_user,
-                    "device_id": self.target_device,
-                    "event_type": "file_copy",
-                    "source_path": f"{src_dir}{filename}",
+                    "source_device_id": self.target_device,
+                    "operation": "copy",
+                    "file_path": f"{src_dir}{filename}",
                     "dest_path": f"E:\\{filename}",
-                    "bytes_written": int(rng.integers(100_000, 50_000_000)),
-                    "classification": rng.choice(["confidential", "restricted"]),
+                    "file_size_bytes": int(rng.integers(500_000, 20_000_000)),
+                    "data_classification": rng.choice(["restricted", "restricted", "confidential"]),
+                    "success": True,
                     "attack_id": self.id,
                     "label": "insider_usb_exfil",
                 })
@@ -443,7 +458,7 @@ class InsiderThreatAttack(AttackScenario):
                 hours=float(rng.uniform(16.0, 19.0))
             )
             personal_domain = rng.choice(_PERSONAL_EMAIL_DOMAINS)
-            attachment_bytes = int(rng.integers(500_000, 25_000_000))
+            attachment_bytes = int(rng.integers(200_000, 5_000_000))
             network_events.append({
                 "timestamp": ts.isoformat(),
                 "src_ip": "10.0.3.156",
@@ -452,7 +467,7 @@ class InsiderThreatAttack(AttackScenario):
                 "bytes_out": attachment_bytes,
                 "bytes_in": int(rng.integers(1000, 5000)),
                 "protocol": "tcp",
-                "duration_ms": int(rng.integers(5000, 30000)),
+                "duration_ms": int(rng.integers(2000, 10000)),
                 "device_id": self.target_device,
                 "user_id": self.target_user,
                 "attack_id": self.id,
@@ -470,7 +485,7 @@ class InsiderThreatAttack(AttackScenario):
             })
 
         # --- Cloud storage uploads (~25% early, ~40% late in phase) ---
-        cloud_prob = 0.25 + 0.20 * (days_into_phase4 / 60.0)
+        cloud_prob = 0.25 + 0.20 * min(days_into_phase4 / 60.0, 1.0)
         if rng.random() < cloud_prob:
             ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(18.0, 22.0))
@@ -486,7 +501,7 @@ class InsiderThreatAttack(AttackScenario):
                 "attack_id": self.id,
                 "label": "insider_cloud_storage_dns",
             })
-            upload_bytes = int(rng.integers(1_000_000, 100_000_000))
+            upload_bytes = int(rng.integers(500_000, 20_000_000))
             network_events.append({
                 "timestamp": ts.isoformat(),
                 "src_ip": "10.0.3.156",
@@ -495,15 +510,15 @@ class InsiderThreatAttack(AttackScenario):
                 "bytes_out": upload_bytes,
                 "bytes_in": int(rng.integers(5000, 20000)),
                 "protocol": "tcp",
-                "duration_ms": int(rng.integers(10000, 120000)),
+                "duration_ms": int(rng.integers(5000, 30000)),
                 "device_id": self.target_device,
                 "user_id": self.target_user,
                 "attack_id": self.id,
                 "label": "insider_cloud_exfil",
             })
 
-        # --- Archive tool usage (~15% of days) ---
-        if rng.random() < 0.15:
+        # --- Archive tool usage (~30% of days) ---
+        if rng.random() < 0.30:
             ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(17.0, 20.0))
             )
@@ -522,8 +537,8 @@ class InsiderThreatAttack(AttackScenario):
                 "label": "insider_archive_tool",
             })
 
-        # --- Bulk data transfer (final 2 weeks of phase 4, ~30% of days) ---
-        if days_into_phase4 > 45 and rng.random() < 0.30:
+        # --- Trickle data transfer (final weeks, ~30% of days) ---
+        if days_into_phase4 > int(self._duration_days * 0.15) and rng.random() < 0.30:
             ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(21.0, 23.5))
             )
@@ -531,15 +546,15 @@ class InsiderThreatAttack(AttackScenario):
                 "timestamp": ts.isoformat(),
                 "src_ip": "10.0.3.156",
                 "dst_ip": f"{rng.integers(50, 200)}.{rng.integers(1, 254)}.{rng.integers(1, 254)}.{rng.integers(1, 254)}",
-                "dst_port": int(rng.choice([443, 8443, 22])),
-                "bytes_out": int(rng.integers(100_000_000, 500_000_000)),
-                "bytes_in": int(rng.integers(10000, 50000)),
+                "dst_port": 443,
+                "bytes_out": int(rng.integers(1_000_000, 20_000_000)),
+                "bytes_in": int(rng.integers(5000, 20000)),
                 "protocol": "tcp",
-                "duration_ms": int(rng.integers(60000, 600000)),
+                "duration_ms": int(rng.integers(5000, 30000)),
                 "device_id": self.target_device,
                 "user_id": self.target_user,
                 "attack_id": self.id,
-                "label": "insider_bulk_exfil",
+                "label": "insider_trickle_exfil",
             })
 
     @property

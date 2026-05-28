@@ -122,11 +122,12 @@ def _generate_file_size(operation, rng):
         return int(rng.integers(104857600, 1073741824))  # 100MB - 1GB
 
 
-def generate_file_access(users_df, current_date, rng) -> list[dict]:
+def generate_file_access(users_df, user_profiles, current_date, rng) -> list[dict]:
     """Generate file access events for all users on a given date.
 
     Args:
         users_df: DataFrame with columns [user_id, primary_device_id]
+        user_profiles: dict mapping user_id to per-user behavioral profile
         current_date: date object for event generation
         rng: numpy random Generator for reproducibility
 
@@ -136,14 +137,37 @@ def generate_file_access(users_df, current_date, rng) -> list[dict]:
     events = []
 
     for _, user in users_df.iterrows():
-        n_events = rng.poisson(FILE_ACCESS_PER_USER_DAY)
         user_id = user["user_id"]
         device_id = user["primary_device_id"]
+        profile = user_profiles.get(user_id, {}) if user_profiles else {}
+
+        activity_mult = profile.get("activity_multiplier", 1.0)
+        n_events = rng.poisson(max(1, int(FILE_ACCESS_PER_USER_DAY * activity_mult)))
 
         for _ in range(n_events):
             ts = _file_access_timestamp(current_date, rng)
-            operation = _pick_operation(rng)
-            classification = _pick_classification(rng)
+
+            # Per-user write bias replaces global _pick_operation
+            write_bias = profile.get("file_write_bias", 0.30)
+            r = rng.random()
+            if r < (1.0 - write_bias - 0.15):  # remaining goes to read
+                operation = "read"
+            elif r < (1.0 - 0.15):
+                operation = "write"
+            elif r < (1.0 - 0.10):
+                operation = "delete"
+            elif r < (1.0 - 0.05):
+                operation = "copy"
+            elif r < (1.0 - 0.025):
+                operation = "move"
+            else:
+                operation = "permission_change"
+
+            # Per-user sensitivity weights replaces global _pick_classification
+            sens_weights = profile.get("file_sensitivity_weights", [0.40, 0.35, 0.20, 0.05])
+            classifications = ["public", "internal", "confidential", "restricted"]
+            classification = rng.choice(classifications, p=sens_weights)
+
             file_path = _generate_file_path(rng)
             file_size = _generate_file_size(operation, rng)
 

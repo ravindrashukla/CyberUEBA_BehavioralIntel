@@ -7,6 +7,8 @@ from .insider_threat import InsiderThreatAttack
 from .credential_theft import CredentialTheftLateral
 from .ransomware import Ransomware
 from .supply_chain import SupplyChainCompromise
+from .volt_typhoon import VoltTyphoonAttack
+from .salt_typhoon import SaltTyphoonAttack
 
 __all__ = [
     "AttackScenario",
@@ -16,4 +18,6 @@ __all__ = [
     "CredentialTheftLateral",
     "Ransomware",
     "SupplyChainCompromise",
+    "VoltTyphoonAttack",
+    "SaltTyphoonAttack",
 ]

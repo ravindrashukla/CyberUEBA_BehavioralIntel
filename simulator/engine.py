@@ -10,26 +10,26 @@ import pandas as pd
 from tqdm import tqdm
 
 from simulator.config import SIM_START, SIM_END, ATTACK_SCENARIOS
-from simulator.entities import generate_all, generate_role_profiles
+from simulator.entities import generate_all, generate_role_profiles, generate_behavioral_profiles
 
 # Log generator registry: module_name -> (function_name, required_args_keys)
 # Each generator is called with a subset of: users_df, devices_df, segments_df,
 # applications_df, role_profiles, current_date, rng
 _GENERATOR_REGISTRY = {
     "auth": ("simulator.log_generators.auth_logs", "generate_auth_logs",
-             ["users_df", "devices_df", "role_profiles", "current_date", "rng"]),
+             ["users_df", "devices_df", "role_profiles", "user_profiles", "current_date", "rng"]),
     "network": ("simulator.log_generators.network_flows", "generate_network_flows",
-                ["devices_df", "segments_df", "current_date", "rng"]),
+                ["devices_df", "segments_df", "users_df", "user_profiles", "current_date", "rng"]),
     "dns": ("simulator.log_generators.dns_logs", "generate_dns_queries",
-            ["devices_df", "segments_df", "current_date", "rng"]),
+            ["devices_df", "segments_df", "users_df", "user_profiles", "current_date", "rng"]),
     "endpoint": ("simulator.log_generators.endpoint_telemetry", "generate_endpoint_events",
-                 ["devices_df", "users_df", "current_date", "rng"]),
+                 ["devices_df", "users_df", "user_profiles", "current_date", "rng"]),
     "app": ("simulator.log_generators.app_logs", "generate_app_events",
             ["users_df", "applications_df", "current_date", "rng"]),
     "privilege": ("simulator.log_generators.privilege_ops", "generate_privilege_ops",
                   ["users_df", "current_date", "rng"]),
     "file_access": ("simulator.log_generators.file_access", "generate_file_access",
-                    ["users_df", "current_date", "rng"]),
+                    ["users_df", "user_profiles", "current_date", "rng"]),
 }
 
 # Attack type -> (module_path, class_name)
@@ -40,6 +40,8 @@ _ATTACK_REGISTRY = {
     "credential_theft_lateral": ("simulator.attacks.credential_theft", "CredentialTheftLateral"),
     "ransomware": ("simulator.attacks.ransomware", "Ransomware"),
     "supply_chain": ("simulator.attacks.supply_chain", "SupplyChainCompromise"),
+    "volt_typhoon": ("simulator.attacks.volt_typhoon", "VoltTyphoonAttack"),
+    "salt_typhoon": ("simulator.attacks.salt_typhoon", "SaltTyphoonAttack"),
 }
 
 
@@ -64,6 +66,9 @@ class SimulationEngine:
         print("Generating entities...")
         self.entities = generate_all()
         self.role_profiles = generate_role_profiles()
+        self.user_profiles = generate_behavioral_profiles(
+            self.entities["users"], self.role_profiles, self.rng
+        )
 
         # Load available log generators
         self._generators = self._load_generators()
@@ -87,7 +92,17 @@ class SimulationEngine:
         return generators
 
     def _load_attacks(self) -> list:
-        """Instantiate attack scenarios from config, skip missing implementations."""
+        """Instantiate attack scenarios from config, skip missing implementations.
+
+        Enriches each scenario config with a user→device mapping so attacks
+        can resolve the correct primary device at runtime (Bug 3 fix).
+        """
+        # Build user→primary_device lookup from entity data
+        user_device_map = dict(
+            zip(self.entities["users"]["user_id"],
+                self.entities["users"]["primary_device_id"])
+        )
+
         attacks = []
         for scenario_cfg in ATTACK_SCENARIOS:
             attack_type = scenario_cfg["type"]
@@ -98,7 +113,10 @@ class SimulationEngine:
             module_path, class_name = entry
             cls = _try_import(module_path, class_name)
             if cls is not None:
-                attacks.append(cls(scenario_cfg))
+                # Inject user→device mapping so attacks can resolve devices
+                enriched_cfg = dict(scenario_cfg)
+                enriched_cfg["_user_device_map"] = user_device_map
+                attacks.append(cls(enriched_cfg))
             else:
                 warnings.warn(f"Attack class not found: {module_path}.{class_name} — skipping '{scenario_cfg['id']}'")
         return attacks
@@ -158,6 +176,7 @@ class SimulationEngine:
             "segments_df": self.entities["segments"],
             "applications_df": self.entities["applications"],
             "role_profiles": self.role_profiles,
+            "user_profiles": self.user_profiles,
             "current_date": current_date,
             "rng": self.rng,
         }
@@ -175,7 +194,13 @@ class SimulationEngine:
         return logs
 
     def _apply_attacks(self, daily_logs: dict, current_date: date):
-        """Let each active attack inject events into the daily logs."""
+        """Let each active attack inject and modify events in the daily logs.
+
+        Three mechanisms per attack:
+        1. inject_events() — generate entirely new attack events
+        2. modify_auth_events() — modify existing auth events per user
+        3. modify_network_flows() — modify existing network flows per device
+        """
         # Normalize attack log-type keys to match generator registry
         _KEY_MAP = {"file": "file_access"}
 
@@ -183,6 +208,7 @@ class SimulationEngine:
             if not attack.is_active(current_date):
                 continue
             try:
+                # 1) Inject new events
                 injected = attack.inject_events(current_date, self.rng)
                 if injected:
                     for log_type, events in injected.items():
@@ -192,6 +218,57 @@ class SimulationEngine:
                         else:
                             daily_logs[mapped] = events
                         self._attack_events += len(events)
+
+                # 2) Modify existing auth events per user
+                if hasattr(attack, 'modify_auth_events') and "auth" in daily_logs and daily_logs["auth"]:
+                    # Group auth events by user_id
+                    by_user = {}
+                    no_user = []
+                    for evt in daily_logs["auth"]:
+                        uid = evt.get("user_id")
+                        if uid:
+                            by_user.setdefault(uid, []).append(evt)
+                        else:
+                            no_user.append(evt)
+                    # Let the attack modify each user's events
+                    modified_auth = []
+                    for uid, user_events in by_user.items():
+                        orig_len = len(user_events)
+                        user_events = attack.modify_auth_events(
+                            uid, user_events, current_date, self.rng
+                        )
+                        new_count = len(user_events) - orig_len
+                        if new_count > 0:
+                            self._attack_events += new_count
+                        modified_auth.extend(user_events)
+                    modified_auth.extend(no_user)
+                    daily_logs["auth"] = modified_auth
+
+                # 3) Modify existing network flows per device
+                if hasattr(attack, 'modify_network_flows') and "network" in daily_logs and daily_logs["network"]:
+                    # Group network flows by device_id
+                    by_device = {}
+                    no_device = []
+                    for flow in daily_logs["network"]:
+                        did = flow.get("device_id")
+                        if did:
+                            by_device.setdefault(did, []).append(flow)
+                        else:
+                            no_device.append(flow)
+                    # Let the attack modify each device's flows
+                    modified_network = []
+                    for did, device_flows in by_device.items():
+                        orig_len = len(device_flows)
+                        device_flows = attack.modify_network_flows(
+                            did, device_flows, current_date, self.rng
+                        )
+                        new_count = len(device_flows) - orig_len
+                        if new_count > 0:
+                            self._attack_events += new_count
+                        modified_network.extend(device_flows)
+                    modified_network.extend(no_device)
+                    daily_logs["network"] = modified_network
+
             except Exception as e:
                 warnings.warn(f"Attack '{attack.id}' failed on {current_date}: {e}")
 

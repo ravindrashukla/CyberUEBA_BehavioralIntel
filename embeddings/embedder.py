@@ -94,7 +94,13 @@ class Embedder:
         """Load from disk cache if exists."""
         cache_path = self.cache_dir / f"{self._cache_key(text)}.npy"
         if cache_path.exists():
-            return np.load(cache_path)
+            try:
+                arr = np.load(cache_path)
+                if arr.shape == (EMBEDDING_DIM,):
+                    return arr
+                cache_path.unlink()
+            except (ValueError, OSError):
+                cache_path.unlink(missing_ok=True)
         return None
 
     def _set_cached(self, text: str, vector: np.ndarray):

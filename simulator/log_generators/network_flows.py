@@ -83,12 +83,14 @@ EXTERNAL_SERVICES = [
 ]
 
 
-def generate_network_flows(devices_df, segments_df, current_date, rng) -> list[dict]:
+def generate_network_flows(devices_df, segments_df, users_df, user_profiles, current_date, rng) -> list[dict]:
     """Generate network flow records for all devices on a given date.
 
     Args:
         devices_df: DataFrame with columns [device_id, device_type, ip_address, segment_id]
         segments_df: DataFrame with columns [segment_id, prefix, adjacent_segments]
+        users_df: DataFrame with user-device mapping (may be None)
+        user_profiles: dict mapping user_id to profile dicts (may be None)
         current_date: date object for flow generation
         rng: numpy random Generator for reproducibility
 
@@ -98,6 +100,12 @@ def generate_network_flows(devices_df, segments_df, current_date, rng) -> list[d
     flows = []
     segment_map = segments_df.set_index("segment_id").to_dict("index")
 
+    # Build device -> owner lookup
+    device_owner = {}
+    if users_df is not None:
+        for _, user in users_df.iterrows():
+            device_owner[user["primary_device_id"]] = user["user_id"]
+
     # Build list of all internal IPs by segment for internal traffic targets
     segment_ips = {}
     for _, dev in devices_df.iterrows():
@@ -106,23 +114,66 @@ def generate_network_flows(devices_df, segments_df, current_date, rng) -> list[d
 
     for _, device in devices_df.iterrows():
         device_type = device["device_type"]
-        n_flows = rng.poisson(500 if device_type == "server" else 200)
+        from simulator.config import NETWORK_FLOWS_PER_DEVICE_DAY
+        base = NETWORK_FLOWS_PER_DEVICE_DAY * 2 if device_type == "server" else NETWORK_FLOWS_PER_DEVICE_DAY
+        n_flows = rng.poisson(base)
 
         seg_id = device["segment_id"]
         seg_info = segment_map.get(seg_id, {})
         adjacent = seg_info.get("adjacent_segments", [])
 
+        # Look up owner profile for per-device variation
+        owner_uid = device_owner.get(device["device_id"])
+        owner_profile = user_profiles.get(owner_uid, {}) if owner_uid and user_profiles else {}
+        ext_ratio = owner_profile.get("external_traffic_ratio", 0.15)
+        role_cat = owner_profile.get("role_category", "office")
+        activity_mult = owner_profile.get("activity_multiplier", 1.0)
+
         for _ in range(n_flows):
             ts = _flow_timestamp(current_date, rng)
             protocol = _pick_protocol(rng)
-            dst_port = _pick_dst_port(protocol, rng)
             src_port = int(rng.integers(1024, 65535))
-            bytes_in, bytes_out = _pick_bytes(rng)
-            duration_ms = _pick_duration(dst_port, rng)
+            duration_ms = _pick_duration(0, rng)  # placeholder, recomputed below
             tcp_flags = _pick_tcp_flags(protocol, rng)
 
-            # Internal vs external traffic
-            if rng.random() < 0.85:
+            # Per-device port selection based on role category
+            if protocol == "ICMP":
+                dst_port = 0
+            else:
+                r = rng.random()
+                if role_cat in ("admin", "security"):
+                    # More SSH, RDP, management ports
+                    if r < 0.30: dst_port = 443
+                    elif r < 0.45: dst_port = 80
+                    elif r < 0.55: dst_port = 22
+                    elif r < 0.65: dst_port = 3389
+                    elif r < 0.70: dst_port = 53
+                    else: dst_port = int(rng.integers(1024, 65535))
+                elif role_cat == "technical":
+                    # More dev ports
+                    if r < 0.35: dst_port = 443
+                    elif r < 0.50: dst_port = 80
+                    elif r < 0.60: dst_port = 22
+                    elif r < 0.65: dst_port = 53
+                    elif r < 0.68: dst_port = 8080
+                    else: dst_port = int(rng.integers(1024, 65535))
+                else:
+                    # Standard user ports
+                    if r < 0.45: dst_port = 443
+                    elif r < 0.65: dst_port = 80
+                    elif r < 0.72: dst_port = 53
+                    elif r < 0.75: dst_port = 22
+                    else: dst_port = int(rng.integers(1024, 65535))
+
+            duration_ms = _pick_duration(dst_port, rng)
+
+            # Per-device byte size variation
+            bytes_in_raw, bytes_out_raw = _pick_bytes(rng)
+            bytes_in = int(bytes_in_raw * activity_mult)
+            bytes_out = int(bytes_out_raw * activity_mult)
+
+            # Internal vs external traffic (per-device ratio)
+            if rng.random() < (1.0 - ext_ratio):
                 # Internal: same segment or adjacent
                 if adjacent and rng.random() < 0.3:
                     target_seg = rng.choice(adjacent)

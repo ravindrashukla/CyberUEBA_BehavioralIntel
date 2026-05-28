@@ -1,0 +1,1155 @@
+====================================================================================================
+TIER 3 ZONE EMBEDDING PIPELINE & CONCEPT ALIGNMENT DEEP TRACE
+Attack users: ['USR-156', 'USR-234', 'USR-042', 'USR-118']
+Results dir:  C:\Users\shuklar\ClaudeCode\CyberUEBA_BehavioralIntel\data\tier3_results
+====================================================================================================
+
+Loading pre-computed results...
+  Trajectories: (4750, 22)
+  Structures:   250 entities
+  Comparison:   (250, 94)
+
+Re-engineering features for attack users (no API calls)...
+Engineering features (incremental, one week at a time)...
+  Week 5/19 processed
+  Week 10/19 processed
+  Week 15/19 processed
+  19 weeks x 4 users = 76 feature vectors
+  Features: (76, 27)
+
+====================================================================================================
+SECTION 1: EXACT ZONE TEXT COMPARISON
+  Flat (serialize_zone) vs Interpretive (serialize_zone_interpretive)
+  Weeks: 0 (first baseline), 9 (first test), 18 (last)
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+  USR-156 -- Insider Threat (8-month)
+  Attack starts: 2025-03-01
+  Profile: role=Analyst, dept=Marketing, clearance=internal
+  Total weeks: 19, showing: [0, 9, 18]
+----------------------------------------------------------------------------------------------------
+
+  --- Week 0 (dates: 2025-01-01 to 2025-01-08) ---
+
+    Zone: identity
+      FLAT:   User USR-156 identity: role=Analyst, department=Marketing, clearance=internal, tenure_days=150, type=employee
+      INTERP: Employee USR-156 is a Analyst in Marketing with internal clearance, tenure 150 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-156 access: auth_events=92, fail_rate=0.0109, off_hours=0.1848, unique_sources=10, unique_dests=6, methods=4
+      INTERP: Analyst USR-156 in Marketing: authentication activity within normal parameters. Failure rate 0.011, off-hours ratio 0.185, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-156 data: file_accesses=61, restricted_ratio=0.0328, confidential_ratio=0.2295, write_ratio=0.1803, unique_paths=61, bytes=1436412674
+      INTERP: Analyst USR-156 in Marketing data access behavior: Volume: 1436412674 bytes across 61 paths.
+
+    Zone: network_footprint
+      FLAT:   User USR-156 network: bytes_out=1648136579, unique_dsts=57, external_ratio=0.1217, dns_domains=62, nxdomain_ratio=0.0375
+      INTERP: Analyst USR-156 in Marketing: network activity within normal parameters. Outbound 1648136579 bytes, external ratio 0.1217, 62 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-156 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0
+      INTERP: Analyst USR-156 in Marketing: endpoint risk within normal parameters. Peak risk 0.0000, mean risk 0.0000, both unremarkable.
+
+  --- Week 9 (dates: 2025-03-05 to 2025-03-12) ---
+
+    Zone: identity
+      FLAT:   User USR-156 identity: role=Analyst, department=Marketing, clearance=internal, tenure_days=150, type=employee
+      INTERP: Employee USR-156 is a Analyst in Marketing with internal clearance, tenure 150 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-156 access: auth_events=77, fail_rate=0.0390, off_hours=0.2727, unique_sources=9, unique_dests=6, methods=4
+      INTERP: Analyst USR-156 in Marketing: authentication activity within normal parameters. Failure rate 0.039, off-hours ratio 0.273, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-156 data: file_accesses=64, restricted_ratio=0.0781, confidential_ratio=0.2500, write_ratio=0.2188, unique_paths=64, bytes=860308105
+      INTERP: Analyst USR-156 in Marketing: data access activity within normal parameters. File operations 64, restricted ratio 0.0781, confidential ratio 0.2500, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-156 network: bytes_out=1266141063, unique_dsts=68, external_ratio=0.1204, dns_domains=56, nxdomain_ratio=0.0000
+      INTERP: Analyst USR-156 in Marketing network behavior: Connecting to 68 destinations, 56 DNS domains.
+
+    Zone: risk_posture
+      FLAT:   User USR-156 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0
+      INTERP: Analyst USR-156 in Marketing: endpoint risk within normal parameters. Peak risk 0.0000, mean risk 0.0000, both unremarkable.
+
+  --- Week 18 (dates: 2025-05-07 to 2025-05-13) ---
+
+    Zone: identity
+      FLAT:   User USR-156 identity: role=Analyst, department=Marketing, clearance=internal, tenure_days=150, type=employee
+      INTERP: Employee USR-156 is a Analyst in Marketing with internal clearance, tenure 150 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-156 access: auth_events=80, fail_rate=0.0250, off_hours=0.1875, unique_sources=11, unique_dests=6, methods=4
+      INTERP: Analyst USR-156 in Marketing: authentication activity within normal parameters. Failure rate 0.025, off-hours ratio 0.188, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-156 data: file_accesses=75, restricted_ratio=0.1600, confidential_ratio=0.1600, write_ratio=0.2933, unique_paths=75, bytes=1692969766
+      INTERP: CRITICAL ANOMALY in data access for Analyst USR-156 in Marketing. Restricted file access at EXTREME level: ratio 0.1600 (2.6 standard deviations above population, 3.3x baseline (major escalation)). This user is accessing classified and restricted materials at a rate far exceeding normal organizational patterns. Pattern strongly consistent with active data exfiltration, insider threat data staging, or unauthorized access to sensitive intellectual property. Total volume: 1692969766 bytes across 75 paths.
+
+    Zone: network_footprint
+      FLAT:   User USR-156 network: bytes_out=1674665603, unique_dsts=59, external_ratio=0.1106, dns_domains=48, nxdomain_ratio=0.0156
+      INTERP: Analyst USR-156 in Marketing: network activity within normal parameters. Outbound 1674665603 bytes, external ratio 0.1106, 48 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-156 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0
+      INTERP: Analyst USR-156 in Marketing: endpoint risk within normal parameters. Peak risk 0.0000, mean risk 0.0000, both unremarkable.
+
+----------------------------------------------------------------------------------------------------
+  USR-234 -- Slow APT (180-day)
+  Attack starts: 2025-04-01
+  Profile: role=ML Engineer, dept=Customer Support, clearance=internal
+  Total weeks: 19, showing: [0, 9, 18]
+----------------------------------------------------------------------------------------------------
+
+  --- Week 0 (dates: 2025-01-01 to 2025-01-08) ---
+
+    Zone: identity
+      FLAT:   User USR-234 identity: role=ML Engineer, department=Customer Support, clearance=internal, tenure_days=1684, type=employee
+      INTERP: Employee USR-234 is a ML Engineer in Customer Support with internal clearance, tenure 1684 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-234 access: auth_events=75, fail_rate=0.0133, off_hours=0.4667, unique_sources=11, unique_dests=8, methods=4
+      INTERP: ML Engineer USR-234 in Customer Support: authentication activity within normal parameters. Failure rate 0.013, off-hours ratio 0.467, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-234 data: file_accesses=60, restricted_ratio=0.1000, confidential_ratio=0.1333, write_ratio=0.3500, unique_paths=60, bytes=1255879780
+      INTERP: ML Engineer USR-234 in Customer Support data access behavior: Restricted access elevated at 0.1000, elevated sensitivity. Volume: 1255879780 bytes across 60 paths.
+
+    Zone: network_footprint
+      FLAT:   User USR-234 network: bytes_out=1051066293, unique_dsts=52, external_ratio=0.1096, dns_domains=61, nxdomain_ratio=0.0260
+      INTERP: ML Engineer USR-234 in Customer Support: network activity within normal parameters. Outbound 1051066293 bytes, external ratio 0.1096, 61 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-234 risk: endpoint_events=63, suspicious_ratio=0.0000, max_risk=74.0000, mean_risk=13.3968, unique_processes=19
+      INTERP: ML Engineer USR-234 in Customer Support: endpoint risk within normal parameters. Peak risk 74.0000, mean risk 13.3968, both unremarkable.
+
+  --- Week 9 (dates: 2025-03-05 to 2025-03-12) ---
+
+    Zone: identity
+      FLAT:   User USR-234 identity: role=ML Engineer, department=Customer Support, clearance=internal, tenure_days=1684, type=employee
+      INTERP: Employee USR-234 is a ML Engineer in Customer Support with internal clearance, tenure 1684 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-234 access: auth_events=95, fail_rate=0.0421, off_hours=0.4421, unique_sources=10, unique_dests=8, methods=4
+      INTERP: ML Engineer USR-234 in Customer Support: authentication activity within normal parameters. Failure rate 0.042, off-hours ratio 0.442, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-234 data: file_accesses=63, restricted_ratio=0.0476, confidential_ratio=0.2540, write_ratio=0.3333, unique_paths=63, bytes=1545927459
+      INTERP: ML Engineer USR-234 in Customer Support: data access activity within normal parameters. File operations 63, restricted ratio 0.0476, confidential ratio 0.2540, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-234 network: bytes_out=594654035, unique_dsts=61, external_ratio=0.1040, dns_domains=52, nxdomain_ratio=0.0299
+      INTERP: ML Engineer USR-234 in Customer Support network behavior: Connecting to 61 destinations, 52 DNS domains.
+
+    Zone: risk_posture
+      FLAT:   User USR-234 risk: endpoint_events=52, suspicious_ratio=0.0000, max_risk=65.0000, mean_risk=13.4231, unique_processes=18
+      INTERP: ML Engineer USR-234 in Customer Support: endpoint risk within normal parameters. Peak risk 65.0000, mean risk 13.4231, both unremarkable.
+
+  --- Week 18 (dates: 2025-05-07 to 2025-05-13) ---
+
+    Zone: identity
+      FLAT:   User USR-234 identity: role=ML Engineer, department=Customer Support, clearance=internal, tenure_days=1684, type=employee
+      INTERP: Employee USR-234 is a ML Engineer in Customer Support with internal clearance, tenure 1684 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-234 access: auth_events=86, fail_rate=0.0349, off_hours=0.4535, unique_sources=13, unique_dests=8, methods=4
+      INTERP: ML Engineer USR-234 in Customer Support: authentication activity within normal parameters. Failure rate 0.035, off-hours ratio 0.453, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-234 data: file_accesses=53, restricted_ratio=0.0377, confidential_ratio=0.2075, write_ratio=0.3019, unique_paths=53, bytes=1259467715
+      INTERP: ML Engineer USR-234 in Customer Support: data access activity within normal parameters. File operations 53, restricted ratio 0.0377, confidential ratio 0.2075, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-234 network: bytes_out=1026748027, unique_dsts=53, external_ratio=0.1748, dns_domains=60, nxdomain_ratio=0.0667
+      INTERP: ML Engineer USR-234 in Customer Support network behavior: External ratio elevated at 0.1748. NXDOMAIN ratio elevated at 0.0667. Connecting to 53 destinations, 60 DNS domains.
+
+    Zone: risk_posture
+      FLAT:   User USR-234 risk: endpoint_events=38, suspicious_ratio=0.0000, max_risk=82.0000, mean_risk=13.6316, unique_processes=16
+      INTERP: ML Engineer USR-234 in Customer Support: endpoint risk within normal parameters. Peak risk 82.0000, mean risk 13.6316, both unremarkable.
+
+----------------------------------------------------------------------------------------------------
+  USR-042 -- Volt Typhoon LOTL (115-day)
+  Attack starts: 2025-01-15
+  Profile: role=SOC Operator, dept=Engineering, clearance=internal
+  Total weeks: 19, showing: [0, 9, 18]
+----------------------------------------------------------------------------------------------------
+
+  --- Week 0 (dates: 2025-01-01 to 2025-01-08) ---
+
+    Zone: identity
+      FLAT:   User USR-042 identity: role=SOC Operator, department=Engineering, clearance=internal, tenure_days=32, type=contractor
+      INTERP: Employee USR-042 is a SOC Operator in Engineering with internal clearance, tenure 32 days, type contractor.
+
+    Zone: access_pattern
+      FLAT:   User USR-042 access: auth_events=82, fail_rate=0.0000, off_hours=0.5732, unique_sources=7, unique_dests=8, methods=3
+      INTERP: SOC Operator USR-042 in Engineering: authentication activity within normal parameters. Failure rate 0.000, off-hours ratio 0.573, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-042 data: file_accesses=59, restricted_ratio=0.0678, confidential_ratio=0.2203, write_ratio=0.3559, unique_paths=59, bytes=2827310066
+      INTERP: SOC Operator USR-042 in Engineering: data access activity within normal parameters. File operations 59, restricted ratio 0.0678, confidential ratio 0.2203, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-042 network: bytes_out=577604446, unique_dsts=51, external_ratio=0.1044, dns_domains=57, nxdomain_ratio=0.0267
+      INTERP: SOC Operator USR-042 in Engineering network behavior: Connecting to 51 destinations, 57 DNS domains.
+
+    Zone: risk_posture
+      FLAT:   User USR-042 risk: endpoint_events=55, suspicious_ratio=0.0000, max_risk=37.0000, mean_risk=14.3636, unique_processes=20
+      INTERP: SOC Operator USR-042 in Engineering: endpoint risk within normal parameters. Peak risk 37.0000, mean risk 14.3636, both unremarkable.
+
+  --- Week 9 (dates: 2025-03-05 to 2025-03-12) ---
+
+    Zone: identity
+      FLAT:   User USR-042 identity: role=SOC Operator, department=Engineering, clearance=internal, tenure_days=32, type=contractor
+      INTERP: Employee USR-042 is a SOC Operator in Engineering with internal clearance, tenure 32 days, type contractor.
+
+    Zone: access_pattern
+      FLAT:   User USR-042 access: auth_events=79, fail_rate=0.0253, off_hours=0.5063, unique_sources=8, unique_dests=8, methods=7
+      INTERP: SOC Operator USR-042 in Engineering: authentication activity within normal parameters. Failure rate 0.025, off-hours ratio 0.506, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-042 data: file_accesses=73, restricted_ratio=0.0411, confidential_ratio=0.1507, write_ratio=0.2192, unique_paths=73, bytes=1574540178
+      INTERP: SOC Operator USR-042 in Engineering: data access activity within normal parameters. File operations 73, restricted ratio 0.0411, confidential ratio 0.1507, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-042 network: bytes_out=872497369, unique_dsts=70, external_ratio=0.1447, dns_domains=50, nxdomain_ratio=0.0317
+      INTERP: SOC Operator USR-042 in Engineering: network activity within normal parameters. Outbound 872497369 bytes, external ratio 0.1447, 50 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-042 risk: endpoint_events=72, suspicious_ratio=0.0000, max_risk=70.0000, mean_risk=15.7879, unique_processes=24
+      INTERP: SOC Operator USR-042 in Engineering: endpoint risk within normal parameters. Peak risk 70.0000, mean risk 15.7879, both unremarkable.
+
+  --- Week 18 (dates: 2025-05-07 to 2025-05-13) ---
+
+    Zone: identity
+      FLAT:   User USR-042 identity: role=SOC Operator, department=Engineering, clearance=internal, tenure_days=32, type=contractor
+      INTERP: Employee USR-042 is a SOC Operator in Engineering with internal clearance, tenure 32 days, type contractor.
+
+    Zone: access_pattern
+      FLAT:   User USR-042 access: auth_events=75, fail_rate=0.0267, off_hours=0.6267, unique_sources=11, unique_dests=8, methods=5
+      INTERP: SOC Operator USR-042 in Engineering authentication behavior: Off-hours ratio elevated at 0.627. Using 11 sources, 8 destinations.
+
+    Zone: data_behavior
+      FLAT:   User USR-042 data: file_accesses=61, restricted_ratio=0.0656, confidential_ratio=0.1803, write_ratio=0.2951, unique_paths=61, bytes=1208853901
+      INTERP: SOC Operator USR-042 in Engineering: data access activity within normal parameters. File operations 61, restricted ratio 0.0656, confidential ratio 0.1803, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-042 network: bytes_out=808976037, unique_dsts=69, external_ratio=0.1341, dns_domains=44, nxdomain_ratio=0.0370
+      INTERP: SOC Operator USR-042 in Engineering: network activity within normal parameters. Outbound 808976037 bytes, external ratio 0.1341, 44 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-042 risk: endpoint_events=46, suspicious_ratio=0.0000, max_risk=69.0000, mean_risk=16.0500, unique_processes=25
+      INTERP: SOC Operator USR-042 in Engineering: endpoint risk within normal parameters. Peak risk 69.0000, mean risk 16.0500, both unremarkable.
+
+----------------------------------------------------------------------------------------------------
+  USR-118 -- Salt Typhoon Telecom (100-day)
+  Attack starts: 2025-01-20
+  Profile: role=QA Engineer, dept=Legal, clearance=internal
+  Total weeks: 19, showing: [0, 9, 18]
+----------------------------------------------------------------------------------------------------
+
+  --- Week 0 (dates: 2025-01-01 to 2025-01-08) ---
+
+    Zone: identity
+      FLAT:   User USR-118 identity: role=QA Engineer, department=Legal, clearance=internal, tenure_days=1119, type=employee
+      INTERP: Employee USR-118 is a QA Engineer in Legal with internal clearance, tenure 1119 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-118 access: auth_events=78, fail_rate=0.0256, off_hours=0.1795, unique_sources=10, unique_dests=8, methods=4
+      INTERP: QA Engineer USR-118 in Legal: authentication activity within normal parameters. Failure rate 0.026, off-hours ratio 0.179, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-118 data: file_accesses=59, restricted_ratio=0.0508, confidential_ratio=0.1695, write_ratio=0.2712, unique_paths=59, bytes=3237178087
+      INTERP: QA Engineer USR-118 in Legal: data access activity within normal parameters. File operations 59, restricted ratio 0.0508, confidential ratio 0.1695, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-118 network: bytes_out=1648136579, unique_dsts=57, external_ratio=0.1217, dns_domains=62, nxdomain_ratio=0.0375
+      INTERP: QA Engineer USR-118 in Legal: network activity within normal parameters. Outbound 1648136579 bytes, external ratio 0.1217, 62 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-118 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0
+      INTERP: QA Engineer USR-118 in Legal: endpoint risk within normal parameters. Peak risk 0.0000, mean risk 0.0000, both unremarkable.
+
+  --- Week 9 (dates: 2025-03-05 to 2025-03-12) ---
+
+    Zone: identity
+      FLAT:   User USR-118 identity: role=QA Engineer, department=Legal, clearance=internal, tenure_days=1119, type=employee
+      INTERP: Employee USR-118 is a QA Engineer in Legal with internal clearance, tenure 1119 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-118 access: auth_events=96, fail_rate=0.0208, off_hours=0.2812, unique_sources=13, unique_dests=8, methods=7
+      INTERP: QA Engineer USR-118 in Legal: authentication activity within normal parameters. Failure rate 0.021, off-hours ratio 0.281, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-118 data: file_accesses=72, restricted_ratio=0.0972, confidential_ratio=0.2639, write_ratio=0.3194, unique_paths=64, bytes=1560129180
+      INTERP: QA Engineer USR-118 in Legal: data access activity within normal parameters. File operations 72, restricted ratio 0.0972, confidential ratio 0.2639, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-118 network: bytes_out=1266141063, unique_dsts=68, external_ratio=0.1204, dns_domains=56, nxdomain_ratio=0.0000
+      INTERP: QA Engineer USR-118 in Legal network behavior: Connecting to 68 destinations, 56 DNS domains.
+
+    Zone: risk_posture
+      FLAT:   User USR-118 risk: endpoint_events=1, suspicious_ratio=0.0000, max_risk=nan, mean_risk=nan, unique_processes=1
+      INTERP: QA Engineer USR-118 in Legal endpoint risk posture: Running 1 unique processes.
+
+  --- Week 18 (dates: 2025-05-07 to 2025-05-13) ---
+
+    Zone: identity
+      FLAT:   User USR-118 identity: role=QA Engineer, department=Legal, clearance=internal, tenure_days=1119, type=employee
+      INTERP: Employee USR-118 is a QA Engineer in Legal with internal clearance, tenure 1119 days, type employee.
+
+    Zone: access_pattern
+      FLAT:   User USR-118 access: auth_events=73, fail_rate=0.0274, off_hours=0.2055, unique_sources=11, unique_dests=8, methods=4
+      INTERP: QA Engineer USR-118 in Legal: authentication activity within normal parameters. Failure rate 0.027, off-hours ratio 0.205, both unremarkable.
+
+    Zone: data_behavior
+      FLAT:   User USR-118 data: file_accesses=66, restricted_ratio=0.0303, confidential_ratio=0.2273, write_ratio=0.3485, unique_paths=66, bytes=2168311355
+      INTERP: QA Engineer USR-118 in Legal: data access activity within normal parameters. File operations 66, restricted ratio 0.0303, confidential ratio 0.2273, all unremarkable.
+
+    Zone: network_footprint
+      FLAT:   User USR-118 network: bytes_out=1674665603, unique_dsts=59, external_ratio=0.1106, dns_domains=48, nxdomain_ratio=0.0156
+      INTERP: QA Engineer USR-118 in Legal: network activity within normal parameters. Outbound 1674665603 bytes, external ratio 0.1106, 48 DNS domains, all unremarkable.
+
+    Zone: risk_posture
+      FLAT:   User USR-118 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0
+      INTERP: QA Engineer USR-118 in Legal: endpoint risk within normal parameters. Peak risk 0.0000, mean risk 0.0000, both unremarkable.
+
+
+====================================================================================================
+SECTION 2: ZONE DRIFT VECTORS (from pre-computed results)
+  Source: data/tier3_results/weekly_zone_trajectories.csv
+  Source: data/tier3_results/entity_structures.json
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+  USR-156 -- Insider Threat (8-month)
+----------------------------------------------------------------------------------------------------
+
+  Phase State (from entity_structures.json):
+    velocity_magnitude: 0.215873
+    acceleration:       -0.002924
+    stability:          0.976201
+    regime_shifts:      0.0
+    trend_consistency:  -0.566028
+    total_drift:        0.019646
+    current_regime:     stable
+
+  Zone drifts (cosine distance from baseline):
+    Zone                               Week 0      Week 18        Delta
+    ---------------------------- ------------ ------------ ------------
+    identity                         0.000000     0.000000    +0.000000
+    access_pattern                   0.045390     0.048436    +0.003046
+    data_behavior                    0.172511     0.246250    +0.073738
+    network_footprint                0.013215     0.015413    +0.002198
+    risk_posture                     0.000000     0.000000    +0.000000
+    composite                        0.007681     0.012637    +0.004956
+
+  MockEmbedder cosine distance (week 0 text vs last week text):
+    (entity_structures.json only stores LAST week zone texts)
+    Last week texts stored:
+      identity: User USR-156 identity: role=Analyst, department=Marketing, clearance=internal, tenure_days=150, type=employee...
+      access_pattern: User USR-156 access: auth_events=80, fail_rate=0.0250, off_hours=0.1875, unique_sources=11, unique_dests=6, methods=4...
+      data_behavior: User USR-156 data: file_accesses=75, restricted_ratio=0.1600, confidential_ratio=0.1600, write_ratio=0.2933, unique_path...
+      network_footprint: User USR-156 network: bytes_out=1674665603, unique_dsts=59, external_ratio=0.1106, dns_domains=48, nxdomain_ratio=0.0156...
+      risk_posture: User USR-156 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0...
+
+----------------------------------------------------------------------------------------------------
+  USR-234 -- Slow APT (180-day)
+----------------------------------------------------------------------------------------------------
+
+  Phase State (from entity_structures.json):
+    velocity_magnitude: 0.161985
+    acceleration:       -0.000037
+    stability:          0.986206
+    regime_shifts:      0.0
+    trend_consistency:  -0.496093
+    total_drift:        0.015287
+    current_regime:     stable
+
+  Zone drifts (cosine distance from baseline):
+    Zone                               Week 0      Week 18        Delta
+    ---------------------------- ------------ ------------ ------------
+    identity                         0.000000     0.000000    +0.000000
+    access_pattern                   0.010660     0.011944    +0.001284
+    data_behavior                    0.096882     0.013053    -0.083829
+    network_footprint                0.085497     0.050987    -0.034510
+    risk_posture                     0.001592     0.002319    +0.000726
+    composite                        0.007421     0.004759    -0.002662
+
+  MockEmbedder cosine distance (week 0 text vs last week text):
+    (entity_structures.json only stores LAST week zone texts)
+    Last week texts stored:
+      identity: User USR-234 identity: role=ML Engineer, department=Customer Support, clearance=internal, tenure_days=1684, type=employe...
+      access_pattern: User USR-234 access: auth_events=86, fail_rate=0.0349, off_hours=0.4535, unique_sources=13, unique_dests=8, methods=4...
+      data_behavior: User USR-234 data: file_accesses=53, restricted_ratio=0.0377, confidential_ratio=0.2075, write_ratio=0.3019, unique_path...
+      network_footprint: User USR-234 network: bytes_out=1026748027, unique_dsts=53, external_ratio=0.1748, dns_domains=60, nxdomain_ratio=0.0667...
+      risk_posture: User USR-234 risk: endpoint_events=38, suspicious_ratio=0.0000, max_risk=82.0000, mean_risk=13.6316, unique_processes=16...
+
+----------------------------------------------------------------------------------------------------
+  USR-042 -- Volt Typhoon LOTL (115-day)
+----------------------------------------------------------------------------------------------------
+
+  Phase State (from entity_structures.json):
+    velocity_magnitude: 0.189772
+    acceleration:       -0.002749
+    stability:          0.981095
+    regime_shifts:      0.0
+    trend_consistency:  -0.470724
+    total_drift:        0.012516
+    current_regime:     stable
+
+  Zone drifts (cosine distance from baseline):
+    Zone                               Week 0      Week 18        Delta
+    ---------------------------- ------------ ------------ ------------
+    identity                         0.000000     0.000000    +0.000000
+    access_pattern                   0.006572     0.011354    +0.004782
+    data_behavior                    0.093270     0.093305    +0.000035
+    network_footprint                0.115032     0.042569    -0.072463
+    risk_posture                     0.001920     0.002345    +0.000425
+    composite                        0.008870     0.009483    +0.000614
+
+  MockEmbedder cosine distance (week 0 text vs last week text):
+    (entity_structures.json only stores LAST week zone texts)
+    Last week texts stored:
+      identity: User USR-042 identity: role=SOC Operator, department=Engineering, clearance=internal, tenure_days=32, type=contractor...
+      access_pattern: User USR-042 access: auth_events=75, fail_rate=0.0267, off_hours=0.6267, unique_sources=11, unique_dests=8, methods=5...
+      data_behavior: User USR-042 data: file_accesses=61, restricted_ratio=0.0656, confidential_ratio=0.1803, write_ratio=0.2951, unique_path...
+      network_footprint: User USR-042 network: bytes_out=808976037, unique_dsts=69, external_ratio=0.1341, dns_domains=44, nxdomain_ratio=0.0370...
+      risk_posture: User USR-042 risk: endpoint_events=46, suspicious_ratio=0.0000, max_risk=69.0000, mean_risk=16.0500, unique_processes=25...
+
+----------------------------------------------------------------------------------------------------
+  USR-118 -- Salt Typhoon Telecom (100-day)
+----------------------------------------------------------------------------------------------------
+
+  Phase State (from entity_structures.json):
+    velocity_magnitude: 0.227044
+    acceleration:       -0.005060
+    stability:          0.972402
+    regime_shifts:      0.0
+    trend_consistency:  -0.492618
+    total_drift:        0.000756
+    current_regime:     stable
+
+  Zone drifts (cosine distance from baseline):
+    Zone                               Week 0      Week 18        Delta
+    ---------------------------- ------------ ------------ ------------
+    identity                         0.000000     0.000000    +0.000000
+    access_pattern                   0.076422     0.078091    +0.001669
+    data_behavior                    0.040641     0.039461    -0.001180
+    network_footprint                0.011475     0.011814    +0.000339
+    risk_posture                     0.000000     0.000000    +0.000000
+    composite                        0.010367     0.010270    -0.000097
+
+  MockEmbedder cosine distance (week 0 text vs last week text):
+    (entity_structures.json only stores LAST week zone texts)
+    Last week texts stored:
+      identity: User USR-118 identity: role=QA Engineer, department=Legal, clearance=internal, tenure_days=1119, type=employee...
+      access_pattern: User USR-118 access: auth_events=73, fail_rate=0.0274, off_hours=0.2055, unique_sources=11, unique_dests=8, methods=4...
+      data_behavior: User USR-118 data: file_accesses=66, restricted_ratio=0.0303, confidential_ratio=0.2273, write_ratio=0.3485, unique_path...
+      network_footprint: User USR-118 network: bytes_out=1674665603, unique_dsts=59, external_ratio=0.1106, dns_domains=48, nxdomain_ratio=0.0156...
+      risk_posture: User USR-118 risk: endpoint_events=0, suspicious_ratio=0.0000, max_risk=0.0000, mean_risk=0.0000, unique_processes=0...
+
+
+====================================================================================================
+SECTION 3: CONCEPT ALIGNMENT TRACE
+  12 reference concepts (10 threat + 2 benign)
+  + Analysis of WHY drift vectors align with seasonal_variation
+====================================================================================================
+
+  THREAT CONCEPTS (10):
+  ------------------------------------------------------------------------------------------
+
+  [1] compromised_endpoint (severity=critical)
+      MITRE: T1059, T1547, T1562, T1071
+      A device showing signs of compromise: unusual process execution including
+      encoded PowerShell commands, connection to known C2 infrastructure, registry
+      modifications for persistence, and defense evasion through disabling security
+      tools. Network beaconing at regular intervals to external IPs not seen before.
+
+  [2] data_exfiltration (severity=critical)
+      MITRE: T1005, T1074, T1048, T1567
+      An entity systematically collecting and transferring sensitive data outside the
+      organization. Large file copies from restricted shares to staging directories,
+      followed by compression and upload to external cloud storage or email to
+      personal accounts. Data volume increasing exponentially over days.
+
+  [3] privilege_escalation (severity=high)
+      MITRE: T1078, T1068, T1134, T1548
+      A user or process progressively gaining higher access levels. Initial standard
+      access followed by requests for elevated permissions, exploitation of
+      misconfigurations to access admin functions, or token manipulation. Access
+      scope expanding from department-level to organization-wide.
+
+  [4] lateral_movement (severity=high)
+      MITRE: T1021, T1570, T1550, T1072
+      An entity moving systematically across the network from system to system.
+      Authentication to devices outside normal scope, SMB/WinRM/RDP connections to
+      multiple hosts in sequence, credential reuse across systems, and accessing
+      administrative shares on remote hosts.
+
+  [5] insider_threat_slow (severity=high)
+      MITRE: T1078, T1083, T1005, T1052
+      A trusted user whose behavior is gradually shifting toward data theft. Slowly
+      expanding file access scope, increasing off-hours activity, accessing documents
+      outside their role, subtle privilege accumulation. Changes are individually
+      innocuous but directionally concerning when viewed over months.
+
+  [6] insider_threat_fast (severity=critical)
+      MITRE: T1005, T1052, T1048, T1567
+      A user rapidly collecting and exfiltrating sensitive data, likely triggered by
+      imminent termination or grievance. Sudden spike in file downloads, bulk access
+      to restricted documents, USB device usage, large email attachments to personal
+      addresses, all within days.
+
+  [7] credential_stuffing (severity=high)
+      MITRE: T1110, T1078
+      Mass authentication attempts against multiple user accounts from external IPs.
+      High failure rate across many accounts in a short window, automated patterns
+      with consistent timing, originating from known proxy/VPN/botnet infrastructure.
+      Some accounts eventually compromised.
+
+  [8] c2_beacon (severity=critical)
+      MITRE: T1071, T1573, T1568, T1102
+      A device establishing covert command-and-control communication. Regular
+      periodic connections to external infrastructure with consistent intervals (with
+      jitter), small packet sizes, DNS-based or HTTP-based tunneling, and connections
+      to newly-registered domains or cloud services not previously seen.
+
+  [9] reconnaissance (severity=medium)
+      MITRE: T1046, T1018, T1087, T1135
+      Systematic discovery and mapping of network resources, user accounts, and
+      system configurations. Port scanning, LDAP enumeration, share discovery,
+      account enumeration, and DNS zone transfer attempts. Methodical progression
+      through network segments.
+
+  [10] supply_chain_compromise (severity=critical)
+      MITRE: T1195, T1059, T1071
+      A trusted application exhibiting new suspicious behaviors after an update.
+      Unexpected network connections to unfamiliar domains, new process spawning
+      patterns, access to data stores not previously touched, and subtle changes in
+      API call patterns that deviate from the application's historical baseline.
+
+  BENIGN CONCEPTS (2):
+  ------------------------------------------------------------------------------------------
+
+  [1] normal_role_change (severity=low)
+      A user whose behavior is shifting due to legitimate organizational change. New
+      application access corresponding to role transfer, different work hours
+      matching new team timezone, new peer group communication patterns. Changes
+      align with HR records of role change or promotion.
+
+  [2] seasonal_variation (severity=low)
+      Entity behavior fluctuating with business cycles. End-of-quarter spikes in
+      finance system usage, annual audit-driven access pattern changes,
+      holiday-period reduced activity, or project-deadline-driven temporary increases
+      in off-hours work.
+
+
+  ==========================================================================================
+  ROOT CAUSE ANALYSIS: Why drift aligns with seasonal_variation
+  ==========================================================================================
+
+  Example: USR-234 data_behavior zone
+    Baseline text: User USR-234 data: file_accesses=72, restricted_ratio=0.0502, confidential_ratio=0.0333, w...
+    Attack text:   User USR-234 data: file_accesses=70, restricted_ratio=0.0426, confidential_ratio=0.0314, w...
+    Drift magnitude (cosine distance): 1.017093
+
+  Drift vector alignment with all 12 concepts:
+    Concept                        Category    Alignment
+    ------------------------------ ---------- ----------
+    normal_role_change             benign       0.031787 <-- TOP
+    compromised_endpoint           threat       0.005258
+    credential_stuffing            threat       0.004913
+    supply_chain_compromise        threat      -0.009367
+    lateral_movement               threat      -0.011255
+    data_exfiltration              threat      -0.011411
+    reconnaissance                 threat      -0.023118
+    c2_beacon                      threat      -0.023512
+    insider_threat_fast            threat      -0.025135
+    seasonal_variation             benign      -0.040666
+    privilege_escalation           threat      -0.048474
+    insider_threat_slow            threat      -0.051893
+
+  DIAGNOSIS:
+  ------------------------------------------------------------------------------------------
+  The MockEmbedder hashes each text string with SHA256 and uses that to seed
+  a random number generator, producing a pseudo-random unit vector in 1536-d.
+
+  KEY PROBLEM: MockEmbedder produces SEMANTICALLY MEANINGLESS vectors.
+  Two texts that differ by a single character produce COMPLETELY DIFFERENT
+  vectors (cosine similarity near 0). This means:
+
+    1. The drift vector (v_attack - v_baseline) is itself a random direction
+       because v_attack and v_baseline are independent random unit vectors.
+
+    2. The concept vectors are ALSO random (seeded by their description text).
+
+    3. Cosine similarity between two random 1536-d unit vectors has mean ~0
+       and std ~1/sqrt(1536) = ~0.026. So ALL alignment scores will be
+       near-zero random noise, with no semantic meaning.
+
+    4. Whichever concept happens to get the highest random score 'wins',
+       and that is often seasonal_variation or normal_role_change because
+       they are just as likely as any threat concept to randomly align.
+
+  CONTRAST WITH REAL EMBEDDINGS:
+    With OpenAI text-embedding-3-small, 'restricted_ratio=0.16' would embed
+    NEAR 'accessing restricted and classified materials' in the data_exfiltration
+    concept. The drift vector from normal restricted_ratio to elevated
+    restricted_ratio would genuinely point toward the exfiltration concept.
+
+  ADDITIONAL PROBLEM -- FLAT SERIALIZATION:
+    Even with real embeddings, the FLAT serialization format
+    ('restricted_ratio=0.0502') is numerically dense but semantically sparse.
+    The number '0.0502' vs '0.16' looks similar to an embedding model.
+    The INTERPRETIVE serialization ('EXTREME level... pattern consistent with
+    data exfiltration') provides the semantic bridge that real embeddings need.
+
+  INTERPRETIVE SERIALIZATION COMPARISON:
+  ------------------------------------------------------------------------------------------
+
+    Normal interp: Analyst USR-234 in Engineering: data access activity within normal parameters. File operations 72, r...
+    Attack interp: CRITICAL ANOMALY in data access for Analyst USR-234 in Engineering. Restricted file access at EXTREM...
+    Drift magnitude: 0.991235
+
+    Alignment with concepts (interpretive drift vector):
+    Concept                        Category    Alignment
+    ------------------------------ ---------- ----------
+    c2_beacon                      threat       0.058439
+    credential_stuffing            threat       0.046635
+    lateral_movement               threat       0.021140
+    insider_threat_fast            threat       0.017181
+    supply_chain_compromise        threat       0.012807
+    seasonal_variation             benign      -0.007116
+    normal_role_change             benign      -0.008125
+    privilege_escalation           threat      -0.010930
+    data_exfiltration              threat      -0.013271
+    reconnaissance                 threat      -0.013693
+    compromised_endpoint           threat      -0.020942
+    insider_threat_slow            threat      -0.035049
+
+    NOTE: Even interpretive text alignment is random with MockEmbedder.
+    With REAL embeddings, the interpretive text contains words like
+    'data exfiltration', 'insider threat', 'sensitive intellectual property'
+    that would embed near the data_exfiltration and insider_threat_slow
+    concept descriptions, producing strong positive alignment scores.
+
+
+====================================================================================================
+SECTION 4: WEEKLY TRAJECTORY DATA
+  Per-week zone drifts, composite drift, velocity, acceleration
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+  USR-156 -- Insider Threat (8-month) (attack start: 2025-03-01)
+----------------------------------------------------------------------------------------------------
+   Wk  data_behavio network_foot access_patte     identity    composite     velocity        accel     zone_div
+  ---  ------------ ------------ ------------ ------------ ------------ ------------ ------------
+    0      0.172511     0.013215     0.045390     0.000000     0.007681     0.000000     0.000000     0.172511
+    1      0.019080     0.092863     0.138096     0.000000     0.012697     0.005016     0.000000     0.138096
+    2      0.018171     0.012707     0.046704     0.000000     0.007146    -0.005551    -0.010566     0.046704
+    3      0.020788     0.013123     0.164838     0.000000     0.007443     0.000297     0.005848     0.164838
+    4      0.132080     0.014867     0.164346     0.000000     0.017088     0.009645     0.009347     0.164346
+    5      0.026844     0.016258     0.045976     0.000000     0.007931    -0.009157    -0.018802     0.045976
+    6      0.021801     0.095909     0.166515     0.000000     0.016604     0.008673     0.017830     0.166515
+    7      0.170605     0.016986     0.045448     0.000000     0.007814    -0.008790    -0.017462     0.170605
+    8      0.018697     0.100966     0.172048     0.000000     0.017459     0.009645     0.018435     0.172048
+    9      0.020600     0.165674     0.046537     0.000000     0.008580    -0.008879    -0.018524     0.165674
+   10      0.130016     0.017664     0.046396     0.000000     0.006570    -0.002010     0.006868     0.130016
+   11      0.137737     0.017681     0.164838     0.000000     0.016643     0.010073     0.012084     0.164838
+   12      0.019781     0.164914     0.047037     0.000000     0.008647    -0.007996    -0.018070     0.164914
+   13      0.020305     0.013871     0.166040     0.000000     0.007645    -0.001002     0.006994     0.166040
+   14      0.136639     0.017981     0.046605     0.000000     0.007206    -0.000438     0.000564     0.136639
+   15      0.173685     0.096734     0.046694     0.000000     0.018242     0.011035     0.011473     0.173685
+   16      0.130588     0.016984     0.045769     0.000000     0.007225    -0.011017    -0.022052     0.130588
+   17      0.242114     0.014082     0.165287     0.000000     0.017119     0.009894     0.020910     0.242114
+   18      0.246250     0.015413     0.048436     0.000000     0.012637    -0.004481    -0.014375     0.246250
+
+  Summary:
+    data_behavior            min=0.018171  max=0.246250  mean=0.097805  std=0.079301
+    network_footprint        min=0.012707  max=0.165674  mean=0.048310  std=0.051719
+    access_pattern           min=0.045390  max=0.172048  mean=0.095421  std=0.057759
+    identity                 min=0.000000  max=0.000000  mean=0.000000  std=0.000000
+    composite                min=0.006570  max=0.018242  mean=0.011178  std=0.004388
+    velocity                 min=-0.011017  max=0.011035  mean=0.000261  std=0.007566
+    acceleration             min=-0.022052  max=0.020910  mean=-0.000500  std=0.013990
+
+  Temporal pattern:
+    Baseline composite drift (wk 0-3 mean):  0.008742
+    Test period composite drift (wk 9+ mean): 0.011052
+    Escalation ratio:                         1.26x
+    data_behavior           : last-6 non-monotonic, late/early ratio=3.44x
+    network_footprint       : last-6 non-monotonic, late/early ratio=1.09x
+    access_pattern          : last-6 non-monotonic, late/early ratio=0.78x
+    identity                : last-6 MONOTONIC INCREASE, late/early ratio=0.00x
+
+----------------------------------------------------------------------------------------------------
+  USR-234 -- Slow APT (180-day) (attack start: 2025-04-01)
+----------------------------------------------------------------------------------------------------
+   Wk  data_behavio network_foot access_patte     identity    composite     velocity        accel     zone_div
+  ---  ------------ ------------ ------------ ------------ ------------ ------------ ------------
+    0      0.096882     0.085497     0.010660     0.000000     0.007421     0.000000     0.000000     0.096882
+    1      0.011982     0.050090     0.011237     0.000000     0.003515    -0.003906     0.000000     0.050090
+    2      0.011229     0.045418     0.011151     0.000000     0.003502    -0.000013     0.003892     0.045418
+    3      0.011292     0.030315     0.095185     0.000000     0.006818     0.003316     0.003329     0.095185
+    4      0.014103     0.051002     0.102203     0.000000     0.009695     0.002878    -0.000438     0.102203
+    5      0.015411     0.031753     0.011024     0.000000     0.003153    -0.006543    -0.009421     0.031753
+    6      0.011626     0.041923     0.011186     0.000000     0.003370     0.000217     0.006760     0.041923
+    7      0.173223     0.031784     0.011604     0.000000     0.008372     0.005003     0.004786     0.173223
+    8      0.013616     0.094161     0.011630     0.000000     0.008964     0.000592    -0.004411     0.094161
+    9      0.014160     0.056473     0.011608     0.000000     0.003632    -0.005332    -0.005924     0.056473
+   10      0.011673     0.044034     0.011250     0.000000     0.003458    -0.000175     0.005157     0.044034
+   11      0.013239     0.062900     0.011435     0.000000     0.003995     0.000537     0.000712     0.062900
+   12      0.016111     0.088273     0.011014     0.000000     0.008473     0.004477     0.003940     0.088273
+   13      0.013826     0.292725     0.010662     0.000000     0.016907     0.008435     0.003957     0.292725
+   14      0.012890     0.029894     0.011492     0.000000     0.002975    -0.013932    -0.022366     0.029894
+   15      0.015092     0.292284     0.190674     0.000000     0.021899     0.018924     0.032855     0.292284
+   16      0.013845     0.292694     0.010951     0.000000     0.017118    -0.004781    -0.023704     0.292694
+   17      0.108359     0.087803     0.010705     0.000000     0.008421    -0.008697    -0.003916     0.108359
+   18      0.013053     0.050987     0.011944     0.000000     0.004759    -0.003662     0.005035     0.050987
+
+  Summary:
+    data_behavior            min=0.011229  max=0.173223  mean=0.031138  std=0.043277
+    network_footprint        min=0.029894  max=0.292725  mean=0.092632  std=0.088816
+    access_pattern           min=0.010660  max=0.190674  mean=0.029875  std=0.046409
+    identity                 min=0.000000  max=0.000000  mean=0.000000  std=0.000000
+    composite                min=0.002975  max=0.021899  mean=0.007708  std=0.005316
+    velocity                 min=-0.013932  max=0.018924  mean=-0.000140  std=0.006830
+    acceleration             min=-0.023704  max=0.032855  mean=0.000013  std=0.011422
+
+  Temporal pattern:
+    Baseline composite drift (wk 0-3 mean):  0.005314
+    Test period composite drift (wk 9+ mean): 0.009164
+    Escalation ratio:                         1.72x
+    data_behavior           : last-6 non-monotonic, late/early ratio=1.14x
+    network_footprint       : last-6 non-monotonic, late/early ratio=3.42x
+    access_pattern          : last-6 non-monotonic, late/early ratio=1.75x
+    identity                : last-6 MONOTONIC INCREASE, late/early ratio=0.00x
+
+----------------------------------------------------------------------------------------------------
+  USR-042 -- Volt Typhoon LOTL (115-day) (attack start: 2025-01-15)
+----------------------------------------------------------------------------------------------------
+   Wk  data_behavio network_foot access_patte     identity    composite     velocity        accel     zone_div
+  ---  ------------ ------------ ------------ ------------ ------------ ------------ ------------
+    0      0.093270     0.115032     0.006572     0.000000     0.008870     0.000000     0.000000     0.115032
+    1      0.052916     0.033594     0.033837     0.000000     0.005154    -0.003715     0.000000     0.052916
+    2      0.032307     0.157280     0.005735     0.000000     0.011766     0.006611     0.010327     0.157280
+    3      0.030523     0.033749     0.005298     0.000000     0.003674    -0.008092    -0.014703     0.033749
+    4      0.057597     0.042037     0.012265     0.000000     0.005785     0.002111     0.010203     0.057597
+    5      0.091448     0.036966     0.114179     0.000000     0.020264     0.014480     0.012369     0.114179
+    6      0.093507     0.039236     0.005505     0.000000     0.009602    -0.010663    -0.025142     0.093507
+    7      0.034253     0.037519     0.010236     0.000000     0.004324    -0.005277     0.005386     0.037519
+    8      0.089093     0.083694     0.013695     0.000000     0.008806     0.004481     0.009758     0.089093
+    9      0.092132     0.044498     0.113295     0.000000     0.020433     0.011627     0.007146     0.113295
+   10      0.036798     0.112265     0.009728     0.000000     0.009933    -0.010499    -0.022126     0.112265
+   11      0.093695     0.115147     0.111557     0.000000     0.015230     0.005296     0.015796     0.118480
+   12      0.177082     0.110379     0.109619     0.000000     0.017792     0.002563    -0.002734     0.177082
+   13      0.033436     0.043963     0.109349     0.000000     0.011136    -0.006656    -0.009219     0.109349
+   14      0.090126     0.037184     0.109572     0.000000     0.019759     0.008623     0.015279     0.109572
+   15      0.039276     0.039209     0.036233     0.000000     0.004995    -0.014764    -0.023387     0.039276
+   16      0.090824     0.157935     0.111481     0.000000     0.020572     0.015577     0.030341     0.157935
+   17      0.092135     0.041635     0.110427     0.000000     0.017734    -0.002838    -0.018415     0.114311
+   18      0.093305     0.042569     0.011354     0.000000     0.009483    -0.008251    -0.005413     0.093305
+
+  Summary:
+    data_behavior            min=0.030523  max=0.177082  mean=0.074406  std=0.035560
+    network_footprint        min=0.033594  max=0.157935  mean=0.069679  std=0.042577
+    access_pattern           min=0.005298  max=0.114179  mean=0.054733  std=0.048806
+    identity                 min=0.000000  max=0.000000  mean=0.000000  std=0.000000
+    composite                min=0.003674  max=0.020572  mean=0.011858  std=0.005847
+    velocity                 min=-0.014764  max=0.015577  mean=0.000032  std=0.008688
+    acceleration             min=-0.025142  max=0.030341  mean=-0.000239  std=0.015021
+
+  Temporal pattern:
+    Baseline composite drift (wk 0-3 mean):  0.007366
+    Test period composite drift (wk 9+ mean): 0.014707
+    Escalation ratio:                         2.00x
+    data_behavior           : last-6 non-monotonic, late/early ratio=1.51x
+    network_footprint       : last-6 non-monotonic, late/early ratio=0.83x
+    access_pattern          : last-6 non-monotonic, late/early ratio=5.24x
+    identity                : last-6 MONOTONIC INCREASE, late/early ratio=0.00x
+
+----------------------------------------------------------------------------------------------------
+  USR-118 -- Salt Typhoon Telecom (100-day) (attack start: 2025-01-20)
+----------------------------------------------------------------------------------------------------
+   Wk  data_behavio network_foot access_patte     identity    composite     velocity        accel     zone_div
+  ---  ------------ ------------ ------------ ------------ ------------ ------------ ------------
+    0      0.040641     0.011475     0.076422     0.000000     0.010367     0.000000     0.000000     0.076422
+    1      0.042230     0.074397     0.081804     0.000000     0.018938     0.008571     0.000000     0.081804
+    2      0.054617     0.012153     0.080251     0.000000     0.007396    -0.011542    -0.020113     0.080251
+    3      0.037670     0.011608     0.078272     0.000000     0.010645     0.003249     0.014790     0.078272
+    4      0.040339     0.011630     0.085142     0.000000     0.019867     0.009223     0.005974     0.244126
+    5      0.038134     0.013618     0.085528     0.000000     0.014530    -0.005337    -0.014560     0.218941
+    6      0.135849     0.076017     0.075276     0.000000     0.010572    -0.003958     0.001380     0.135849
+    7      0.041411     0.017165     0.079198     0.000000     0.014803     0.004231     0.008188     0.218941
+    8      0.192831     0.079736     0.085142     0.000000     0.026000     0.011198     0.006967     0.192831
+    9      0.062407     0.147046     0.078605     0.000000     0.024560    -0.001440    -0.012638     0.218941
+   10      0.192911     0.013865     0.080818     0.000000     0.014274    -0.010286    -0.008846     0.192911
+   11      0.062753     0.015025     0.087540     0.000000     0.008310    -0.005964     0.004322     0.087540
+   12      0.193163     0.146956     0.085260     0.000000     0.027924     0.019614     0.025578     0.193163
+   13      0.204071     0.014064     0.078296     0.000000     0.016536    -0.011388    -0.031002     0.204071
+   14      0.192655     0.018642     0.079513     0.000000     0.022050     0.005514     0.016902     0.218941
+   15      0.207688     0.077795     0.078403     0.000000     0.029189     0.007139     0.001625     0.244126
+   16      0.060435     0.014055     0.078997     0.000000     0.013022    -0.016167    -0.023306     0.218941
+   17      0.055499     0.013133     0.085175     0.000000     0.007567    -0.005455     0.010712     0.085175
+   18      0.039461     0.011814     0.078091     0.000000     0.010270     0.002703     0.008158     0.078091
+
+  Summary:
+    data_behavior            min=0.037670  max=0.207688  mean=0.099724  std=0.069533
+    network_footprint        min=0.011475  max=0.147046  mean=0.041063  std=0.044371
+    access_pattern           min=0.075276  max=0.087540  mean=0.080933  std=0.003504
+    identity                 min=0.000000  max=0.000000  mean=0.000000  std=0.000000
+    composite                min=0.007396  max=0.029189  mean=0.016149  std=0.006851
+    velocity                 min=-0.016167  max=0.019614  mean=-0.000005  std=0.008966
+    acceleration             min=-0.031002  max=0.025578  mean=-0.000309  std=0.014274
+
+  Temporal pattern:
+    Baseline composite drift (wk 0-3 mean):  0.011837
+    Test period composite drift (wk 9+ mean): 0.017370
+    Escalation ratio:                         1.47x
+    data_behavior           : last-6 non-monotonic, late/early ratio=2.07x
+    network_footprint       : last-6 non-monotonic, late/early ratio=1.07x
+    access_pattern          : last-6 non-monotonic, late/early ratio=1.01x
+    identity                : last-6 MONOTONIC INCREASE, late/early ratio=0.00x
+
+
+====================================================================================================
+SECTION 5: POPULATION COMPARISON
+  Attack user drift at LAST week vs normal user distribution
+====================================================================================================
+
+  Normal user distribution at week 18 (N=246):
+  Metric                              p50        p90        p95        p99        max
+  ---------------------------- ---------- ---------- ---------- ---------- ----------
+  identity                       0.000000   0.000000   0.000000   0.000000   0.000000
+  access_pattern                 0.029475   0.217612   0.267142   0.287184   0.318759
+  data_behavior                  0.046708   0.169326   0.201717   0.242067   0.267879
+  network_footprint              0.014508   0.140994   0.197402   0.249065   0.282142
+  risk_posture                   0.001951   0.011422   0.013692   0.106679   0.166618
+  composite                      0.008037   0.020546   0.027413   0.042909   0.053665
+  zone_divergence                0.117147   0.248793   0.268215   0.287184   0.318759
+
+
+  ATTACK USER POSITIONING (week 18):
+  ------------------------------------------------------------------------------------------
+
+  USR-156 -- Insider Threat (8-month):
+    identity                     value=  0.000000  percentile=  0.0%  bucket=p90-p95
+    access_pattern               value=  0.048436  percentile= 55.7%  bucket=p50-p90
+    data_behavior                value=  0.246250  percentile= 98.8%  bucket=>p99
+    network_footprint            value=  0.015413  percentile= 53.3%  bucket=p50-p90
+    risk_posture                 value=  0.000000  percentile=  0.0%  bucket=<p50
+    composite                    value=  0.012637  percentile= 72.4%  bucket=p50-p90
+    zone_divergence              value=  0.246250  percentile= 89.0%  bucket=p50-p90
+
+  USR-234 -- Slow APT (180-day):
+    identity                     value=  0.000000  percentile=  0.0%  bucket=p90-p95
+    access_pattern               value=  0.011944  percentile= 30.1%  bucket=<p50
+    data_behavior                value=  0.013053  percentile= 22.4%  bucket=<p50
+    network_footprint            value=  0.050987  percentile= 72.0%  bucket=p50-p90
+    risk_posture                 value=  0.002319  percentile= 54.1%  bucket=p50-p90
+    composite                    value=  0.004759  percentile= 21.5%  bucket=<p50
+    zone_divergence              value=  0.050987  percentile= 20.7%  bucket=<p50
+
+  USR-042 -- Volt Typhoon LOTL (115-day):
+    identity                     value=  0.000000  percentile=  0.0%  bucket=p90-p95
+    access_pattern               value=  0.011354  percentile= 28.9%  bucket=<p50
+    data_behavior                value=  0.093305  percentile= 71.1%  bucket=p50-p90
+    network_footprint            value=  0.042569  percentile= 69.9%  bucket=p50-p90
+    risk_posture                 value=  0.002345  percentile= 54.1%  bucket=p50-p90
+    composite                    value=  0.009483  percentile= 60.6%  bucket=p50-p90
+    zone_divergence              value=  0.093305  percentile= 39.8%  bucket=<p50
+
+  USR-118 -- Salt Typhoon Telecom (100-day):
+    identity                     value=  0.000000  percentile=  0.0%  bucket=p90-p95
+    access_pattern               value=  0.078091  percentile= 66.3%  bucket=p50-p90
+    data_behavior                value=  0.039461  percentile= 41.1%  bucket=<p50
+    network_footprint            value=  0.011814  percentile= 23.6%  bucket=<p50
+    risk_posture                 value=  0.000000  percentile=  0.0%  bucket=<p50
+    composite                    value=  0.010270  percentile= 61.4%  bucket=p50-p90
+    zone_divergence              value=  0.078091  percentile= 34.6%  bucket=<p50
+
+
+  VELOCITY/ACCELERATION COMPARISON (week 18):
+  ------------------------------------------------------------------------------------------
+
+  Normal distribution:
+  Metric                      p50        p90        p95        p99
+  -------------------- ---------- ---------- ---------- ----------
+  velocity               0.000170   0.013750   0.016782   0.037461
+  acceleration           0.002097   0.018685   0.026000   0.037915
+
+  Attack users:
+  USR-156      (Insider Threat (8-mo)  velocity= -0.004481  acceleration= -0.014375
+  USR-234      (Slow APT (180-day)  )  velocity= -0.003662  acceleration=  0.005035
+  USR-042      (Volt Typhoon LOTL (1)  velocity= -0.008251  acceleration= -0.005413
+  USR-118      (Salt Typhoon Telecom)  velocity=  0.002703  acceleration=  0.008158
+
+
+====================================================================================================
+SECTION 6: CONCEPT ALIGNMENT WITH ACTUAL ATTACK USER ZONE TEXTS
+  Using MockEmbedder to show mechanical behavior of the pipeline
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+  USR-156 -- Insider Threat (8-month)
+----------------------------------------------------------------------------------------------------
+
+  Week 0 -> Week 18:
+
+    data_behavior:
+      Flat drift magnitude:   1.013461
+      Interp drift magnitude: 1.029262
+      Flat top alignment:     compromised_endpoint (threat) = 0.048765
+      Interp top alignment:   lateral_movement (threat) = 0.052681
+      Flat max threat:        compromised_endpoint = 0.048765
+      Interp max threat:      lateral_movement = 0.052681
+
+      Full alignment table (flat) for USR-156 data_behavior:
+      Concept                        Cat           Score
+      compromised_endpoint           threat     0.048765
+      credential_stuffing            threat     0.037075
+      supply_chain_compromise        threat     0.024240
+      normal_role_change             benign     0.023067
+      seasonal_variation             benign     0.002579
+      insider_threat_slow            threat    -0.001312
+      reconnaissance                 threat    -0.008273
+      c2_beacon                      threat    -0.010256
+      lateral_movement               threat    -0.017342
+      privilege_escalation           threat    -0.019913
+      insider_threat_fast            threat    -0.022895
+      data_exfiltration              threat    -0.036075
+
+    network_footprint:
+      Flat drift magnitude:   0.982627
+      Interp drift magnitude: 0.973116
+      Flat top alignment:     lateral_movement (threat) = 0.041890
+      Interp top alignment:   insider_threat_fast (threat) = 0.024912
+      Flat max threat:        lateral_movement = 0.041890
+      Interp max threat:      insider_threat_fast = 0.024912
+
+    access_pattern:
+      Flat drift magnitude:   0.995661
+      Interp drift magnitude: 1.035627
+      Flat top alignment:     credential_stuffing (threat) = 0.027513
+      Interp top alignment:   lateral_movement (threat) = 0.037436
+      Flat max threat:        credential_stuffing = 0.027513
+      Interp max threat:      lateral_movement = 0.037436
+
+    risk_posture:
+      Flat drift magnitude:   0.000000
+      Interp drift magnitude: 0.000000
+      Flat top alignment:     compromised_endpoint (threat) = 0.000000
+      Interp top alignment:   compromised_endpoint (threat) = 0.000000
+      Flat max threat:        compromised_endpoint = 0.000000
+      Interp max threat:      compromised_endpoint = 0.000000
+
+----------------------------------------------------------------------------------------------------
+  USR-234 -- Slow APT (180-day)
+----------------------------------------------------------------------------------------------------
+
+  Week 0 -> Week 18:
+
+    data_behavior:
+      Flat drift magnitude:   0.959804
+      Interp drift magnitude: 1.008905
+      Flat top alignment:     normal_role_change (benign) = 0.050368
+      Interp top alignment:   insider_threat_fast (threat) = 0.036920
+      Flat max threat:        privilege_escalation = 0.035903
+      Interp max threat:      insider_threat_fast = 0.036920
+
+    network_footprint:
+      Flat drift magnitude:   1.028501
+      Interp drift magnitude: 0.981914
+      Flat top alignment:     insider_threat_slow (threat) = 0.022325
+      Interp top alignment:   lateral_movement (threat) = 0.021165
+      Flat max threat:        insider_threat_slow = 0.022325
+      Interp max threat:      lateral_movement = 0.021165
+
+    access_pattern:
+      Flat drift magnitude:   0.986412
+      Interp drift magnitude: 0.988579
+      Flat top alignment:     privilege_escalation (threat) = 0.063550
+      Interp top alignment:   privilege_escalation (threat) = 0.025422
+      Flat max threat:        privilege_escalation = 0.063550
+      Interp max threat:      privilege_escalation = 0.025422
+
+    risk_posture:
+      Flat drift magnitude:   1.030979
+      Interp drift magnitude: 1.017962
+      Flat top alignment:     privilege_escalation (threat) = 0.044747
+      Interp top alignment:   compromised_endpoint (threat) = 0.043284
+      Flat max threat:        privilege_escalation = 0.044747
+      Interp max threat:      compromised_endpoint = 0.043284
+
+----------------------------------------------------------------------------------------------------
+  USR-042 -- Volt Typhoon LOTL (115-day)
+----------------------------------------------------------------------------------------------------
+
+  Week 0 -> Week 18:
+
+    data_behavior:
+      Flat drift magnitude:   1.007463
+      Interp drift magnitude: 0.997626
+      Flat top alignment:     lateral_movement (threat) = 0.025569
+      Interp top alignment:   compromised_endpoint (threat) = 0.050046
+      Flat max threat:        lateral_movement = 0.025569
+      Interp max threat:      compromised_endpoint = 0.050046
+
+    network_footprint:
+      Flat drift magnitude:   1.014022
+      Interp drift magnitude: 0.996594
+      Flat top alignment:     supply_chain_compromise (threat) = 0.035789
+      Interp top alignment:   supply_chain_compromise (threat) = 0.071405
+      Flat max threat:        supply_chain_compromise = 0.035789
+      Interp max threat:      supply_chain_compromise = 0.071405
+
+    access_pattern:
+      Flat drift magnitude:   1.037269
+      Interp drift magnitude: 0.989262
+      Flat top alignment:     data_exfiltration (threat) = 0.069660
+      Interp top alignment:   lateral_movement (threat) = 0.044347
+      Flat max threat:        data_exfiltration = 0.069660
+      Interp max threat:      lateral_movement = 0.044347
+
+    risk_posture:
+      Flat drift magnitude:   0.993845
+      Interp drift magnitude: 1.000926
+      Flat top alignment:     supply_chain_compromise (threat) = 0.060850
+      Interp top alignment:   reconnaissance (threat) = 0.042332
+      Flat max threat:        supply_chain_compromise = 0.060850
+      Interp max threat:      reconnaissance = 0.042332
+
+----------------------------------------------------------------------------------------------------
+  USR-118 -- Salt Typhoon Telecom (100-day)
+----------------------------------------------------------------------------------------------------
+
+  Week 0 -> Week 18:
+
+    data_behavior:
+      Flat drift magnitude:   1.005442
+      Interp drift magnitude: 1.005674
+      Flat top alignment:     insider_threat_fast (threat) = 0.028248
+      Interp top alignment:   privilege_escalation (threat) = 0.045067
+      Flat max threat:        insider_threat_fast = 0.028248
+      Interp max threat:      privilege_escalation = 0.045067
+
+    network_footprint:
+      Flat drift magnitude:   0.999180
+      Interp drift magnitude: 1.024300
+      Flat top alignment:     privilege_escalation (threat) = 0.048255
+      Interp top alignment:   credential_stuffing (threat) = 0.052505
+      Flat max threat:        privilege_escalation = 0.048255
+      Interp max threat:      credential_stuffing = 0.052505
+
+    access_pattern:
+      Flat drift magnitude:   1.007366
+      Interp drift magnitude: 0.966823
+      Flat top alignment:     seasonal_variation (benign) = 0.039303
+      Interp top alignment:   reconnaissance (threat) = 0.046446
+      Flat max threat:        data_exfiltration = 0.037915
+      Interp max threat:      reconnaissance = 0.046446
+
+    risk_posture:
+      Flat drift magnitude:   0.000000
+      Interp drift magnitude: 0.000000
+      Flat top alignment:     compromised_endpoint (threat) = 0.000000
+      Interp top alignment:   compromised_endpoint (threat) = 0.000000
+      Flat max threat:        compromised_endpoint = 0.000000
+      Interp max threat:      compromised_endpoint = 0.000000
+
+
+====================================================================================================
+SECTION 7: TIER 3 COMPARISON DIAGNOSTICS (from tier3_comparison.csv)
+====================================================================================================
+
+  USR-156 -- Insider Threat (8-month):
+    Concept diagnostics: identity->(none, conf=0.000); access_pattern->(c2_beacon, conf=0.026); data_behavior->(insider_threat_fast, conf=0.331 [THREAT]); network_footprint->(privilege_escalation, conf=0.038); risk_posture->(none, conf=0.000)
+    Divergence strings:  identity STABLE (-0.000), data_behavior DRIFTING (0.328) toward insider_threat_fast | access_pattern STABLE (0.004), data_behavior DRIFTING (0.328) toward insider_threat_fast | network_footprint STABL...
+    Primary threat zone: data_behavior (confidence=0.3313521444797516)
+    Detected by: regime, zone divergence, zone threat, prog, combined
+    Missed by:   velocity, rel, ctx, cohort member, cusum
+    t3_composite_score:       0.8859
+    t3_anomaly_breadth:       3
+    t3_cusum_max:             0.047343
+    t3_prog_best_tau:         0.4152
+    t3_zone_threat_best_score:1.0000
+
+  USR-234 -- Slow APT (180-day):
+    Concept diagnostics: identity->(none, conf=0.000); access_pattern->(data_exfiltration, conf=0.035); data_behavior->(seasonal_variation, conf=-0.004); network_footprint->(privilege_escalation, conf=0.028); risk_posture->(credential_stuffing, conf=-0.008)
+    Divergence strings:  identity STABLE (0.000), data_behavior DRIFTING (0.168) toward seasonal_variation | identity STABLE (0.000), network_footprint DRIFTING (0.166) toward privilege_escalation | access_pattern STABLE (0.0...
+    Primary threat zone:  (confidence=0.0)
+    Detected by: zone threat, prog
+    Missed by:   velocity, regime, zone divergence, rel, ctx, cohort member, cusum, combined
+    t3_composite_score:       0.6282
+    t3_anomaly_breadth:       1
+    t3_cusum_max:             0.047541
+    t3_prog_best_tau:         0.3333
+    t3_zone_threat_best_score:1.0000
+
+  USR-042 -- Volt Typhoon LOTL (115-day):
+    Concept diagnostics: identity->(none, conf=0.000); access_pattern->(credential_stuffing, conf=0.189); data_behavior->(seasonal_variation, conf=0.074); network_footprint->(seasonal_variation, conf=0.213); risk_posture->(privilege_escalation, conf=0.036)
+    Divergence strings:  identity STABLE (0.000), network_footprint DRIFTING (0.201) toward seasonal_variation | access_pattern STABLE (0.015), network_footprint DRIFTING (0.201) toward seasonal_variation | data_behavior STAB...
+    Primary threat zone:  (confidence=0.0)
+    Detected by: NONE
+    Missed by:   velocity, regime, zone divergence, rel, ctx, cohort member, cusum, zone threat, prog, combined
+    t3_composite_score:       0.5988
+    t3_anomaly_breadth:       0
+    t3_cusum_max:             0.086942
+    t3_prog_best_tau:         0.2281
+    t3_zone_threat_best_score:0.9333
+
+  USR-118 -- Salt Typhoon Telecom (100-day):
+    Concept diagnostics: identity->(none, conf=0.000); access_pattern->(normal_role_change, conf=-0.008); data_behavior->(privilege_escalation, conf=0.108); network_footprint->(c2_beacon, conf=0.060); risk_posture->(none, conf=0.000)
+    Divergence strings:  ...
+    Primary threat zone:  (confidence=0.0)
+    Detected by: regime, zone threat, prog, combined
+    Missed by:   velocity, zone divergence, rel, ctx, cohort member, cusum
+    t3_composite_score:       0.6772
+    t3_anomaly_breadth:       2
+    t3_cusum_max:             0.089232
+    t3_prog_best_tau:         0.3684
+    t3_zone_threat_best_score:1.0000
+
+
+====================================================================================================
+SUMMARY: WHY CONCEPT ALIGNMENT IS BROKEN
+====================================================================================================
+
+  1. MOCKEMBEDDER PRODUCES RANDOM VECTORS: The SHA256-seeded RNG creates
+     deterministic but semantically meaningless 1536-d vectors. Any two
+     different texts produce near-orthogonal vectors regardless of semantic
+     similarity. Drift vectors are random directions in 1536-d space.
+
+  2. RANDOM CONCEPT ALIGNMENT: With random drift vectors and random concept
+     vectors, all cosine similarities cluster near 0.0 (expected value = 0,
+     std = 1/sqrt(1536) ~ 0.026). The "winning" concept is determined by
+     random chance, not semantic meaning. seasonal_variation wins as often
+     as data_exfiltration.
+
+  3. FLAT SERIALIZATION IS WEAK EVEN WITH REAL EMBEDDINGS: The flat format
+     'restricted_ratio=0.0502' vs 'restricted_ratio=0.1600' looks like a
+     minor numeric change to an embedding model. The semantic distance is
+     tiny. The interpretive format explicitly states 'CRITICAL ANOMALY...
+     pattern strongly consistent with active data exfiltration' -- this
+     provides the semantic bridge that real embeddings can leverage.
+
+  4. THE FIX REQUIRES BOTH:
+     a) REAL EMBEDDINGS (OpenAI text-embedding-3-small) to create
+        semantically meaningful vectors where similar concepts cluster.
+     b) INTERPRETIVE SERIALIZATION to translate numeric anomalies into
+        threat-language that aligns with concept descriptions.
+
+     The pipeline already HAS interpretive serialization (serialize_zone_
+     interpretive). The run_tier3 pipeline already USES it for zone text
+     generation (see build_entity_zoo, line ~150). The missing ingredient
+     is REAL embeddings via OPENAI_API_KEY.
+
+  5. DETECTION STILL WORKS WITHOUT CONCEPT ALIGNMENT: The drift MAGNITUDE
+     metrics (CUSUM, velocity, zone divergence scores) are geometry-based
+     and work correctly even with MockEmbedder. They detect that something
+     is changing, just not WHAT it is changing toward. This is why
+     t3_cusum_detected, t3_velocity_detected, t3_zone_divergence_detected
+     still catch attack users, while concept-direction methods do not.
+

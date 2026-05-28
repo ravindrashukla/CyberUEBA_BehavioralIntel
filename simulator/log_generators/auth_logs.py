@@ -4,10 +4,10 @@ import datetime
 import numpy as np
 
 
-def _work_hour_timestamp(current_date, rng, work_start=8, work_end=18):
-    """Generate timestamp biased toward work hours (80/20 split)."""
+def _work_hour_timestamp(current_date, rng, work_start=8, work_end=18, off_hours_pct=0.20):
+    """Generate timestamp biased toward work hours."""
     off_hours = list(range(0, work_start)) + list(range(work_end, 24))
-    if rng.random() < 0.80 or not off_hours:
+    if rng.random() < (1.0 - off_hours_pct) or not off_hours:
         hour = rng.integers(work_start, min(work_end, 24))
         minute = rng.integers(0, 60)
         second = rng.integers(0, 60)
@@ -38,6 +38,9 @@ def _pick_failure_reason(auth_method, rng):
         "mfa": ["mfa_timeout", "invalid_token", "device_not_enrolled"],
         "sso": ["token_expired", "idp_unavailable", "session_expired"],
         "certificate": ["cert_expired", "cert_revoked", "cn_mismatch"],
+        "ssh_key": ["key_rejected", "key_expired", "host_key_mismatch"],
+        "smart_card": ["card_not_present", "pin_locked", "card_expired"],
+        "vpn": ["vpn_timeout", "tunnel_failed", "credential_expired"],
     }
     return rng.choice(reasons.get(auth_method, ["unknown_error"]))
 
@@ -48,7 +51,7 @@ def _generate_ip(base_subnet, rng):
     return f"{parts[0]}.{parts[1]}.{rng.integers(1, 255)}.{rng.integers(1, 255)}"
 
 
-def generate_auth_logs(users_df, devices_df, role_profiles, current_date, rng) -> list[dict]:
+def generate_auth_logs(users_df, devices_df, role_profiles, user_profiles, current_date, rng) -> list[dict]:
     """Generate authentication log events for all users on a given date.
 
     Args:
@@ -56,6 +59,7 @@ def generate_auth_logs(users_df, devices_df, role_profiles, current_date, rng) -
         devices_df: DataFrame with columns [device_id, device_name, ip_address]
         role_profiles: dict mapping role -> {systems: list, work_start: int, work_end: int,
                        failure_rate: float, travel_pct: float}
+        user_profiles: dict mapping user_id -> per-user behavioral profile dict
         current_date: date object for event generation
         rng: numpy random Generator for reproducibility
 
@@ -68,19 +72,27 @@ def generate_auth_logs(users_df, devices_df, role_profiles, current_date, rng) -
     for _, user in users_df.iterrows():
         user_id = user["user_id"]
         role = user["role"]
-        profile = role_profiles.get(role, {})
+        role_prof = role_profiles.get(role, {})
+        profile = user_profiles.get(user_id, {})
 
-        login_hours = profile.get("typical_login_hours", (8, 18))
-        work_start = login_hours[0]
-        work_end = login_hours[1]
-        failure_rate = 0.03
-        travel_pct = 0.05
+        login_hours = role_prof.get("typical_login_hours", (8, 18))
+        work_start = profile.get("work_start", login_hours[0])
+        work_end = profile.get("work_end", login_hours[1])
+        failure_rate = profile.get("failure_rate", 0.03)
+        travel_pct = profile.get("travel_pct", 0.05)
 
-        n_events = rng.poisson(12)
+        n_events = rng.poisson(max(1, int(12 * profile.get("activity_multiplier", 1.0))))
 
         for _ in range(n_events):
-            ts = _work_hour_timestamp(current_date, rng, work_start, work_end)
-            auth_method = _pick_auth_method(rng)
+            off_pct = profile.get("off_hours_pct", 0.20)
+            ts = _work_hour_timestamp(current_date, rng, work_start, work_end, off_hours_pct=off_pct)
+
+            methods = profile.get("auth_methods", ["password", "mfa", "sso", "certificate"])
+            weights = profile.get("auth_weights", None)
+            if weights and len(weights) == len(methods):
+                auth_method = rng.choice(methods, p=weights)
+            else:
+                auth_method = rng.choice(methods)
             success = rng.random() > failure_rate
             failure_reason = None if success else _pick_failure_reason(auth_method, rng)
 
@@ -100,7 +112,7 @@ def generate_auth_logs(users_df, devices_df, role_profiles, current_date, rng) -
                 geo_location = rng.choice(["remote_vpn", "branch_office", "travel_hotel", "partner_site"])
 
             dest_systems = ["email", "intranet", "vpn", "fileserver", "erp", "crm", "dev_tools", "cloud_console"]
-            dest_system = rng.choice(dest_systems[:profile.get("typical_systems_accessed", 4)])
+            dest_system = rng.choice(dest_systems[:role_prof.get("typical_systems_accessed", 4)])
 
             events.append({
                 "timestamp": ts,

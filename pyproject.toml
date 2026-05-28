@@ -21,3 +21,10 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = ["pytest>=8.0", "httpx>=0.27", "ruff>=0.3"]
+
+[tool.pytest.ini_options]
+markers = [
+    "p0: critical priority",
+    "p1: high priority",
+    "p2: medium priority",
+]

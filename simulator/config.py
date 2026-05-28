@@ -6,23 +6,23 @@ SIM_END = date(2026, 5, 1)
 CURRENT_DATE = date(2026, 5, 1)
 SIM_DAYS = (SIM_END - SIM_START).days
 
-N_USERS = 500
-N_DEVICES = 800
+N_USERS = 250
+N_DEVICES = 400
 N_SEGMENTS = 25
 N_APPLICATIONS = 60
 N_ROLES = 30
 
 USER_TYPE_DIST = {"employee": 0.80, "contractor": 0.15, "service_account": 0.05}
-DEVICE_TYPE_DIST = {"endpoint": 0.60, "server": 0.25, "network_appliance": 0.10, "iot": 0.05}
+DEVICE_TYPE_DIST = {"endpoint": 0.80, "server": 0.12, "network_appliance": 0.05, "iot": 0.03}
 SEGMENT_ZONES = ["dmz", "internal", "restricted", "management", "guest"]
 
-AUTH_EVENTS_PER_USER_DAY = 12
-NETWORK_FLOWS_PER_DEVICE_DAY = 200
-DNS_QUERIES_PER_DEVICE_DAY = 50
-ENDPOINT_EVENTS_PER_DEVICE_DAY = 30
-FILE_ACCESS_PER_USER_DAY = 15
-APP_EVENTS_PER_USER_DAY = 20
-PRIV_OPS_PER_DAY = 20
+AUTH_EVENTS_PER_USER_DAY = 8
+NETWORK_FLOWS_PER_DEVICE_DAY = 40
+DNS_QUERIES_PER_DEVICE_DAY = 10
+ENDPOINT_EVENTS_PER_DEVICE_DAY = 8
+FILE_ACCESS_PER_USER_DAY = 10
+APP_EVENTS_PER_USER_DAY = 5
+PRIV_OPS_PER_DAY = 5
 
 WORK_HOURS = (8, 18)
 WORK_DAYS = [0, 1, 2, 3, 4]
@@ -79,17 +79,17 @@ ATTACK_SCENARIOS = [
     {
         "id": "ATK-003",
         "type": "apt_slow",
-        "start": date(2025, 8, 1),
-        "duration_days": 180,
-        "c2_interval_minutes": 45,
+        "start": date(2025, 3, 10),
+        "duration_days": 65,
+        "c2_interval_minutes": 360,
         "target_user": "USR-234",
         "description": "Slow APT with periodic C2 beacon and gradual data staging",
     },
     {
         "id": "ATK-004",
         "type": "insider_threat",
-        "start": date(2025, 6, 1),
-        "escalation_months": 8,
+        "start": date(2025, 3, 10),
+        "escalation_months": 2,
         "user": "USR-156",
         "description": "Disgruntled employee gradually escalating access and exfiltrating data",
     },
@@ -108,6 +108,25 @@ ATTACK_SCENARIOS = [
         "compromised_app": "APP-017",
         "dormant_days": 90,
         "description": "Legitimate app update contains backdoor, activates after dormancy",
+    },
+    {
+        "id": "ATK-007",
+        "type": "volt_typhoon",
+        "start": date(2025, 3, 15),
+        "duration_days": 60,
+        "target_user": "USR-042",
+        "proxy_ip": "203.0.113.88",
+        "description": "Volt Typhoon: LOTL credential harvest + lateral movement + infrastructure pre-positioning",
+    },
+    {
+        "id": "ATK-008",
+        "type": "salt_typhoon",
+        "start": date(2025, 3, 15),
+        "duration_days": 60,
+        "target_user": "USR-118",
+        "c2_domain": "cdn-check.microsoftupdate-service.com",
+        "exfil_ip": "198.18.0.77",
+        "description": "Salt Typhoon: Telecom infrastructure interception via edge device compromise + CDR exfil",
     },
 ]
 

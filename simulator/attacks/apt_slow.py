@@ -49,11 +49,16 @@ class APTSlowAttack(AttackScenario):
         super().__init__(config)
         self.duration_days = config.get("duration_days", 180)
         self.target_user = config.get("target_user", "USR-234")
-        self.target_device = config.get("target_device", "DEV-234")
+        # Resolve device from entity data if available, fall back to config/default
+        user_device_map = config.get("_user_device_map", {})
+        self.target_device = config.get("target_device",
+                                        user_device_map.get(self.target_user, "DEV-234"))
         self.c2_ip = config.get("c2_ip", "198.51.100.47")
-        self.beacon_interval_min = config.get("beacon_interval_min", 45)
-        self.beacon_jitter_min = config.get("beacon_jitter_min", 10)
-        self.staging_interval_days = config.get("staging_interval_days", 17)  # ~every 2-3 weeks
+        # Stealthy: 2-3 beacons per day (every 8-12 hours)
+        self.beacon_interval_min = config.get("beacon_interval_min", 720)
+        self.beacon_jitter_min = config.get("beacon_jitter_min", 90)
+        default_interval = max(5, self.duration_days // 10)
+        self.staging_interval_days = config.get("staging_interval_days", default_interval)
         self._start_date = (
             self.start if isinstance(self.start, date) else datetime.fromisoformat(self.start).date()
         )
@@ -80,7 +85,8 @@ class APTSlowAttack(AttackScenario):
 
         days_in = self._days_elapsed(current_date)
         # One minor privilege escalation per month (days 30, 60, 90, 120, 150)
-        if days_in > 0 and days_in % 30 == 0:
+        escalation_interval = max(10, self.duration_days // 6)
+        if days_in > 0 and days_in % escalation_interval == 0:
             escalation_ts = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(9, 17))
             )
@@ -120,11 +126,14 @@ class APTSlowAttack(AttackScenario):
 
         days_in = self._days_elapsed(current_date)
 
-        # --- C2 Beacon: runs every day, ~32 beacons per day (every 45 min) ---
-        beacon_time = datetime.combine(current_date, datetime.min.time()) + timedelta(
-            minutes=float(rng.uniform(0, self.beacon_interval_min))
-        )
+        # --- C2 Beacon: ~2-3 beacons per day, skip ~25% of days ---
         end_of_day = datetime.combine(current_date, datetime.min.time()) + timedelta(hours=24)
+        if rng.random() < 0.25:
+            beacon_time = end_of_day
+        else:
+            beacon_time = datetime.combine(current_date, datetime.min.time()) + timedelta(
+                minutes=float(rng.uniform(0, self.beacon_interval_min))
+            )
 
         while beacon_time < end_of_day:
             # Tiny packets — designed to blend with background noise
@@ -151,18 +160,17 @@ class APTSlowAttack(AttackScenario):
             )
             beacon_time += timedelta(minutes=float(max(interval, 20)))
 
-        # --- DGA DNS: 1-3 queries per day to random-looking domains ---
-        num_dga = rng.integers(1, 4)
-        for _ in range(num_dga):
+        # --- DGA DNS: 0-1 queries per day, mostly resolving (stealthy) ---
+        if rng.random() < 0.4:
             query_time = datetime.combine(current_date, datetime.min.time()) + timedelta(
-                hours=float(rng.uniform(0, 24))
+                hours=float(rng.uniform(8, 18))
             )
             dns_events.append({
                 "timestamp": query_time.isoformat(),
                 "device_id": self.target_device,
                 "query_domain": _generate_dga_domain(rng),
                 "query_type": "A",
-                "response": rng.choice(["NXDOMAIN", "NXDOMAIN", self.c2_ip]),
+                "response": rng.choice([self.c2_ip, self.c2_ip, self.c2_ip, "NXDOMAIN"]),
                 "attack_id": self.id,
                 "label": "dga_dns",
             })
@@ -172,8 +180,8 @@ class APTSlowAttack(AttackScenario):
             sensitivity = self._sensitivity_level(current_date)
             # Access progressively more sensitive directories
             accessible_dirs = _DIRECTORIES[: sensitivity + 1]
-            # Read 3-8 files from the most sensitive accessible directories
-            num_files = rng.integers(3, 9)
+            # Read 1-3 files (stealthy — fewer files, looks like normal browsing)
+            num_files = rng.integers(1, 4)
             staging_start = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(10, 16))
             )
@@ -191,10 +199,12 @@ class APTSlowAttack(AttackScenario):
                 file_events.append({
                     "timestamp": file_ts.isoformat(),
                     "user_id": self.target_user,
-                    "device_id": self.target_device,
-                    "event_type": "file_read",
-                    "path": f"{chosen_dir}/{filename}",
-                    "bytes_read": int(rng.integers(10_000, 500_000)),
+                    "source_device_id": self.target_device,
+                    "operation": "read",
+                    "file_path": f"{chosen_dir}/{filename}",
+                    "file_size_bytes": int(rng.integers(10_000, 500_000)),
+                    "data_classification": "confidential",
+                    "success": True,
                     "attack_id": self.id,
                     "label": "data_staging",
                     "sensitivity_tier": dir_idx,

@@ -7,7 +7,7 @@ services:
       POSTGRES_USER: cyber_ueba
       POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
     ports:
-      - "5433:5432"
+      - "5437:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
     healthcheck:
