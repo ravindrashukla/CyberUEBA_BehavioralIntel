@@ -1,4 +1,4 @@
-# ACECARD Complete Anomalous Scenario Inventory
+# V-Intelligence UEBA Complete Anomalous Scenario Inventory
 
 8 attack scenarios spanning the full MITRE ATT&CK kill chain, injected across 82M+ events, 250 users, 300 devices, 30 roles, 15 departments, and 7 telemetry log types.
 

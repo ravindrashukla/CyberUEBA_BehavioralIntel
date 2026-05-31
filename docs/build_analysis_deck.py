@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """
-Build ACECARD Traditional vs Behavioral Analysis PowerPoint Deck.
+Build V-Intelligence UEBA Traditional vs Behavioral Analysis PowerPoint Deck.
 
 Generates a 16-slide executive presentation comparing traditional anomaly
-detection methods against ACECARD's behavioral drift approach, using
+detection methods against V-Intelligence UEBA's behavioral drift approach, using
 empirical results from 130-day synthetic telemetry analysis.
 
-Output: docs/ACECARD_Traditional_vs_Behavioral_Deck.pptx
+Output: docs/V_Intelligence_UEBA_Traditional_vs_Behavioral_Deck.pptx
 """
 
 import os
@@ -773,10 +773,10 @@ def slide_10_core_problem(prs):
 
 
 def slide_11_acecard_approach(prs):
-    """Slide 11: ACECARD's Approach - Behavioral Drift Detection."""
+    """Slide 11: V-Intelligence UEBA's Approach - Behavioral Drift Detection."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_slide_bg(slide, WHITE)
-    add_title_bar(slide, "ACECARD’s Approach — Behavioral Drift Detection")
+    add_title_bar(slide, "V-Intelligence UEBA’s Approach — Behavioral Drift Detection")
 
     # Flow steps as connected boxes
     steps = [
@@ -840,7 +840,7 @@ def slide_11_acecard_approach(prs):
                   font_size=24, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
     summary_box.text_frame.margin_top = Inches(0.1)
     add_paragraph(summary_box.text_frame,
-                  "Traditional methods ask \"how much?\"  —  ACECARD asks \"in what direction?\"",
+                  "Traditional methods ask \"how much?\"  —  V-Intelligence UEBA asks \"in what direction?\"",
                   font_size=16, bold=False, color=WHITE, alignment=PP_ALIGN.CENTER,
                   space_before=Pt(8))
 
@@ -1240,8 +1240,7 @@ def slide_17_contact(prs):
     contact_box.line.fill.solid()
     contact_box.line.color.rgb = TEAL
     contact_box.line.width = Pt(1)
-    tf = set_text(contact_box, "ACECARD — Adaptive Cyber-Entity Correlation & "
-                  "Anomalous Response Detection",
+    tf = set_text(contact_box, "V-Intelligence UEBA — User and Entity Behavior Analytics",
                   font_size=14, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
     contact_box.text_frame.margin_top = Inches(0.15)
     add_paragraph(contact_box.text_frame,
@@ -1452,7 +1451,7 @@ def main():
     slide_17_contact(prs)
 
     out_dir = os.path.dirname(os.path.abspath(__file__))
-    out_path = os.path.join(out_dir, "ACECARD_Traditional_vs_Behavioral_Deck.pptx")
+    out_path = os.path.join(out_dir, "V_Intelligence_UEBA_Traditional_vs_Behavioral_Deck.pptx")
     prs.save(out_path)
     print(f"Deck created successfully at: {out_path}")
     print(f"Total slides: {len(prs.slides)}")

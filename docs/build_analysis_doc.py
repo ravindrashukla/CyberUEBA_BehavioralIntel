@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
 """
-Build ACECARD Traditional vs. Behavioral Analysis Word Document.
+Build V-Intelligence UEBA Traditional vs. Behavioral Analysis Word Document.
 
 Generates a professional .docx proving that traditional anomaly detection
-algorithms fail against slow/stealthy cyber attacks, while ACECARD's
+algorithms fail against slow/stealthy cyber attacks, while V-Intelligence UEBA's
 behavioral drift approach succeeds.
 
 Target audience: Federal cybersecurity leadership (CISO-level).
@@ -30,7 +30,7 @@ RED_ACCENT = RGBColor(0xC0, 0x39, 0x2B)
 GREEN_ACCENT = RGBColor(0x1E, 0x8A, 0x49)
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__),
-                           "ACECARD_Traditional_vs_Behavioral_Analysis.docx")
+                           "V_Intelligence_UEBA_Traditional_vs_Behavioral_Analysis.docx")
 
 
 # ── Helper functions ──────────────────────────────────────────────
@@ -254,7 +254,7 @@ def build_document():
     header = section.header
     header_para = header.paragraphs[0]
     header_para.alignment = WD_ALIGN_PARAGRAPH.RIGHT
-    run = header_para.add_run("ACECARD — 22nd Century Technologies")
+    run = header_para.add_run("V-Intelligence UEBA — 22nd Century Technologies")
     run.font.size = Pt(8)
     run.font.color.rgb = ACCENT_BLUE
     run.font.name = 'Calibri'
@@ -285,7 +285,7 @@ def build_document():
     # Title
     add_formatted_paragraph(
         doc,
-        "ACECARD",
+        "V-Intelligence UEBA",
         alignment=WD_ALIGN_PARAGRAPH.CENTER,
         font_size=36, color=DARK_BLUE, bold=True,
         font_name='Calibri', space_after=4
@@ -350,7 +350,7 @@ def build_document():
         "This report presents empirical evidence that traditional anomaly detection algorithms "
         "are structurally unable to detect the most dangerous category of cyber attacks: those "
         "that change behavioral direction without changing behavioral volume. We tested seventeen "
-        "distinct detection approaches across three tiers—traditional ML, ACECARD behavioral "
+        "distinct detection approaches across three tiers—traditional ML, V-Intelligence UEBA behavioral "
         "analysis, and Digital Entity zone-based analysis—against "
         "a synthetic dataset spanning 130 days of telemetry "
         "from 50 users, including four carefully designed attack scenarios: an 8-month insider "
@@ -920,15 +920,14 @@ def build_document():
     add_page_break(doc)
 
     # ══════════════════════════════════════════════════════════════
-    #  6. ACECARD BEHAVIORAL DRIFT APPROACH
+    #  6. V-INTELLIGENCE UEBA BEHAVIORAL DRIFT APPROACH
     # ══════════════════════════════════════════════════════════════
-    add_section_heading(doc, "6. ACECARD Behavioral Drift Approach", level=1)
+    add_section_heading(doc, "6. V-Intelligence UEBA Behavioral Drift Approach", level=1)
 
     add_body_text(doc, (
-        "ACECARD (Adaptive Cyber Entity Anomaly Recognition through Compositional Analysis "
-        "and Recursive Detection) takes a fundamentally different approach to behavioral "
+        "V-Intelligence UEBA takes a fundamentally different approach to behavioral "
         "anomaly detection. Rather than treating behavioral metrics as numerical features "
-        "for statistical analysis, ACECARD converts behavioral data into semantic "
+        "for statistical analysis, V-Intelligence UEBA converts behavioral data into semantic "
         "representations that capture the meaning of behavior, not just its magnitude."
     ))
 
@@ -938,7 +937,7 @@ def build_document():
         "volumes—are first transformed into natural language descriptions of the user's "
         "behavior. This text serialization step translates numerical features into prose "
         "that describes what the user is doing in human-interpretable terms. For example, "
-        "rather than encoding a user as a vector [47, 3, 0.064, ...], ACECARD generates "
+        "rather than encoding a user as a vector [47, 3, 0.064, ...], V-Intelligence UEBA generates "
         "a description like: 'This user authenticated 47 times with 3 failures (6.4% fail "
         "rate), accessed 12 unique file paths including 2 restricted files...'"
     ))
@@ -971,7 +970,7 @@ def build_document():
 
     add_section_heading(doc, "Composite Behavioral Vectors", level=2)
     add_body_text(doc, (
-        "ACECARD constructs composite behavioral vectors from multiple signal types, "
+        "V-Intelligence UEBA constructs composite behavioral vectors from multiple signal types, "
         "including authentication patterns, resource access behaviors, network activity, "
         "endpoint telemetry, and temporal patterns. These signals are composed through "
         "weighted aggregation into a single behavioral vector per entity per time window. "
@@ -983,8 +982,8 @@ def build_document():
 
     add_section_heading(doc, "CUSUM Change-Point Detection on Drift Trajectory", level=2)
     add_body_text(doc, (
-        "ACECARD applies change-point detection to the trajectory of behavioral drift in "
-        "semantic space. Rather than asking 'is this user anomalous right now?', ACECARD "
+        "V-Intelligence UEBA applies change-point detection to the trajectory of behavioral drift in "
+        "semantic space. Rather than asking 'is this user anomalous right now?', V-Intelligence UEBA "
         "asks 'has this user's behavioral trajectory changed direction in a meaningful way?' "
         "The CUSUM statistic accumulates persistent directional shifts, enabling detection "
         "of slow attacks that never produce a single anomalous data point."
@@ -1002,7 +1001,7 @@ def build_document():
 
     add_section_heading(doc, "Reference Concept Alignment for Threat Classification", level=2)
     add_body_text(doc, (
-        "Beyond detecting that drift has occurred, ACECARD classifies the nature of the "
+        "Beyond detecting that drift has occurred, V-Intelligence UEBA classifies the nature of the "
         "drift by measuring alignment between the user's behavioral vector and reference "
         "concept vectors representing known threat patterns. These reference concepts "
         "include behavioral descriptions of insider threats, data exfiltration, lateral "
@@ -1010,7 +1009,7 @@ def build_document():
     ))
 
     add_body_text(doc, (
-        "This alignment capability is what enables ACECARD to achieve low false positive "
+        "This alignment capability is what enables V-Intelligence UEBA to achieve low false positive "
         "rates. A user who drifts toward 'expanded legitimate project scope' is distinguished "
         "from a user who drifts toward 'systematic reconnaissance and staging.' Both "
         "represent behavioral change; only one represents a threat."
@@ -1056,7 +1055,7 @@ def build_document():
         ["Z-Score (|z|>3)", "MISSED", "DET", "DET", "DET", "2.2%"],
         ["Temporal Z-Score", "DET", "DET", "DET", "DET", "100.0%"],
         ["Feature CUSUM", "MISSED", "MISSED", "DET", "DET", "6.5%"],
-        ["ACECARD Direction", "MISSED", "MISSED", "MISSED", "MISSED", "4.3%"],
+        ["V-Intelligence UEBA Direction", "MISSED", "MISSED", "MISSED", "MISSED", "4.3%"],
         ["T3 Zone Divergence", "DET", "DET", "MISSED", "MISSED", "6.5%"],
         ["T3 Combined", "DET", "DET", "DET", "DET", "8.7%"],
         ["LOF + Zone Div", "DET", "DET", "DET", "DET", "6.5%"],

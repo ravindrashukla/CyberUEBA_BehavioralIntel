@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
-"""Build ACECARD Results and Findings Document (Word).
+"""Build V-Intelligence UEBA Results and Findings Document (Word).
 
 Presents empirical results from the three-tier detection system evaluation:
 17 detection methods tested against 4 attack campaigns across 250 users
 and 4.2M events. Focuses on WHAT was found and business value, not
 internal algorithmic details.
 
-Output: docs/ACECARD_Results_and_Findings.docx
+Output: docs/V_Intelligence_UEBA_Results_and_Findings.docx
 """
 
 import os
@@ -26,7 +26,7 @@ GREEN_ACCENT = RGBColor(0x1E, 0x8A, 0x49)
 BLACK = RGBColor(0x00, 0x00, 0x00)
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__),
-                           "ACECARD_Results_and_Findings.docx")
+                           "V_Intelligence_UEBA_Results_and_Findings.docx")
 
 
 def set_cell_shading(cell, color_hex):
@@ -137,7 +137,7 @@ def build_document():
         doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("ACECARD THREE-TIER DETECTION SYSTEM")
+    run = p.add_run("V-INTELLIGENCE UEBA THREE-TIER DETECTION SYSTEM")
     run.bold = True
     run.font.size = Pt(28)
     run.font.color.rgb = NAVY
@@ -173,7 +173,7 @@ def build_document():
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(
         "22nd Century Technologies, Inc.\n"
-        "ACECARD Program\n"
+        "V-Intelligence UEBA Program\n"
         "May 2025"
     )
     run.font.size = Pt(12)
@@ -228,9 +228,9 @@ def build_document():
     add_section_heading(doc, "1. Executive Summary", level=1)
 
     add_body_text(doc, (
-        "This document presents the empirical results from the ACECARD three-tier "
+        "This document presents the empirical results from the V-Intelligence UEBA three-tier "
         "detection system evaluation. Seventeen detection methods spanning traditional "
-        "statistical techniques, ACECARD behavioral analytics, and the advanced Digital "
+        "statistical techniques, V-Intelligence UEBA behavioral analytics, and the advanced Digital "
         "Entity architecture were tested against 4 real-world-modeled attack campaigns "
         "hidden within 4.2 million synthetic enterprise events. The key findings are:"
     ))
@@ -318,8 +318,8 @@ def build_document():
             ["Tier 1\n(Traditional)",
              "Isolation Forest, One-Class SVM, LOF,\nZ-Score, Temporal Z-Score, Feature CUSUM",
              "6"],
-            ["Tier 2\n(ACECARD Basic)",
-             "ACECARD Direction, IForest+ACECARD Combined",
+            ["Tier 2\n(V-Intelligence UEBA Basic)",
+             "V-Intelligence UEBA Direction, IForest+V-Intelligence UEBA Combined",
              "2"],
             ["Tier 3\n(Digital Entity)",
              "Velocity/Acceleration, Regime Shift, Zone Divergence,\n"
@@ -365,9 +365,9 @@ def build_document():
              "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "232", "94.3%"],
             ["6", "Feature CUSUM\nTop10%", "1",
              "DETECTED", "MISSED", "DETECTED", "DETECTED", "3", "22", "8.9%"],
-            ["7", "ACECARD Direction", "2",
+            ["7", "V-Intelligence UEBA Direction", "2",
              "MISSED", "DETECTED", "DETECTED", "MISSED", "2", "37", "15.0%"],
-            ["8", "IForest +\nACECARD", "1+2",
+            ["8", "IForest +\nV-Intelligence UEBA", "1+2",
              "MISSED", "DETECTED", "DETECTED", "MISSED", "2", "49", "19.9%"],
             ["9", "T3 Velocity/\nAccel", "3",
              "DETECTED", "MISSED", "DETECTED", "MISSED", "2", "23", "9.3%"],
@@ -403,9 +403,9 @@ def build_document():
         [
             ["Tier 1 Best", "Feature CUSUM", "3/4", "8.9%",
              "Misses Slow APT (USR-234)"],
-            ["Tier 2 Best", "ACECARD Direction", "2/4", "15.0%",
+            ["Tier 2 Best", "V-Intelligence UEBA Direction", "2/4", "15.0%",
              "Misses Insider + Salt Typhoon"],
-            ["Tier 1+2\nCombined", "IForest + ACECARD", "2/4", "19.9%",
+            ["Tier 1+2\nCombined", "IForest + V-Intelligence UEBA", "2/4", "19.9%",
              "Still misses Insider + Salt"],
             ["Tier 3\nCombined", "T3 Combined", "4/4", "15.0%",
              "None — all attacks detected"],
@@ -437,7 +437,7 @@ def build_document():
              "Volume unchanged — insider accesses same\nnumber of files"],
             ["LOF", "MISSED",
              "Feature-space profile looks normal\n(magnitude unchanged)"],
-            ["ACECARD Direction", "MISSED",
+            ["V-Intelligence UEBA Direction", "MISSED",
              "Single composite dilutes data_behavior\nsignal across 5 zones"],
             ["T3 Zone Divergence", "DETECTED",
              "data_behavior zone drifts 0.259 while\nidentity stable at 0.000"],
@@ -472,7 +472,7 @@ def build_document():
              "C2 beacon volume too low to create\nfeature-space outlier"],
             ["Feature CUSUM", "MISSED",
              "Scalar features don't capture network\ndirectionality"],
-            ["ACECARD Direction", "DETECTED",
+            ["V-Intelligence UEBA Direction", "DETECTED",
              "Embedding drift toward threat concepts\nover 65 days"],
             ["T3 Contextual", "DETECTED",
              "apt_hunt context (network=0.40) amplifies\nC2 signal"],
@@ -505,7 +505,7 @@ def build_document():
              "LOTL tools create measurable endpoint anomaly"],
             ["Feature CUSUM", "DETECTED",
              "Scalar feature trajectory accumulates drift"],
-            ["ACECARD Direction", "DETECTED",
+            ["V-Intelligence UEBA Direction", "DETECTED",
              "Embedding captures behavioral phase change"],
             ["T3 Velocity/Accel", "DETECTED",
              "Acceleration = 0.004 (positive, speeding up)"],
@@ -542,7 +542,7 @@ def build_document():
              "CDR access spikes file_restricted_ratio\nbeyond 3σ"],
             ["Feature CUSUM", "DETECTED",
              "100-day campaign creates persistent\nscalar drift"],
-            ["ACECARD Direction", "MISSED",
+            ["V-Intelligence UEBA Direction", "MISSED",
              "Single composite dilutes multi-zone signal"],
             ["T3 Embedding CUSUM", "DETECTED",
              "Cumulative embedding drift over 60 days"],
@@ -588,7 +588,7 @@ def build_document():
             ["Feature CUSUM", "3/4",
              "Slow APT (USR-234)",
              "Scalar features don't capture\nnetwork directionality"],
-            ["ACECARD Direction", "2/4",
+            ["V-Intelligence UEBA Direction", "2/4",
              "Insider + Salt Typhoon",
              "Single composite dilutes\nzone-specific signals"],
             ["T3 Embedding CUSUM", "3/4",
@@ -689,7 +689,7 @@ def build_document():
 
     add_body_text(doc, (
         "Tier 3 Combined detects all 4 attacks at 15.0% FP. While Feature CUSUM (Tier 1) "
-        "achieves 3/4 at 8.9% FP, it misses the APT. While ACECARD Direction (Tier 2) "
+        "achieves 3/4 at 8.9% FP, it misses the APT. While V-Intelligence UEBA Direction (Tier 2) "
         "catches APT and Volt Typhoon, it misses the Insider and Salt Typhoon. Only Tier 3 "
         "covers all threat types."
     ))
@@ -785,7 +785,7 @@ def build_document():
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(
         "22nd Century Technologies, Inc.\n"
-        "ACECARD Program — Results and Findings v1.0\n"
+        "V-Intelligence UEBA Program — Results and Findings v1.0\n"
         "May 2025"
     )
     run.font.size = Pt(10)

@@ -1,13 +1,13 @@
 #!/usr/bin/env python3
 """
-Build ACECARD Technical Deep Dive PowerPoint Deck.
+Build V-Intelligence UEBA Technical Deep Dive PowerPoint Deck.
 
 Generates a 20-slide technical presentation covering synthetic data design,
-algorithm comparison, and empirical results from the ACECARD behavioral
+algorithm comparison, and empirical results from the V-Intelligence UEBA behavioral
 analysis pipeline.  Safe for federal government audience — no proprietary
 math, no implementation internals, no vendor-branding constraints.
 
-Output: docs/ACECARD_Technical_Deep_Dive.pptx
+Output: docs/V_Intelligence_UEBA_Technical_Deep_Dive.pptx
 """
 
 import os
@@ -130,7 +130,7 @@ def add_title_bar(slide, title_text, font_size=28):
     return bar
 
 
-def add_footer(slide, text="22nd Century Technologies, Inc.  |  ACECARD Technical Analysis  |  Confidential"):
+def add_footer(slide, text="22nd Century Technologies, Inc.  |  V-Intelligence UEBA Technical Analysis  |  Confidential"):
     add_textbox(slide, Inches(0.5), Inches(7.05), Inches(12.3), Inches(0.35),
                 text, font_size=10, bold=False, color=MID_GRAY, alignment=PP_ALIGN.LEFT)
 
@@ -224,7 +224,7 @@ def slide_01_title(prs):
     add_shape(slide, Inches(0.8), Inches(1.6), Inches(2.5), Inches(0.05), fill_color=GOLD)
 
     add_textbox(slide, Inches(0.8), Inches(1.8), Inches(11.8), Inches(0.9),
-                "ACECARD Technical Deep Dive",
+                "V-Intelligence UEBA Technical Deep Dive",
                 font_size=42, bold=True, color=WHITE, alignment=PP_ALIGN.LEFT)
 
     add_textbox(slide, Inches(0.8), Inches(2.65), Inches(11.8), Inches(0.7),
@@ -238,7 +238,7 @@ def slide_01_title(prs):
                 font_size=18, bold=False, color=GOLD, alignment=PP_ALIGN.LEFT)
 
     add_textbox(slide, Inches(0.8), Inches(4.6), Inches(11.8), Inches(0.5),
-                "22nd Century Technologies, Inc.  |  ACECARD Program  |  May 2025",
+                "22nd Century Technologies, Inc.  |  V-Intelligence UEBA Program  |  May 2025",
                 font_size=15, bold=False, color=MID_GRAY, alignment=PP_ALIGN.LEFT)
 
     add_textbox(slide, Inches(0.8), Inches(6.6), Inches(11.8), Inches(0.4),
@@ -608,7 +608,7 @@ def slide_07_attack_design_philosophy(prs):
                   space_before=Pt(8))
 
     add_textbox(slide, Inches(0.5), Inches(7.1), Inches(12), Inches(0.3),
-                "22nd Century Technologies, Inc.  |  ACECARD Technical Analysis  |  Confidential",
+                "22nd Century Technologies, Inc.  |  V-Intelligence UEBA Technical Analysis  |  Confidential",
                 font_size=10, bold=False, color=RGBColor(60, 70, 85), alignment=PP_ALIGN.LEFT)
 
 
@@ -764,15 +764,15 @@ def slide_09_temporal_methods(prs):
 
 
 # ---------------------------------------------------------------------------
-# Slide 10: ACECARD Behavioral Analysis
+# Slide 10: V-Intelligence UEBA Behavioral Analysis
 # ---------------------------------------------------------------------------
 def slide_10_acecard_behavioral(prs):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_slide_bg(slide, WHITE)
-    add_title_bar(slide, "ACECARD Behavioral Drift Direction Analysis")
+    add_title_bar(slide, "V-Intelligence UEBA Behavioral Drift Direction Analysis")
 
     add_textbox(slide, Inches(0.7), Inches(1.25), Inches(11.9), Inches(0.5),
-                "ACECARD analyzes the trajectory of behavioral change — "
+                "V-Intelligence UEBA analyzes the trajectory of behavioral change — "
                 "not whether a user is an outlier today, but whether their behavior "
                 "is consistently moving in a threat-consistent direction over time.",
                 font_size=15, bold=False, color=DARK_GRAY, alignment=PP_ALIGN.LEFT)
@@ -838,7 +838,7 @@ def slide_10_acecard_behavioral(prs):
              font_size=22, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
     summary.text_frame.margin_top = Inches(0.08)
     add_paragraph(summary.text_frame,
-                  "Traditional methods ask \"how much?\"  —  ACECARD asks \"in what direction?\"",
+                  "Traditional methods ask \"how much?\"  —  V-Intelligence UEBA asks \"in what direction?\"",
                   font_size=15, bold=False, color=WHITE, alignment=PP_ALIGN.CENTER,
                   space_before=Pt(6))
 
@@ -869,7 +869,7 @@ def slide_11_full_results_table(prs):
         ["Z-Score",            "T1", "MISS", "DET",  "DET",  "DET",  "3", "2.2%"],
         ["Temporal Z-Score",   "T1", "DET",  "DET",  "DET",  "DET",  "4", "100%"],
         ["Feature Trajectory", "T1", "MISS", "MISS", "DET",  "DET",  "2", "6.5%"],
-        ["ACECARD Direction",  "T2", "MISS", "MISS", "MISS", "MISS", "0", "4.3%"],
+        ["V-Intelligence UEBA Direction",  "T2", "MISS", "MISS", "MISS", "MISS", "0", "4.3%"],
         ["T3 Regime Shift",    "T3", "MISS", "MISS", "DET",  "DET",  "2", "6.5%"],
         ["T3 Zone Divergence", "T3", "DET",  "DET",  "MISS", "MISS", "2", "6.5%"],
         ["T3 Combined",        "T3", "DET",  "DET",  "DET",  "DET",  "4", "8.7%"],
@@ -1063,7 +1063,7 @@ def slide_13_temporal_deep_dive(prs):
 
 
 # ---------------------------------------------------------------------------
-# Slide 14: ACECARD Direction Results
+# Slide 14: V-Intelligence UEBA Direction Results
 # ---------------------------------------------------------------------------
 def slide_14_acecard_direction_results(prs):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
@@ -1135,7 +1135,7 @@ def slide_14_acecard_direction_results(prs):
         "Tier 2 averages all behavioral zones into one composite vector",
         "Zone-specific drift signals are diluted — data_behavior drift "
         "is averaged with stable identity, access, and risk zones",
-        "Result: ACECARD Direction detects 0 of 4 attacks at threshold",
+        "Result: V-Intelligence UEBA Direction detects 0 of 4 attacks at threshold",
     ]
     y = Inches(4.5)
     for pt in pts_r:
@@ -1309,7 +1309,7 @@ def slide_17_fp_comparison(prs):
         ("Z-Score (|z|>3)",           2.2,   1,  GREEN),
         ("Temporal Z-Score",          100.0, 46, RED),
         ("Feature Trajectory Top-10%", 6.5,   3,  GREEN),
-        ("ACECARD Direction",         4.3,   2,  GREEN),
+        ("V-Intelligence UEBA Direction",         4.3,   2,  GREEN),
         ("T3 Zone Divergence",        6.5,   3,  GREEN),
         ("T3 Combined",               8.7,   4,  GREEN),
         ("LOF + Zone Divergence",     6.5,   3,  TEAL),
@@ -1396,7 +1396,7 @@ def slide_18_key_findings(prs):
         y += Inches(1.3)
 
     add_textbox(slide, Inches(0.5), Inches(7.1), Inches(12), Inches(0.3),
-                "22nd Century Technologies, Inc.  |  ACECARD Technical Analysis  |  Confidential",
+                "22nd Century Technologies, Inc.  |  V-Intelligence UEBA Technical Analysis  |  Confidential",
                 font_size=10, bold=False, color=RGBColor(60, 70, 85), alignment=PP_ALIGN.LEFT)
 
 
@@ -1869,7 +1869,7 @@ def main():
     slide_24_tier3_parameters(prs)
 
     out_dir  = os.path.dirname(os.path.abspath(__file__))
-    out_path = os.path.join(out_dir, "ACECARD_Technical_Deep_Dive.pptx")
+    out_path = os.path.join(out_dir, "V_Intelligence_UEBA_Technical_Deep_Dive.pptx")
     prs.save(out_path)
     print(f"Deck created: {out_path}")
     print(f"Total slides: {len(prs.slides)}")

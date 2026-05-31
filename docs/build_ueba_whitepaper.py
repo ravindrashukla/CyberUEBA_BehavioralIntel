@@ -3,7 +3,7 @@
 
 Comprehensive whitepaper on User and Entity Behavior Analytics (UEBA):
 what it is, why traditional approaches fail, the threat taxonomy it addresses,
-behavioral detection architecture, empirical validation with ACECARD results,
+behavioral detection architecture, empirical validation with V-Intelligence UEBA results,
 and deployment recommendations for federal agencies.
 
 Output: docs/UEBA_Behavioral_Intelligence_Whitepaper.docx
@@ -181,7 +181,7 @@ def build_whitepaper():
     meta.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = meta.add_run(
         "22nd Century Technologies, Inc.\n"
-        "ACECARD Program — Adaptive Cybersecurity Engine for Continuous Anomaly and Risk Detection\n\n"
+        "V-Intelligence UEBA Program\n\n"
         "May 2026\n\n"
         "Classification: Internal Technical Reference"
     )
@@ -271,7 +271,7 @@ def build_whitepaper():
 
     add_body(doc, (
         "This whitepaper presents a comprehensive UEBA framework validated through the "
-        "ACECARD program (Adaptive Cybersecurity Engine for Continuous Anomaly and Risk "
+        "V-Intelligence UEBA program (User and Entity Behavior Analytics for Continuous Anomaly and Risk "
         "Detection). Using 130 days of synthetic telemetry across 50 users with 4 "
         "embedded attack campaigns — an 8-month insider threat, a 180-day slow APT, a "
         "115-day Volt Typhoon LOTL campaign, and a 100-day Salt Typhoon telecom "
@@ -575,7 +575,7 @@ def build_whitepaper():
     add_body(doc, "Duration and Progression", bold=True, space_after=2)
     add_body(doc, (
         "Insider threats typically unfold over months, following a predictable escalation "
-        "pattern. The ACECARD simulation models an 8-month (32-week) campaign with four "
+        "pattern. The V-Intelligence UEBA simulation models an 8-month (32-week) campaign with four "
         "distinct phases:"
     ))
 
@@ -638,7 +638,7 @@ def build_whitepaper():
 
     add_body(doc, "Duration and Progression", bold=True, space_after=2)
     add_body(doc, (
-        "The ACECARD simulation models a 180-day (26-week) slow APT campaign with "
+        "The V-Intelligence UEBA simulation models a 180-day (26-week) slow APT campaign with "
         "Command and Control (C2) beaconing as the primary operational mechanism:"
     ))
 
@@ -679,7 +679,7 @@ def build_whitepaper():
 
     add_body(doc, "Duration and Progression", bold=True, space_after=2)
     add_body(doc, (
-        "The ACECARD simulation models a 115-day Volt Typhoon LOTL campaign based on "
+        "The V-Intelligence UEBA simulation models a 115-day Volt Typhoon LOTL campaign based on "
         "CISA Advisory AA23-144A:"
     ))
 
@@ -722,7 +722,7 @@ def build_whitepaper():
 
     add_body(doc, "Duration and Progression", bold=True, space_after=2)
     add_body(doc, (
-        "The ACECARD simulation models a 100-day Salt Typhoon-style campaign based on "
+        "The V-Intelligence UEBA simulation models a 100-day Salt Typhoon-style campaign based on "
         "the 2024 disclosure of Chinese compromise of AT&T, Verizon, and T-Mobile:"
     ))
 
@@ -759,7 +759,7 @@ def build_whitepaper():
     add_section_heading(doc, "6. Behavioral Detection Architecture", level=1)
 
     add_body(doc, (
-        "The ACECARD behavioral detection architecture transforms raw telemetry "
+        "The V-Intelligence UEBA behavioral detection architecture transforms raw telemetry "
         "into behavioral embeddings organized across five dimensions, tracked over "
         "time, and analyzed for drift direction against known threat patterns. This "
         "section describes the architectural components that enable UEBA detection."
@@ -923,7 +923,7 @@ def build_whitepaper():
     add_section_heading(doc, "7. Detection Methods and Their Parameters", level=1)
 
     add_body(doc, (
-        "The ACECARD system implements 17 detection methods across three tiers, each "
+        "The V-Intelligence UEBA system implements 17 detection methods across three tiers, each "
         "operating on the same underlying telemetry but applying fundamentally different "
         "analytical approaches. This section details the input features, parameters, "
         "and detection logic for each method."
@@ -1165,9 +1165,9 @@ def build_whitepaper():
              "2", "4", "8.7%"],
             ["6", "Feature Trajectory", "1", "MISSED", "DETECTED", "MISSED", "DETECTED",
              "2", "3", "6.5%"],
-            ["7", "ACECARD Direction", "2", "MISSED", "MISSED", "MISSED", "MISSED",
+            ["7", "V-Intelligence UEBA Direction", "2", "MISSED", "MISSED", "MISSED", "MISSED",
              "0", "4", "8.7%"],
-            ["8", "IForest + ACECARD", "1+2", "MISSED", "MISSED", "DETECTED", "DETECTED",
+            ["8", "IForest + V-Intelligence UEBA", "1+2", "MISSED", "MISSED", "DETECTED", "DETECTED",
              "2", "5", "10.9%"],
             ["9", "T3 Velocity/Accel", "3", "MISSED", "MISSED", "MISSED", "MISSED",
              "0", "5", "10.9%"],
@@ -1396,7 +1396,7 @@ def build_whitepaper():
     ))
 
     add_body(doc, (
-        "The ACECARD empirical validation demonstrates three key architectural insights:"
+        "The V-Intelligence UEBA empirical validation demonstrates three key architectural insights:"
     ))
 
     add_body(doc, "1. Magnitude alone is insufficient.", bold=True, space_after=2)
@@ -1461,7 +1461,7 @@ def build_whitepaper():
     doc.add_paragraph()
     add_body(doc, (
         "For technical implementation details including algorithm parameters, threshold "
-        "values, and detection logic, refer to the ACECARD Technical Specification document."
+        "values, and detection logic, refer to the V-Intelligence UEBA Technical Specification document."
     ), italic=True)
 
     # ── Save ──

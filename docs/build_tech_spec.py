@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Build ACECARD Technical Specification Document (Word).
+"""Build V-Intelligence UEBA Technical Specification Document (Word).
 
 Comprehensive technical specification covering Tier 1 (Traditional)
-and Tier 2 (ACECARD Basic) implementations — data pipeline, algorithms,
+and Tier 2 (V-Intelligence UEBA Basic) implementations — data pipeline, algorithms,
 parameters, detection logic, and empirical results.
 
-Output: docs/ACECARD_Technical_Specification.docx
+Output: docs/V_Intelligence_UEBA_Technical_Specification.docx
 """
 
 import os
@@ -25,7 +25,7 @@ GREEN_ACCENT = RGBColor(0x1E, 0x8A, 0x49)
 BLACK = RGBColor(0x00, 0x00, 0x00)
 
 OUTPUT_PATH = os.path.join(os.path.dirname(__file__),
-                           "ACECARD_Technical_Specification.docx")
+                           "V_Intelligence_UEBA_Technical_Specification.docx")
 
 
 def set_cell_shading(cell, color_hex):
@@ -136,14 +136,14 @@ def build_document():
         doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("ACECARD TECHNICAL SPECIFICATION")
+    run = p.add_run("V-INTELLIGENCE UEBA TECHNICAL SPECIFICATION")
     run.bold = True
     run.font.size = Pt(28)
     run.font.color.rgb = NAVY
 
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("Tier 1 (Traditional) | Tier 2 (ACECARD Basic) | Tier 3 (Digital Entity)")
+    run = p.add_run("Tier 1 (Traditional) | Tier 2 (V-Intelligence UEBA Basic) | Tier 3 (Digital Entity)")
     run.font.size = Pt(16)
     run.font.color.rgb = TEAL
 
@@ -162,7 +162,7 @@ def build_document():
         doc.add_paragraph()
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
-    run = p.add_run("22nd Century Technologies, Inc.\nACECARD Program\nMay 2025")
+    run = p.add_run("22nd Century Technologies, Inc.\nV-Intelligence UEBA Program\nMay 2025")
     run.font.size = Pt(12)
     run.font.color.rgb = NAVY
 
@@ -193,7 +193,7 @@ def build_document():
         "   4.2. Temporal Anomaly Detection (2 algorithms)",
         "   4.3. Algorithm Parameters",
         "   4.4. Tier 1 Results",
-        "5. Tier 2: ACECARD Basic",
+        "5. Tier 2: V-Intelligence UEBA Basic",
         "   5.1. Text Serialization (Scalar → Prose)",
         "   5.2. Embedding (Prose → 1536-d Vector)",
         "   5.3. Signal Composition (5 Signals → 1 Composite)",
@@ -233,8 +233,8 @@ def build_document():
     add_section_heading(doc, "1. Document Overview", level=1)
 
     add_body_text(doc, (
-        "This document is the authoritative technical specification for the ACECARD "
-        "three-tier detection system: Tier 1 (Traditional Detection), Tier 2 (ACECARD "
+        "This document is the authoritative technical specification for the V-Intelligence UEBA "
+        "three-tier detection system: Tier 1 (Traditional Detection), Tier 2 (V-Intelligence UEBA "
         "Basic), and Tier 3 (Digital Entity). It records every parameter, algorithm "
         "configuration, data pipeline step, and detection criterion used to produce "
         "the empirical results across 17 detection methods against 4 attack campaigns. "
@@ -243,7 +243,7 @@ def build_document():
     ))
 
     add_body_text(doc, (
-        "ACECARD is a User and Entity Behavior Analytics (UEBA) system. UEBA detects "
+        "V-Intelligence UEBA is a User and Entity Behavior Analytics (UEBA) system. UEBA detects "
         "threats by establishing behavioral baselines for every user and device, then "
         "flagging when behavior drifts from that baseline. Unlike rule-based SIEM systems "
         "that match known attack signatures, UEBA asks: 'Is this entity behaving "
@@ -578,9 +578,9 @@ def build_document():
     add_page_break(doc)
 
     # ══════════════════════════════════════════════════════════════
-    #  5. TIER 2: ACECARD BASIC
+    #  5. TIER 2: V-INTELLIGENCE UEBA BASIC
     # ══════════════════════════════════════════════════════════════
-    add_section_heading(doc, "5. Tier 2: ACECARD Basic", level=1)
+    add_section_heading(doc, "5. Tier 2: V-Intelligence UEBA Basic", level=1)
 
     add_body_text(doc, (
         "Tier 2 uses the same 23 features as Tier 1 but transforms them through "
@@ -770,9 +770,9 @@ def build_document():
         ["Detection Method", "Criterion", "Used for Final Result?"],
         [
             ["Magnitude CUSUM", "cusum_detect(drift_magnitudes) triggers", "No — 100% FP with real embeddings"],
-            ["ACECARD Direction", "threat_consistency ≥ 0.40", "Yes — primary detection"],
-            ["ACECARD Top-10%", "threat_consistency ≥ 90th percentile", "Yes — alternate threshold"],
-            ["IForest + ACECARD", "iforest_anomaly OR acecard_direction_detected", "Yes — combined ensemble"],
+            ["V-Intelligence UEBA Direction", "threat_consistency ≥ 0.40", "Yes — primary detection"],
+            ["V-Intelligence UEBA Top-10%", "threat_consistency ≥ 90th percentile", "Yes — alternate threshold"],
+            ["IForest + V-Intelligence UEBA", "iforest_anomaly OR acecard_direction_detected", "Yes — combined ensemble"],
         ],
         col_widths=[1.8, 2.5, 2.2],
     )
@@ -783,19 +783,19 @@ def build_document():
         ["Method", "USR-156\n(Insider)", "USR-234\n(Slow APT)", "USR-042\n(Volt Typh)",
          "USR-118\n(Salt Typh)", "True\nPos", "False\nPos", "FP Rate"],
         [
-            ["ACECARD Direction", "MISSED", "DETECTED", "DETECTED", "MISSED", "2", "37", "15.0%"],
-            ["IForest + ACECARD", "MISSED", "DETECTED", "DETECTED", "MISSED", "2", "49", "19.9%"],
+            ["V-Intelligence UEBA Direction", "MISSED", "DETECTED", "DETECTED", "MISSED", "2", "37", "15.0%"],
+            ["IForest + V-Intelligence UEBA", "MISSED", "DETECTED", "DETECTED", "MISSED", "2", "49", "19.9%"],
         ],
         col_widths=[1.3, 0.8, 0.8, 0.8, 0.8, 0.5, 0.5, 0.6],
     )
 
     add_body_text(doc, (
-        "Tier 2 finding: ACECARD Direction detects USR-234 (slow APT) and USR-042 "
+        "Tier 2 finding: V-Intelligence UEBA Direction detects USR-234 (slow APT) and USR-042 "
         "(Volt Typhoon) — the two attacks with clear embedding drift signatures. However, "
         "it misses USR-156 (insider) and USR-118 (Salt Typhoon) because the single-composite "
-        "architecture dilutes zone-specific signals. The IForest + ACECARD combined ensemble "
+        "architecture dilutes zone-specific signals. The IForest + V-Intelligence UEBA combined ensemble "
         "achieves the same detections at higher FP (19.9%) due to IForest's false positives "
-        "adding to ACECARD's."
+        "adding to V-Intelligence UEBA's."
     ), bold=True)
 
     add_page_break(doc)
@@ -1187,9 +1187,9 @@ def build_document():
          "USR-118\n(Salt Typh)", "False\nPos", "FP Rate"],
         [
             ["Feature CUSUM (Tier 1)", "DETECTED", "MISSED", "DETECTED", "DETECTED", "22", "8.9%"],
-            ["ACECARD Direction (Tier 2)", "MISSED", "DETECTED", "DETECTED", "MISSED", "37", "15.0%"],
+            ["V-Intelligence UEBA Direction (Tier 2)", "MISSED", "DETECTED", "DETECTED", "MISSED", "37", "15.0%"],
             ["T3 Combined (Tier 3)", "DETECTED", "DETECTED", "DETECTED", "DETECTED", "37", "15.0%"],
-            ["Feat CUSUM + ACECARD Dir", "DETECTED", "DETECTED", "DETECTED", "DETECTED", "~55", "~22%"],
+            ["Feat CUSUM + V-Intelligence UEBA Dir", "DETECTED", "DETECTED", "DETECTED", "DETECTED", "~55", "~22%"],
         ],
         col_widths=[1.5, 0.8, 0.8, 0.8, 0.8, 0.5, 0.6],
     )
@@ -1223,9 +1223,9 @@ def build_document():
              "4", "232", "94.3%"],
             ["6", "Feature CUSUM", "1", "DETECTED", "MISSED", "DETECTED", "DETECTED",
              "3", "22", "8.9%"],
-            ["7", "ACECARD Direction", "2", "MISSED", "DETECTED", "DETECTED", "MISSED",
+            ["7", "V-Intelligence UEBA Direction", "2", "MISSED", "DETECTED", "DETECTED", "MISSED",
              "2", "37", "15.0%"],
-            ["8", "IForest+ACECARD", "1+2", "MISSED", "DETECTED", "DETECTED", "MISSED",
+            ["8", "IForest+V-Intelligence UEBA", "1+2", "MISSED", "DETECTED", "DETECTED", "MISSED",
              "2", "49", "19.9%"],
             ["9", "T3 Velocity", "3", "DETECTED", "MISSED", "DETECTED", "MISSED",
              "2", "23", "9.3%"],
@@ -1278,7 +1278,7 @@ def build_document():
     ))
 
     add_body_text(doc, (
-        "ACECARD implements UEBA through semantic embeddings: behavioral telemetry is "
+        "V-Intelligence UEBA implements UEBA through semantic embeddings: behavioral telemetry is "
         "serialized to natural language, embedded into 1536-dimensional vector space, "
         "and tracked over time. Drift in this space represents behavioral change. The "
         "direction of drift — toward known threat concepts or away from baseline patterns — "
@@ -1550,7 +1550,7 @@ def build_document():
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(
         "22nd Century Technologies, Inc.\n"
-        "ACECARD Program — Three-Tier Technical Specification\n"
+        "V-Intelligence UEBA Program — Three-Tier Technical Specification\n"
         "Document Version 3.0 — May 2025"
     )
     run.font.size = Pt(10)
