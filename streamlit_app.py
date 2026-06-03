@@ -213,8 +213,61 @@ if page == "Story Mode":
             if csvs:
                 sample = pd.read_csv(csvs[-1])
                 avail_cols = [c for c in cols if c in sample.columns]
-                st.dataframe(sample[avail_cols].head(20), hide_index=True, use_container_width=True)
-                st.caption(f"{len(csvs)} daily files, ~{len(sample):,} events on this day alone")
+                sort_col = "user_id" if "user_id" in avail_cols else ("device_id" if "device_id" in avail_cols else ("src_ip" if "src_ip" in avail_cols else avail_cols[0]))
+                st.dataframe(sample[avail_cols].sort_values(sort_col).reset_index(drop=True), hide_index=True, use_container_width=True, height=400)
+                st.caption(f"{len(csvs)} daily files · {len(sample):,} events (sorted by {sort_col})")
+
+    # User detail lookup
+    st.divider()
+    st.subheader("User Detail Lookup")
+    all_uids = sorted(users_df["user_id"].tolist()) if not users_df.empty and "user_id" in users_df.columns else []
+    if all_uids:
+        sel_uid = st.selectbox("Select a user to view full profile and activity", all_uids, index=None, placeholder="Choose a user...")
+        if sel_uid:
+            profile_row = users_df[users_df["user_id"] == sel_uid]
+            if not profile_row.empty:
+                p = profile_row.iloc[0]
+                pc = st.columns(5)
+                pc[0].metric("User Type", p.get("user_type", "—"))
+                pc[1].metric("Department", p.get("department", "—"))
+                pc[2].metric("Role", p.get("role", "—"))
+                pc[3].metric("Clearance", p.get("clearance", "—"))
+                pc[4].metric("User ID", sel_uid)
+
+            _sel_wf = db_load_weekly_features()
+            if not _sel_wf.empty and "user_id" in _sel_wf.columns:
+                user_wf = _sel_wf[_sel_wf["user_id"] == sel_uid]
+                if not user_wf.empty:
+                    st.markdown("**Activity Summary (Weekly Averages)**")
+                    activity_metrics = {
+                        "auth_total": "Auth Events", "auth_fail_rate": "Auth Fail Rate",
+                        "auth_off_hours_ratio": "Off-Hours Ratio", "file_total": "File Events",
+                        "file_restricted_ratio": "Restricted File %", "file_confidential_ratio": "Confidential File %",
+                        "net_bytes_out": "Net Bytes Out", "net_unique_dsts": "Unique Net Dests",
+                        "net_external_ratio": "External Ratio", "dns_unique_domains": "DNS Domains",
+                        "dns_nxdomain_ratio": "NXDomain Ratio",
+                    }
+                    avail_metrics = {k: v for k, v in activity_metrics.items() if k in user_wf.columns}
+                    mc = st.columns(min(len(avail_metrics), 4))
+                    for i, (col_key, label) in enumerate(avail_metrics.items()):
+                        val = user_wf[col_key].mean()
+                        fmt = f"{val:,.0f}" if val > 10 else f"{val:.3f}"
+                        mc[i % len(mc)].metric(label, fmt)
+
+                    trend_cols = [c for c in ["auth_total", "file_total", "net_bytes_out", "dns_unique_domains"] if c in user_wf.columns]
+                    if trend_cols and "week_idx" in user_wf.columns:
+                        st.markdown("**Weekly Activity Trend**")
+                        trend_data = user_wf[["week_idx"] + trend_cols].sort_values("week_idx")
+                        fig_trend = go.Figure()
+                        for tc in trend_cols:
+                            fig_trend.add_trace(go.Scatter(
+                                x=trend_data["week_idx"], y=trend_data[tc],
+                                mode="lines+markers", name=tc.replace("_", " ").title(),
+                            ))
+                        fig_trend.update_layout(height=300, margin=dict(l=20, r=20, t=20, b=20),
+                                                xaxis_title="Week", yaxis_title="Count",
+                                                legend=dict(orientation="h", yanchor="bottom", y=1.02))
+                        st.plotly_chart(fig_trend, use_container_width=True)
 
     # Weekly activity overview — all users side by side
     st.subheader(f"Weekly Activity: All {_n_story_users} Users")
