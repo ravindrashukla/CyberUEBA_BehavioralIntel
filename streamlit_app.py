@@ -4093,9 +4093,10 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <h2 style="text-align:center; color:{NAVY};">All Attack Users: Signal Separation</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:8px;">
-    Full ~70-week campaign, raw cumulative drift vs the normal band (★ = first sustained detection).
-    Both signals eventually flag the volume attacks, but embedding drift flags the behavioral-direction
-    attacks (insider, LOTL) ~30 weeks earlier; the slow APT clears neither band and needs composite scoring.</p>
+    How far each attacker drifts from normal over the full ~70-week campaign (★ = first clear detection).
+    Each lens wins on different attacks: the <b>raw numbers</b> (left) catch the noisy, high-volume attack (USR-118)
+    earliest — even before the AI; the <b>AI "meaning" lens</b> (right) catches the subtle insider and stealth-hacker
+    ~30 weeks sooner, but is slower on that volume attack. Neither catches the slow APT on its own.</p>
     """, unsafe_allow_html=True)
 
     # ── Like-for-like view: RAW cumulative CUSUM over the same ~70-week window ──
@@ -4172,7 +4173,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.plotly_chart(fig_f, use_container_width=True)
         st.markdown(f"""
         <div style="text-align:center; color:{RED}; font-weight:600; font-size:0.9rem;">
-            Eventually flags volume/footprint attacks — but late, and never the slow APT
+            Best at noisy, high-volume attacks — catches USR-118 first, even before the AI lens. Slow on subtle attacks; never the slow APT.
         </div>
         {_ttd_caption(cross_f)}
         """, unsafe_allow_html=True)
@@ -4183,7 +4184,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.plotly_chart(fig_a, use_container_width=True)
         st.markdown(f"""
         <div style="text-align:center; color:#1E8449; font-weight:600; font-size:0.9rem;">
-            Flags the insider & LOTL ~30 weeks earlier — the slow APT still needs composite scoring
+            Best at subtle attacks — catches the insider &amp; stealth-hacker ~30 weeks earlier, but ~24 weeks slower on the noisy volume attack (USR-118). Never the slow APT.
         </div>
         {_ttd_caption(cross_a)}
         """, unsafe_allow_html=True)
