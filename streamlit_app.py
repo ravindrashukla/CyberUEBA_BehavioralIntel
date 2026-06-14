@@ -3982,11 +3982,31 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"<div style='text-align:center; color:{_vcolor}; font-weight:600; font-size:0.92rem; margin:2px 0 12px 0;'>{_verdict}</div>",
                 unsafe_allow_html=True)
 
+    # Real traditional SIEM (point-anomaly) verdict — the genuine "traditional miss"
+    _trad_hits = []
+    if not comp_df.empty:
+        _tr = comp_df[comp_df.user_id == selected_user]
+        if not _tr.empty:
+            for _mn, _mc in [("Isolation Forest", "iforest_anomaly"), ("One-Class SVM", "ocsvm_anomaly"), ("LOF", "lof_anomaly")]:
+                if bool(_tr.iloc[0].get(_mc, False)):
+                    _trad_hits.append(_mn)
+    _trad_line = (f"flagged by {', '.join(_trad_hits)}" if _trad_hits
+                  else "scored NORMAL by Isolation Forest, SVM, and LOF — a genuine miss")
+    _trad_color = "#E67E22" if _trad_hits else RED
+    st.markdown(f"""
+    <div style="background:#FDEDEC; border:1px solid #F5B7B1; border-radius:8px; padding:10px 16px; margin-bottom:12px; text-align:center; font-size:0.88rem;">
+        <b style="color:{_trad_color};">Real traditional SIEM (point-anomaly): {selected_user} {_trad_line}.</b>
+        <span style="color:#6C757D;"> The Feature-Space CUSUM panel below is a <b>temporal-drift</b> method, not a SIEM — it tracks
+        loud attacks but fires on ~99% of normal users, so its "flag" is not actionable. The genuine traditional failure
+        is that the point-anomaly methods (Isolation Forest / SVM / LOF) never flag these attacks at all.</span>
+    </div>
+    """, unsafe_allow_html=True)
+
     with drift_col1:
         st.markdown(f"""
         <div style="background:#FDEDEC; padding:8px 14px; border-radius:6px; text-align:center; margin-bottom:8px;">
             <span style="color:{RED}; font-weight:700;">Feature-Space CUSUM</span>
-            <span style="color:#6C757D; font-size:0.8rem;"> — Traditional approach</span>
+            <span style="color:#6C757D; font-size:0.8rem;"> — temporal feature drift (~99% FP, not a SIEM)</span>
         </div>
         """, unsafe_allow_html=True)
 
