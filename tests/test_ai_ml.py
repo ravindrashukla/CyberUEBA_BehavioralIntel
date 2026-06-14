@@ -31,7 +31,7 @@ warnings.filterwarnings("ignore", category=UserWarning, module="pandas")
 import pytest
 import numpy as np
 
-from embeddings.embedder import MockEmbedder, EMBEDDING_DIM
+from embeddings.embedder import EMBEDDING_DIM
 from embeddings.composer import (
     SIGNAL_WEIGHTS,
     compose,
@@ -70,46 +70,50 @@ from detection.drift_direction import analyze_entity_drift
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.p0
-def test_ai_001_embed_text_returns_1536d(mock_embedder):
+def test_ai_001_embed_text_returns_1536d(real_embedder):
     """AI-001: embed_text returns a 1536-d float32 numpy array."""
-    vec = mock_embedder.embed_text("hello world")
+    vec = real_embedder.embed_text("hello world")
     assert isinstance(vec, np.ndarray)
     assert vec.shape == (EMBEDDING_DIM,)
     assert vec.dtype == np.float32
 
 
 @pytest.mark.p0
-def test_ai_002_embed_text_unit_norm(mock_embedder):
-    """AI-002: embed_text output is L2-normalized (unit vector)."""
-    vec = mock_embedder.embed_text("unit norm test")
+def test_ai_002_embed_text_unit_norm(real_embedder):
+    """AI-002: embed_text output is L2-normalized (unit vector).
+
+    Real OpenAI embeddings are normalized to ~1.0 but only to float32 precision,
+    so use a tolerance appropriate for real (not exactly-normalized) vectors.
+    """
+    vec = real_embedder.embed_text("unit norm test")
     norm = float(np.linalg.norm(vec))
-    assert np.allclose(norm, 1.0, atol=1e-6)
+    assert np.allclose(norm, 1.0, atol=1e-3)
 
 
 @pytest.mark.p0
-def test_ai_003_embed_text_deterministic(mock_embedder):
+def test_ai_003_embed_text_deterministic(real_embedder):
     """AI-003: Same input text always produces the same vector."""
-    v1 = mock_embedder.embed_text("deterministic check")
-    v2 = mock_embedder.embed_text("deterministic check")
+    v1 = real_embedder.embed_text("deterministic check")
+    v2 = real_embedder.embed_text("deterministic check")
     assert np.allclose(v1, v2, atol=1e-6)
 
 
 @pytest.mark.p0
-def test_ai_004_embed_text_different_inputs(mock_embedder):
+def test_ai_004_embed_text_different_inputs(real_embedder):
     """AI-004: Different input texts produce different vectors."""
-    v1 = mock_embedder.embed_text("alpha")
-    v2 = mock_embedder.embed_text("beta")
+    v1 = real_embedder.embed_text("alpha")
+    v2 = real_embedder.embed_text("beta")
     assert not np.allclose(v1, v2, atol=1e-3)
 
 
 @pytest.mark.p1
-def test_ai_005_embed_batch_matches_singles(mock_embedder):
+def test_ai_005_embed_batch_matches_singles(real_embedder):
     """AI-005: embed_batch results match individual embed_text calls."""
     texts = ["one", "two", "three"]
-    batch = mock_embedder.embed_batch(texts)
+    batch = real_embedder.embed_batch(texts)
     assert len(batch) == len(texts)
     for text, batch_vec in zip(texts, batch):
-        single_vec = mock_embedder.embed_text(text)
+        single_vec = real_embedder.embed_text(text)
         assert np.allclose(batch_vec, single_vec, atol=1e-6)
 
 
@@ -277,17 +281,17 @@ def test_ai_017_drift_magnitude_symmetry(random_unit_vector):
 
 
 @pytest.mark.p0
-def test_ai_017b_zero_drift_identical_embeddings(mock_embedder):
+def test_ai_017b_zero_drift_identical_embeddings(real_embedder):
     """AI-017b: Identical embeddings produce zero drift."""
-    vec = mock_embedder.embed_text("same text repeated")
+    vec = real_embedder.embed_text("same text repeated")
     assert drift_magnitude(vec, vec) == pytest.approx(0.0, abs=1e-6)
 
 
 @pytest.mark.p0
-def test_ai_017c_positive_drift_different_embeddings(mock_embedder):
+def test_ai_017c_positive_drift_different_embeddings(real_embedder):
     """AI-017c: Different embeddings produce positive drift."""
-    v1 = mock_embedder.embed_text("normal user behavior pattern")
-    v2 = mock_embedder.embed_text("anomalous data exfiltration detected")
+    v1 = real_embedder.embed_text("normal user behavior pattern")
+    v2 = real_embedder.embed_text("anomalous data exfiltration detected")
     mag = drift_magnitude(v1, v2)
     assert mag > 0.0, "Drift between different texts should be positive"
     assert mag <= 2.0, "Drift magnitude must be in [0, 2]"
@@ -442,10 +446,10 @@ def test_ai_025_serialize_different_features_produce_different_text():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.p0
-def test_ai_026_compose_zones_returns_1536d_unit_vector(mock_embedder):
+def test_ai_026_compose_zones_returns_1536d_unit_vector(real_embedder):
     """AI-026: compose_zones() returns a 1536-d unit vector."""
     zone_embeddings = build_zone_embeddings(
-        "user", "USR-026", _SAMPLE_PROFILE, _SAMPLE_FEATURES, mock_embedder
+        "user", "USR-026", _SAMPLE_PROFILE, _SAMPLE_FEATURES, real_embedder
     )
     composite = compose_zones(zone_embeddings, context="normal_ops")
     assert composite.shape == (EMBEDDING_DIM,)
@@ -454,10 +458,10 @@ def test_ai_026_compose_zones_returns_1536d_unit_vector(mock_embedder):
 
 
 @pytest.mark.p0
-def test_ai_027_compose_zones_different_contexts_differ(mock_embedder):
+def test_ai_027_compose_zones_different_contexts_differ(real_embedder):
     """AI-027: compose_zones() under different contexts produces different vectors."""
     zone_embeddings = build_zone_embeddings(
-        "user", "USR-027", _SAMPLE_PROFILE, _SAMPLE_FEATURES, mock_embedder
+        "user", "USR-027", _SAMPLE_PROFILE, _SAMPLE_FEATURES, real_embedder
     )
     composites = {}
     for ctx in ALL_CONTEXTS:
@@ -885,17 +889,18 @@ def test_ai_046_db_embedding_integrity():
 # ═══════════════════════════════════════════════════════════════════════════════
 
 @pytest.mark.p0
-def test_ai_047_end_to_end_pipeline(mock_embedder):
+def test_ai_047_end_to_end_pipeline(real_embedder):
     """AI-047: Full pipeline: features -> serialize -> embed -> compose -> cosine sim."""
     # Step 1: Build zone embeddings from features
     zone_embeddings = build_zone_embeddings(
-        "user", "USR-E2E", _SAMPLE_PROFILE, _SAMPLE_FEATURES, mock_embedder
+        "user", "USR-E2E", _SAMPLE_PROFILE, _SAMPLE_FEATURES, real_embedder
     )
     assert len(zone_embeddings) == 5, f"Expected 5 zones, got {len(zone_embeddings)}"
     for zone_name, vec in zone_embeddings.items():
         assert vec.shape == (EMBEDDING_DIM,), f"Zone '{zone_name}' not 1536-d"
         norm = float(np.linalg.norm(vec))
-        assert np.allclose(norm, 1.0, atol=1e-5), f"Zone '{zone_name}' not unit norm"
+        # Real OpenAI embeddings are unit-norm only to float32 precision.
+        assert np.allclose(norm, 1.0, atol=1e-3), f"Zone '{zone_name}' not unit norm"
 
     # Step 2: Compose under two contexts
     composite_normal = compose_zones(zone_embeddings, context="normal_ops")
@@ -916,7 +921,7 @@ def test_ai_047_end_to_end_pipeline(mock_embedder):
     anomalous_features["endpoint_max_risk"] = 0.95
 
     zone_embeddings_anomalous = build_zone_embeddings(
-        "user", "USR-E2E", _SAMPLE_PROFILE, anomalous_features, mock_embedder
+        "user", "USR-E2E", _SAMPLE_PROFILE, anomalous_features, real_embedder
     )
     composite_anomalous = compose_zones(zone_embeddings_anomalous, context="normal_ops")
 
@@ -926,7 +931,7 @@ def test_ai_047_end_to_end_pipeline(mock_embedder):
 
 
 @pytest.mark.p0
-def test_ai_048_pipeline_trajectory_chain(mock_embedder):
+def test_ai_048_pipeline_trajectory_chain(real_embedder):
     """AI-048: Build multiple snapshots, compute trajectory and regime."""
     # Create a temporal series of zone embeddings by varying features
     snapshots = []
@@ -937,7 +942,7 @@ def test_ai_048_pipeline_trajectory_chain(mock_embedder):
         features["net_bytes_out"] = 1_200_000 + 500_000 * week
 
         zone_embs = build_zone_embeddings(
-            "user", "USR-TRAJ", _SAMPLE_PROFILE, features, mock_embedder
+            "user", "USR-TRAJ", _SAMPLE_PROFILE, features, real_embedder
         )
         composite = compose_zones(zone_embs, context="normal_ops")
         snapshots.append(composite)

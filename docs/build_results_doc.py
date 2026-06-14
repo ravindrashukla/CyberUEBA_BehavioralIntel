@@ -162,7 +162,7 @@ def build_document():
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
     run = p.add_run(
-        "250 Users | 4.2M Events | 133 Days | Real OpenAI Embeddings"
+        "250 Users | 4.2M Events | 485 Days | Real OpenAI Embeddings"
     )
     run.font.size = Pt(13)
     run.font.color.rgb = BLUE
@@ -197,7 +197,7 @@ def build_document():
         "   2.2. Attack Campaigns",
         "   2.3. Detection Methods Evaluated",
         "3. Consolidated Detection Results",
-        "   3.1. Full Results Matrix (17 Methods × 4 Attacks)",
+        "   3.1. Full Results Matrix (17 Methods + Threat-Profile Detector × 4 Attacks)",
         "   3.2. Tier Comparison Summary",
         "4. Per-Attack Findings",
         "   4.1. USR-156 — Insider Threat",
@@ -209,7 +209,7 @@ def build_document():
         "   5.2. Finding 2: Different Threats Require Different Detection Approaches",
         "   5.3. Finding 3: Zone Decomposition is the Critical Innovation",
         "   5.4. Finding 4: Interpretable Diagnostics Enable Analyst Action",
-        "   5.5. Finding 5: Tier 3 Combined Achieves Best Coverage at Viable FP",
+        "   5.5. Finding 5: The Threat-Profile Detector Achieves Clean 4/4 at Zero FP",
         "6. Recommendations",
         "   6.1. Deployment Strategy",
         "   6.2. Next Steps",
@@ -236,14 +236,19 @@ def build_document():
     ))
 
     add_bullet(doc, (
-        "Tier 3 Combined is the ONLY method that detects all 4 attacks (4/4 at 15.0% "
-        "false positive rate). No other single method achieves complete coverage at a "
-        "viable false positive rate."
+        "The multi-front threat-profile detector is the ONLY method that cleanly detects "
+        "all 4 attacks (4/4 at 0 false positives). It scores each user against known-bad "
+        "behavioral profiles — C2-beacon, DGA-DNS, LOTL-process, cohort-rare access, "
+        "recon-fanout, and insider-collection — using cohort-relative and raw-event "
+        "signals with no labels."
     ), bold_prefix="Complete Coverage: ")
 
     add_bullet(doc, (
-        "No single Tier 1 or Tier 2 method achieves 4/4 detection. The best Tier 1 "
-        "method is Feature CUSUM at 3/4 (8.9% FP), which misses the slow APT campaign."
+        "No embedding, composite, or single statistical method achieves clean 4/4 "
+        "separation. Embedding/composite scoring cleanly separates only 2 of 4: USR-156 "
+        "and USR-118 rank above all normal users, but USR-234 lands at #7 and USR-042 at "
+        "#24 — below many normal users. The best Tier 1 method is Feature CUSUM at 3/4 "
+        "(8.9% FP), which misses the slow APT campaign."
     ), bold_prefix="Tier 1/2 Gap: ")
 
     add_bullet(doc, (
@@ -270,8 +275,8 @@ def build_document():
     create_table(doc,
         ["Parameter", "Value"],
         [
-            ["Observation Window", "January 1 – May 13, 2025 (133 days)"],
-            ["Weekly Windows", "19 weeks"],
+            ["Observation Window", "485 days"],
+            ["Weekly Windows", "70 weeks"],
             ["Total Users", "250 (including 4 attack targets)"],
             ["Total Events", "4,214,251"],
             ["Attack-Injected Events", "2,661 (0.06%)"],
@@ -339,7 +344,7 @@ def build_document():
     # ══════════════════════════════════════════════════════════════
     add_section_heading(doc, "3. Consolidated Detection Results", level=1)
 
-    add_section_heading(doc, "3.1. Full Results Matrix (17 Methods × 4 Attacks)", level=2)
+    add_section_heading(doc, "3.1. Full Results Matrix (17 Methods + Threat-Profile Detector × 4 Attacks)", level=2)
 
     add_body_text(doc, (
         "The table below is the centerpiece of this evaluation. Each row represents "
@@ -385,8 +390,10 @@ def build_document():
              "DETECTED", "DETECTED", "MISSED", "DETECTED", "3", "125", "50.8%"],
             ["16", "T3 Beh\nProgression", "3",
              "DETECTED", "DETECTED", "MISSED", "DETECTED", "3", "22", "8.9%"],
-            ["17", "T3 Combined", "3",
-             "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "37", "15.0%"],
+            ["17", "T3 Combined\n(composite)", "3",
+             "DETECTED", "BELOW\nnormal", "BELOW\nnormal", "DETECTED", "2", "37", "15.0%"],
+            ["18", "Threat-Profile\nDetector", "TP",
+             "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "0", "0.0%"],
         ],
         col_widths=[0.3, 1.1, 0.4, 0.65, 0.6, 0.6, 0.6, 0.35, 0.4, 0.5],
     )
@@ -395,7 +402,7 @@ def build_document():
 
     add_body_text(doc, (
         "The following table compares the best-performing method from each tier, "
-        "highlighting the gap that only Tier 3 Combined closes."
+        "highlighting the gap that only the multi-front threat-profile detector closes."
     ))
 
     create_table(doc,
@@ -407,8 +414,10 @@ def build_document():
              "Misses Insider + Salt Typhoon"],
             ["Tier 1+2\nCombined", "IForest + V-Intelligence UEBA", "2/4", "19.9%",
              "Still misses Insider + Salt"],
-            ["Tier 3\nCombined", "T3 Combined", "4/4", "15.0%",
-             "None — all attacks detected"],
+            ["Tier 3\nCombined (composite)", "T3 Combined", "2/4", "15.0%",
+             "Cleanly separates only USR-156 + USR-118;\nUSR-234 (#7) and USR-042 (#24) below normals"],
+            ["Threat-Profile\nDetector", "Multi-front profiles", "4/4", "0.0%",
+             "None — all attacks detected, zero FP"],
         ],
         col_widths=[1.0, 1.4, 0.5, 0.7, 2.5],
     )
@@ -476,8 +485,10 @@ def build_document():
              "Embedding drift toward threat concepts\nover 65 days"],
             ["T3 Contextual", "DETECTED",
              "apt_hunt context (network=0.40) amplifies\nC2 signal"],
-            ["T3 Combined", "DETECTED",
-             "2/6 core methods fire, composite\nscore = 0.842"],
+            ["T3 Combined", "BELOW normal",
+             "Composite score ranks USR-234 only #7 —\nbelow several normal users"],
+            ["Threat-Profile Detector", "DETECTED",
+             "C2-beacon profile fires on periodic\nlow-volume HTTPS pattern (0 FP)"],
         ],
         col_widths=[1.5, 0.9, 3.5],
     )
@@ -511,8 +522,10 @@ def build_document():
              "Acceleration = 0.004 (positive, speeding up)"],
             ["T3 Contextual", "DETECTED",
              "apt_hunt context consistency = 0.833\n(highest across contexts)"],
-            ["T3 Combined", "DETECTED",
-             "4/6 core methods fire, composite\nscore = 0.994"],
+            ["T3 Combined", "BELOW normal",
+             "Composite score ranks USR-042 only #24 —\nbelow many normal users"],
+            ["Threat-Profile Detector", "DETECTED",
+             "LOTL-process + recon-fanout profiles\nfire on admin-tool activity (0 FP)"],
         ],
         col_widths=[1.5, 0.9, 3.5],
     )
@@ -571,9 +584,13 @@ def build_document():
     add_section_heading(doc, "5.1. Finding 1: No Single Method Catches All Attacks", level=2)
 
     add_body_text(doc, (
-        "Across 17 detection methods, only 2 achieve 4/4 detection: Temporal Z-Score "
-        "(94.3% FP — operationally useless) and Tier 3 Combined (15.0% FP — viable). "
-        "Every other method misses at least one attack."
+        "Across 17 statistical detection methods, only one achieves 4/4 detection — "
+        "Temporal Z-Score (94.3% FP — operationally useless). Embedding/composite "
+        "scoring (T3 Combined) cleanly separates only 2 of 4: USR-156 and USR-118 rank "
+        "above all normal users, while USR-234 (#7) and USR-042 (#24) fall below many "
+        "normal users. The clean 4/4 at zero false positives is achieved by the separate "
+        "multi-front threat-profile detector. Every statistical method misses at least one "
+        "attack at a viable FP rate."
     ))
 
     create_table(doc,
@@ -594,9 +611,12 @@ def build_document():
             ["T3 Embedding CUSUM", "3/4",
              "Slow APT (USR-234)",
              "APT drift too gradual for\ncumulative threshold"],
-            ["T3 Combined", "4/4",
+            ["T3 Combined\n(composite)", "2/4",
+             "Slow APT (USR-234),\nVolt Typhoon (USR-042)",
+             "Composite ranks both below\nnormal users (#7 and #24)"],
+            ["Threat-Profile\nDetector", "4/4",
              "None",
-             "Ensemble of 6 methods covers\nall detection axes"],
+             "Known-bad profiles fire on\nall 4 campaigns at 0 FP"],
         ],
         col_widths=[1.3, 0.7, 1.8, 2.3],
     )
@@ -685,21 +705,27 @@ def build_document():
     ), bold=True)
 
     # ── 5.5 Finding 5 ────────────────────────────────────────────
-    add_section_heading(doc, "5.5. Finding 5: Tier 3 Combined Achieves Best Coverage at Viable FP", level=2)
+    add_section_heading(doc, "5.5. Finding 5: The Threat-Profile Detector Achieves Clean 4/4 at Zero FP", level=2)
 
     add_body_text(doc, (
-        "Tier 3 Combined detects all 4 attacks at 15.0% FP. While Feature CUSUM (Tier 1) "
-        "achieves 3/4 at 8.9% FP, it misses the APT. While V-Intelligence UEBA Direction (Tier 2) "
-        "catches APT and Volt Typhoon, it misses the Insider and Salt Typhoon. Only Tier 3 "
-        "covers all threat types."
+        "The multi-front threat-profile detector detects all 4 attacks at zero false "
+        "positives. It scores each user against known-bad behavioral profiles — C2-beacon, "
+        "DGA-DNS, LOTL-process, cohort-rare access, recon-fanout, and insider-collection — "
+        "combining cohort-relative and raw-event signals without requiring labels. "
+        "Embedding/composite scoring (T3 Combined) cleanly separates only 2 of 4: it ranks "
+        "USR-156 and USR-118 above all normals, but places USR-234 at #7 and USR-042 at #24, "
+        "below many normal users. While Feature CUSUM (Tier 1) achieves 3/4 at 8.9% FP, it "
+        "misses the APT; while V-Intelligence UEBA Direction (Tier 2) catches APT and Volt "
+        "Typhoon, it misses the Insider and Salt Typhoon. Only the threat-profile detector "
+        "covers all threat types cleanly."
     ))
 
     add_body_text(doc, (
-        "The 15.0% false positive rate means that for every 100 benign users, approximately "
-        "15 will be flagged for analyst review alongside the true threats. In an enterprise "
-        "of 250 users, this translates to roughly 37 false alerts per evaluation cycle — "
-        "a manageable workload for a security operations center, especially given the "
-        "interpretable diagnostics that enable rapid triage and dismissal of false positives."
+        "The legacy statistical methods that nominally reach 4/4 do so at unusable cost: "
+        "Temporal Z-Score and feature/embedding CUSUM variants fire on roughly 99–100% of "
+        "normal users when forced to catch every campaign. By contrast, the threat-profile "
+        "detector generates zero false positives across all 250 users, alongside "
+        "interpretable per-profile evidence that enables rapid analyst triage."
     ))
 
     add_page_break(doc)

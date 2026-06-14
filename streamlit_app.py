@@ -125,9 +125,9 @@ with st.sidebar:
 
     page = st.radio(
         "Navigation",
-        ["Story Mode", "Dashboard", "Alerts", "Kill Chains", "Behavioral Drift", "Behavioral Profile",
+        ["Story Mode", "Proof of Realism", "Dashboard", "Alerts", "Kill Chains", "Behavioral Drift", "Behavioral Profile",
          "Drift Trajectory", "Digital Entity", "Telemetry Explorer", "Traditional vs V-Intelligence UEBA",
-         "Three-Tier Detection", "Detection Comparison"],
+         "Three-Tier Detection", "Detection Comparison", "Threat Profiles"],
         label_visibility="collapsed",
     )
 
@@ -140,13 +140,6 @@ with st.sidebar:
         Digital Entity Behavioral Modeling<br>
         Novelty Persistence Detection<br>
         MITRE ATT&CK Mapping</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div style="text-align:center; padding:16px 0 8px 0;">
-        <p style="color:#6C757D; font-size:0.65rem;">
-        22nd Century Technologies<br>PROPRIETARY</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -533,6 +526,10 @@ if page == "Story Mode":
         fp_story = len(flagged_story[~flagged_story["is_attack"]])
         n_normal_story = len(comp_story[~comp_story["is_attack"]])
         fp_rate_story = 100 * fp_story / n_normal_story
+        _ss = comp_story.sort_values("composite", ascending=False).reset_index(drop=True)
+        clean_story = sum(1 for _u in ["USR-156", "USR-234", "USR-042", "USR-118"]
+                          if len(_ss.index[_ss["uid"] == _u])
+                          and int((~_ss.iloc[:int(_ss.index[_ss["uid"] == _u][0])]["is_attack"]).sum()) == 0)
 
         ens_c1, ens_c2, ens_c3 = st.columns(3)
         with ens_c1:
@@ -548,9 +545,9 @@ if page == "Story Mode":
             st.markdown(f"""
             <div style="background:white; padding:24px; border-radius:12px; text-align:center;
                          box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
-                <h4 style="color:#27AE60; margin:0;">All Attacks Detected</h4>
-                <div style="font-size:2.5rem; font-weight:700; color:#27AE60;">{tp_story} / 4</div>
-                <p style="color:#6C757D; font-size:0.85rem;">Including the Slow APT<br>invisible to all other methods</p>
+                <h4 style="color:#27AE60; margin:0;">Cleanly Separated</h4>
+                <div style="font-size:2.5rem; font-weight:700; color:#27AE60;">{clean_story} / 4</div>
+                <p style="color:#6C757D; font-size:0.85rem;">above all normal users<br>(threat-profile detector catches 4/4, 0 FP)</p>
             </div>
             """, unsafe_allow_html=True)
         with ens_c3:
@@ -597,14 +594,315 @@ if page == "Story Mode":
         st.markdown(f"""
         <div style="background:{NAVY}; padding:28px 32px; border-radius:16px; margin-top:32px; text-align:center;">
             <p style="color:{GOLD}; font-size:1.5rem; font-weight:700; margin:0;">
-            4 campaigns. 3 tiers. 1 composite score.</p>
+            4 campaigns. Composite ranks them. Threat profiles catch them.</p>
             <p style="color:#A0C8E0; font-size:1.1rem; margin:12px 0 0 0;">
-            Multi-phase composite scoring detects {_story_tp_txt} of 4 attacks at {_story_fp_txt} false positive rate.<br>
-            No manual algorithm selection — one ranked output per user.</p>
+            Composite scoring cleanly separates {clean_story} of 4 (USR-156, USR-118); the multi-front
+            <b>threat-profile detector catches all 4 at 0 false positives</b>, each named by technique.<br>
+            No manual algorithm selection — one ranked output, plus an explainable alert per attacker.</p>
             <p style="color:{GOLD}; font-size:0.95rem; margin:16px 0 0 0; font-weight:600;">
             Available for 4-week proof of concept on your agency's data.</p>
         </div>
         """, unsafe_allow_html=True)
+
+
+# ── PAGE: PROOF OF REALISM ──
+elif page == "Proof of Realism":
+    from models.hierarchical_zones import serialize_zone, USER_ZONE_ORDER
+
+    st.markdown(f"""
+    <div class="header-bar">
+        <h1>🔬 Proof of Realism — Intruder vs Normal, Side by Side</h1>
+        <p>Pick any two users. Compare their raw telemetry, behavioral digital entity, and
+        cumulative drift in real time — proving attackers hide within normal statistical ranges.</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    _ATTACK_LABELS = {"USR-234": "Slow APT", "USR-118": "Salt Typhoon",
+                      "USR-156": "Insider Threat", "USR-042": "Volt Typhoon"}
+
+    # Load full profiles (for device mapping + identity zone)
+    _users_csv = GENERATED_DIR / "entities" / "users.csv"
+    _profiles = {}
+    if _users_csv.exists():
+        _pdf = pd.read_csv(_users_csv)
+        for _, _r in _pdf.iterrows():
+            _profiles[_r["user_id"]] = _r.to_dict()
+
+    _all_uids = sorted(_profiles.keys())
+    if not _all_uids:
+        st.warning("User roster not found in data/generated/entities/users.csv.")
+    else:
+        def _fmt_uid(uid):
+            return f"{uid} — {_ATTACK_LABELS[uid]} ⚠️" if uid in _ATTACK_LABELS else uid
+
+        sc1, sc2 = st.columns(2)
+        with sc1:
+            uidA = st.selectbox("User A (default: an attacker)", _all_uids,
+                                index=_all_uids.index("USR-234") if "USR-234" in _all_uids else 0,
+                                format_func=_fmt_uid, key="por_a")
+        with sc2:
+            _defB = "USR-001" if "USR-001" in _all_uids else (_all_uids[1] if len(_all_uids) > 1 else _all_uids[0])
+            uidB = st.selectbox("User B (default: a normal user)", _all_uids,
+                                index=_all_uids.index(_defB), format_func=_fmt_uid, key="por_b")
+
+        pA, pB = _profiles.get(uidA, {}), _profiles.get(uidB, {})
+
+        # ─────────────────────────────────────────────────────────────
+        # SECTION 1: STATISTICAL TWINS
+        # ─────────────────────────────────────────────────────────────
+        st.subheader("1 · Statistical Twins — Weekly Feature Averages")
+        st.markdown("If the attacker data is **realistic**, its aggregate statistics should be "
+                    "indistinguishable from a normal user. Compare the weekly averages:")
+        _wf = db_load_weekly_features()
+        _twin = ["auth_total", "auth_off_hours_ratio", "file_total", "file_restricted_ratio",
+                 "file_confidential_ratio", "net_bytes_out", "net_unique_dsts",
+                 "net_external_ratio", "dns_unique_domains", "dns_nxdomain_ratio"]
+        if not _wf.empty:
+            _uA = _wf[_wf["user_id"] == uidA]
+            _uB = _wf[_wf["user_id"] == uidB]
+            _rows = []
+            for f in _twin:
+                if f in _wf.columns:
+                    va = _uA[f].mean() if not _uA.empty else float("nan")
+                    vb = _uB[f].mean() if not _uB.empty else float("nan")
+                    closer = "≈ nearly identical" if (pd.notna(va) and pd.notna(vb) and
+                             abs(va - vb) <= 0.15 * (abs(va) + 1e-9)) else ""
+                    _rows.append({"Feature": f, f"{uidA}": f"{va:,.4f}",
+                                  f"{uidB}": f"{vb:,.4f}", "Verdict": closer})
+            st.dataframe(pd.DataFrame(_rows), hide_index=True, use_container_width=True)
+            st.info("The attacker's volume-level statistics blend into the normal population — on "
+                    "several features the attacker is even **lower** than normal. This is exactly "
+                    "why threshold- and magnitude-based detection scores 0/4. Realism = invisibility.")
+
+        # ─────────────────────────────────────────────────────────────
+        # SECTION 2: RAW TELEMETRY
+        # ─────────────────────────────────────────────────────────────
+        st.subheader("2 · Raw Telemetry — Live Daily Logs")
+        _net_files = sorted((GENERATED_DIR / "network").glob("*.csv"))
+        if _net_files:
+            _day_idx = st.slider("Simulation day (slide to any day in the campaign)", 0,
+                                 len(_net_files) - 1, len(_net_files) // 2, key="por_day")
+            _day = _net_files[_day_idx].name
+            st.caption(f"Raw events for day file: **{_day}**  ·  drag the slider to scan the timeline")
+
+            def _raw_for(folder, key_col, key_val, cols):
+                fp = GENERATED_DIR / folder / _day
+                if not fp.exists() or not key_val:
+                    return pd.DataFrame()
+                df = pd.read_csv(fp)
+                if key_col not in df.columns:
+                    return pd.DataFrame()
+                sub = df[df[key_col].astype(str) == str(key_val)].reset_index(drop=True)
+                avail = [c for c in cols if c in sub.columns]
+                return sub[avail + ([c for c in ["attack_id", "label"] if c in sub.columns and c not in avail])]
+
+            _tabs = st.tabs(["🌐 Network Flows", "🔑 Authentication", "📁 File Access"])
+
+            # Network (keyed by device)
+            with _tabs[0]:
+                nc1, nc2 = st.columns(2)
+                for col, uid, prof in [(nc1, uidA, pA), (nc2, uidB, pB)]:
+                    with col:
+                        dev = prof.get("primary_device_id", "")
+                        sub = _raw_for("network", "device_id", dev,
+                                       ["timestamp", "dst_ip", "dst_port", "bytes_out", "bytes_in", "protocol"])
+                        n_atk = int(sub["attack_id"].notna().sum()) if "attack_id" in sub.columns else 0
+                        st.markdown(f"**{_fmt_uid(uid)}** · device `{dev}`")
+                        st.caption(f"{len(sub)} flows · {n_atk} attack-labeled")
+                        if not sub.empty:
+                            st.dataframe(sub.head(30), hide_index=True, use_container_width=True, height=300)
+                        if n_atk > 0 and "label" in sub.columns:
+                            atk = sub[sub["attack_id"].notna()]
+                            st.error(f"⚠️ {n_atk} C2-beacon flows to {atk['dst_ip'].iloc[0]} — "
+                                     f"tiny packets ({int(atk['bytes_out'].min())}-{int(atk['bytes_out'].max())} "
+                                     f"bytes out), buried among normal traffic where a single web request "
+                                     f"can exceed 200,000 bytes.")
+
+            # Auth (keyed by user)
+            with _tabs[1]:
+                ac1, ac2 = st.columns(2)
+                for col, uid in [(ac1, uidA), (ac2, uidB)]:
+                    with col:
+                        sub = _raw_for("auth", "user_id", uid,
+                                       ["timestamp", "source_ip", "dest_system", "success", "auth_method"])
+                        n_atk = int(sub["attack_id"].notna().sum()) if "attack_id" in sub.columns else 0
+                        st.markdown(f"**{_fmt_uid(uid)}**")
+                        st.caption(f"{len(sub)} auth events · {n_atk} attack-labeled")
+                        if not sub.empty:
+                            st.dataframe(sub.head(30), hide_index=True, use_container_width=True, height=300)
+
+            # File (keyed by user)
+            with _tabs[2]:
+                fc1, fc2 = st.columns(2)
+                for col, uid in [(fc1, uidA), (fc2, uidB)]:
+                    with col:
+                        sub = _raw_for("file_access", "user_id", uid,
+                                       ["timestamp", "file_path", "operation", "data_classification"])
+                        n_atk = int(sub["attack_id"].notna().sum()) if "attack_id" in sub.columns else 0
+                        st.markdown(f"**{_fmt_uid(uid)}**")
+                        st.caption(f"{len(sub)} file events · {n_atk} attack-labeled (data staging)")
+                        if not sub.empty:
+                            st.dataframe(sub.head(30), hide_index=True, use_container_width=True, height=300)
+
+        # ─────────────────────────────────────────────────────────────
+        # SECTION 3: DIGITAL ENTITY
+        # ─────────────────────────────────────────────────────────────
+        st.subheader("3 · Digital Entity — The 5-Zone Behavioral Profile")
+        st.markdown("Each user's raw metrics are serialized into **prose per behavioral zone**, then "
+                    "embedded into a 1536-dimensional vector that captures *meaning*, not just magnitude.")
+        if not _wf.empty:
+            ec1, ec2 = st.columns(2)
+            for col, uid, prof in [(ec1, uidA, pA), (ec2, uidB, pB)]:
+                with col:
+                    st.markdown(f"**{_fmt_uid(uid)}**")
+                    u = _wf[_wf["user_id"] == uid].sort_values("week_idx")
+                    feat = u.iloc[-1].to_dict() if not u.empty else {}
+                    for zone in USER_ZONE_ORDER:
+                        try:
+                            txt = serialize_zone("user", zone, prof, feat)
+                            st.markdown(f"<div style='background:#F7F8FA;border-left:3px solid {TEAL};"
+                                        f"padding:8px 12px;margin:4px 0;border-radius:6px;font-size:0.8rem;'>"
+                                        f"<strong style='color:{NAVY};'>{zone}</strong><br>"
+                                        f"<span style='color:#444;'>{txt}</span></div>",
+                                        unsafe_allow_html=True)
+                        except Exception as _e:
+                            st.caption(f"{zone}: (unavailable)")
+
+        # ─────────────────────────────────────────────────────────────
+        # SECTION 4: CUMULATIVE DRIFT (CUSUM)
+        # ─────────────────────────────────────────────────────────────
+        st.subheader("4 · Cumulative Drift (CUSUM) — Watching Drift Add Up Over Time")
+        st.markdown("Each week we measure behavioral drift, subtract a normal-wobble allowance, and "
+                    "accumulate the excess (floored at zero). Small weekly drifts that never trip a "
+                    "single-week alarm **add up** for a sustained attacker — and reset for a normal user.")
+        _traj = db_load_weekly_trajectories()
+        if not _traj.empty and "week_to_week_drift" in _traj.columns:
+            _allow = float(_traj["week_to_week_drift"].median())
+            st.caption(f"Normal-wobble allowance (population median weekly drift) = {_allow:.4f}, "
+                       f"subtracted each week before accumulating.")
+
+            def _cusum_series(uid):
+                u = _traj[_traj["user_id"] == uid].sort_values("week_idx")
+                if u.empty:
+                    return [], [], []
+                weeks = u["week_idx"].tolist()
+                drift = u["week_to_week_drift"].tolist()
+                cusum, acc = [], 0.0
+                for d in drift:
+                    acc = max(0.0, acc + d - _allow)
+                    cusum.append(acc)
+                return weeks, drift, cusum
+
+            wksA, drA, csA = _cusum_series(uidA)
+            wksB, drB, csB = _cusum_series(uidB)
+
+            fig_cu = make_subplots(rows=2, cols=1, shared_xaxes=True, vertical_spacing=0.08,
+                                   subplot_titles=["Per-Week Drift (raw)", "Cumulative Drift (CUSUM)"])
+            colA = RED if uidA in _ATTACK_LABELS else BLUE
+            colB = RED if uidB in _ATTACK_LABELS else BLUE
+            if wksA:
+                fig_cu.add_trace(go.Scatter(x=wksA, y=drA, mode="lines+markers",
+                                 name=f"{uidA} drift", line=dict(color=colA)), row=1, col=1)
+                fig_cu.add_trace(go.Scatter(x=wksA, y=csA, mode="lines+markers",
+                                 name=f"{uidA} CUSUM", line=dict(color=colA, width=3)), row=2, col=1)
+            if wksB:
+                fig_cu.add_trace(go.Scatter(x=wksB, y=drB, mode="lines+markers",
+                                 name=f"{uidB} drift", line=dict(color=colB, dash="dot")), row=1, col=1)
+                fig_cu.add_trace(go.Scatter(x=wksB, y=csB, mode="lines+markers",
+                                 name=f"{uidB} CUSUM", line=dict(color=colB, width=3, dash="dot")), row=2, col=1)
+            fig_cu.add_hline(y=_allow, line=dict(color="gray", dash="dash"), row=1, col=1)
+            fig_cu.update_layout(height=520, margin=dict(l=40, r=20, t=50, b=40),
+                                 legend=dict(orientation="h", yanchor="bottom", y=1.08),
+                                 plot_bgcolor="white")
+            fig_cu.update_xaxes(title_text="Week", row=2, col=1)
+            st.plotly_chart(fig_cu, use_container_width=True)
+            st.markdown(f"""
+<div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {GOLD}; font-size:0.8rem; color:#555;">
+    <strong>How to read this:</strong> the top panel shows each week's drift — small and noisy for everyone, no single week is alarming.
+    The bottom panel accumulates the excess over the allowance. A sustained attacker's CUSUM <strong>climbs and never resets</strong>;
+    a normal user's drift falls below the allowance most weeks, so their CUSUM stays near zero. This is how slow, low-and-slow
+    campaigns are caught without any single week crossing a threshold.
+</div>
+""", unsafe_allow_html=True)
+
+        # ─────────────────────────────────────────────────────────────
+        # SECTION 5: COHORT COMPARISON (vs ROLE PEER GROUP)
+        # ─────────────────────────────────────────────────────────────
+        st.subheader("5 · Cohort Comparison — Intruder vs Role Peer Group")
+        from detection.composite_scorer import ROLE_TO_GROUP
+        _roleA = pA.get("role", "?")
+        _grpA = ROLE_TO_GROUP.get(_roleA, "unknown")
+        st.markdown(f"**{uidA}** is a *{_roleA}* → peer group **`{_grpA}`**. V-Intelligence UEBA "
+                    f"compares each user only to behavioral peers in the same role group, so a "
+                    f"developer is never measured against an executive — a finance analyst's "
+                    f"normal is different from an IT admin's.")
+
+        if not _wf.empty:
+            _cohort_feats = ["auth_total", "auth_off_hours_ratio", "file_total",
+                             "file_restricted_ratio", "net_bytes_out", "dns_unique_domains"]
+            _avail_cf = [f for f in _cohort_feats if f in _wf.columns]
+            _um = _wf.groupby("user_id")[_avail_cf].mean().reset_index()
+            _um["role"] = _um["user_id"].map(lambda u: _profiles.get(u, {}).get("role"))
+            _um["grp"] = _um["role"].map(lambda r: ROLE_TO_GROUP.get(r, "unknown"))
+            _cohort = _um[_um["grp"] == _grpA]
+            st.caption(f"Peer group `{_grpA}` contains {len(_cohort)} users.")
+
+            # 5a — raw features vs cohort box plots
+            st.markdown("**5a · Raw features vs cohort** — the attacker sits *inside* the normal "
+                        "peer range. Volume statistics alone do not betray the attack.")
+            _fig_box = make_subplots(rows=2, cols=3, subplot_titles=_avail_cf)
+            for i, f in enumerate(_avail_cf):
+                rr, cc = i // 3 + 1, i % 3 + 1
+                _fig_box.add_trace(go.Box(y=_cohort[f], name="cohort", marker_color=BLUE,
+                                          boxpoints="outliers", showlegend=False), row=rr, col=cc)
+                for uid, clr, sym in [(uidA, RED, "diamond"), (uidB, "#27AE60", "circle")]:
+                    val = _um[_um["user_id"] == uid][f]
+                    if not val.empty:
+                        _fig_box.add_trace(go.Scatter(x=["cohort"], y=[val.iloc[0]], mode="markers",
+                                           marker=dict(color=clr, size=13, symbol=sym,
+                                                       line=dict(width=1, color="white")),
+                                           name=uid, showlegend=(i == 0)), row=rr, col=cc)
+            _fig_box.update_layout(height=480, margin=dict(l=30, r=20, t=50, b=20),
+                                   legend=dict(orientation="h", yanchor="bottom", y=1.06),
+                                   plot_bgcolor="white")
+            st.plotly_chart(_fig_box, use_container_width=True)
+            st.caption("Red diamond = User A, green circle = User B. If the diamond falls within the "
+                       "box, the attacker is statistically indistinguishable from peers on that feature.")
+
+            # 5b — behavioral group z-scores (what the composite scorer actually uses)
+            st.markdown("**5b · Behavioral group z-scores** — what V-Intelligence UEBA actually scores. "
+                        "These are computed *relative to the peer group*. The raw volume blends in, but "
+                        "behavioral-direction features (sustained drift, trend, late-stage escalation) "
+                        "separate the attacker.")
+            _zf = db_load_zscored_features()
+            _zrow = _zf[_zf["uid"] == uidA] if "uid" in _zf.columns else _zf.iloc[0:0]
+            if not _zrow.empty:
+                _zcols = [c for c in _zf.columns if c.startswith("z_")]
+                _zvals = [(c[2:].replace("_", " "), float(_zrow.iloc[0][c]))
+                          for c in _zcols if pd.notna(_zrow.iloc[0][c])]
+                _ztop = sorted(_zvals, key=lambda x: abs(x[1]), reverse=True)[:10][::-1]
+                _figz = go.Figure(go.Bar(
+                    x=[v for _, v in _ztop], y=[k for k, _ in _ztop], orientation="h",
+                    marker_color=[RED if abs(v) >= 2 else (GOLD if abs(v) >= 1 else BLUE)
+                                  for _, v in _ztop]))
+                _figz.add_vline(x=2, line=dict(color=RED, dash="dash"))
+                _figz.add_vline(x=-2, line=dict(color=RED, dash="dash"))
+                _figz.update_layout(height=400, margin=dict(l=20, r=20, t=20, b=40),
+                                    xaxis_title=f"Group-relative z-score  ({uidA} vs {_grpA} peers)",
+                                    plot_bgcolor="white")
+                st.plotly_chart(_figz, use_container_width=True)
+                _n_extreme = sum(1 for _, v in _zvals if abs(v) >= 2)
+                _tf, _tv = max(_zvals, key=lambda x: abs(x[1])) if _zvals else ("", 0.0)
+                if _n_extreme >= 1:
+                    st.info(f"{uidA} has {_n_extreme} behavioral feature(s) beyond ±2σ from the "
+                            f"`{_grpA}` peer group (red bars) — decisive anomalies that drive the "
+                            f"composite score, invisible in the raw volume comparison (5a).")
+                else:
+                    st.info(f"{uidA}'s behavioral z-scores stay modest (strongest: "
+                            f"{_tf.replace('_', ' ')} at {_tv:+.1f}σ). Some campaigns — notably the "
+                            f"slow APT — are caught not by z-scored volume features but by **novelty "
+                            f"persistence**: a previously-unseen C2 IP recurring every week. That "
+                            f"signal lives in a separate detection phase, not this z-score view.")
 
 
 # ── PAGE: DASHBOARD ──
@@ -1416,7 +1714,7 @@ elif page == "Behavioral Profile":
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {BLUE}; font-size:0.78rem; color:#555;">
-    <strong>Normalized Drift</strong> — Each signal is min-max scaled to [0,1] relative to its own range, enabling cross-signal comparison regardless of absolute magnitude.
+    <strong>Normalized Drift</strong> — Each signal is the absolute z-score deviation from the entity's baseline (first 2 weeks), normalized to [0,1] by its peak, enabling cross-signal comparison regardless of absolute magnitude.
 </div>
 """, unsafe_allow_html=True)
 
@@ -1451,8 +1749,8 @@ elif page == "Behavioral Profile":
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {BLUE}; font-size:0.78rem; color:#555;">
-    <strong>Baseline (Blue)</strong> — Average behavioral pattern from the first 25% of observation weeks, representing the entity's established normal.<br>
-    <strong>Current (Red)</strong> — Average behavioral pattern from the last 25% of observation weeks, representing recent activity.
+    <strong>Baseline (Blue)</strong> — The entity's behavioral pattern in its first observed week, representing established normal.<br>
+    <strong>Current (Red)</strong> — The entity's most recent observed week, representing current activity.
 </div>
 """, unsafe_allow_html=True)
 
@@ -1544,6 +1842,93 @@ elif page == "Behavioral Profile":
 </div>
 """, unsafe_allow_html=True)
 
+            # ── RAW-EVIDENCE VERDICT — ties the composite score back to the logs ──
+            st.subheader("Raw-Evidence Verdict — Why the Score Ties to the Logs")
+            st.markdown(
+                "The composite score *ranks* the entity. This panel *explains* that rank "
+                "in **raw-log terms only**: each primitive below is a number pulled "
+                "straight from the entity's own logs and benchmarked against its role "
+                "peers. No embedding or drift math here — every row is a fact an analyst "
+                "can pull up and verify in the underlying events."
+            )
+
+            @st.cache_data(show_spinner=False)
+            def _evidence_tables():
+                from detection.evidence import build_primitive_table, _peer_bars
+                wf = db_load_weekly_features()
+                nm = db_load_novelty_metrics()
+                sc = db_load_composite_scores().reset_index(drop=True)
+                prim = build_primitive_table(wf, nm, sc)
+                cols = [c for c in prim.columns
+                        if c not in ("uid", "grp", "is_attack") and not c.startswith("_")
+                        and c not in ("volume_steady", "novel_ip_persistence")]
+                bars = _peer_bars(prim, cols)
+                return prim, bars, sc, nm, wf
+
+            try:
+                from detection.evidence import build_evidence_chain
+                _prim, _bars, _sc, _nm, _wf = _evidence_tables()
+                if (_sc.uid == selected_user).any():
+                    chain = build_evidence_chain(selected_user, _wf, _nm, _sc, _prim, _bars)
+                    ec1, ec2, ec3 = st.columns(3)
+                    ec1.metric("Composite", f"{chain['composite']:.1f}")
+                    ec2.metric("Rank", f"#{chain['rank']} / {chain['n_users']}")
+                    ec3.metric("Profile match", chain["profile"] or "— none —")
+
+                    drivers = ", ".join(f"{n} ({v:.1f})"
+                                        for n, v in chain["top_phases"][:3] if v > 0.1)
+                    if drivers:
+                        st.caption(f"Detector drivers (abstraction side): {drivers}")
+
+                    if chain["fired"]:
+                        ev_rows = [{
+                            "Raw-log primitive": f["label"],
+                            "Entity value": f["value_str"],
+                            "Peer benchmark (role cohort)": f["peer_str"],
+                            "Severity": round(f["severity"], 1),
+                            "Drill → week_idx": ", ".join(map(str, f["weeks"])) if f["weeks"] else "—",
+                            "Source log column": f.get("raw_col") or "—",
+                        } for f in chain["fired"]]
+                        st.dataframe(pd.DataFrame(ev_rows), use_container_width=True, hide_index=True)
+
+                        if chain["profile"]:
+                            st.markdown(f"""
+<div style="background:linear-gradient(135deg, {NAVY} 0%, {BLUE} 100%); color:white; padding:14px 20px; border-radius:10px; margin-top:6px;">
+    <h4 style="color:{GOLD}; margin:0 0 6px 0;">Evidence chain → {chain['profile']}</h4>
+    <p style="color:#A0C8E0; margin:0; font-size:0.86rem;">
+    {len(chain['fired'])} raw-log primitive(s) fired and co-occur in the pattern of a
+    <strong>{chain['profile']}</strong> campaign ({chain['profile_coverage']*100:.0f}% of that
+    profile's primitives present). Every primitive above resolves to specific weeks and a
+    source log column — the verdict is auditable end-to-end, no model internals required.
+    </p>
+</div>
+""", unsafe_allow_html=True)
+                        else:
+                            st.markdown(f"""
+<div style="background:#FEF9E7; border-left:4px solid {GOLD}; padding:10px 16px; border-radius:6px; margin-top:6px; font-size:0.86rem;">
+    Primitives fired but did not co-occur into a known attack profile — review the rows individually.
+</div>
+""", unsafe_allow_html=True)
+                    else:
+                        # high score + no coherent raw evidence = candidate false positive
+                        top_decile = chain["rank"] <= max(int(chain["n_users"] * 0.1), 1)
+                        if top_decile:
+                            st.markdown(f"""
+<div style="background:#FDEDEC; border-left:4px solid {RED}; padding:10px 16px; border-radius:6px; margin-top:6px; font-size:0.86rem;">
+    <strong>Candidate false positive.</strong> This entity ranks high on the composite
+    (#{chain['rank']}) yet <strong>no raw-log primitive clears its role-peer bar</strong>.
+    A score with no coherent raw evidence is a fast triage dismissal — the explanation
+    layer is doing the analyst's first-pass filtering.
+</div>
+""", unsafe_allow_html=True)
+                        else:
+                            st.info("No raw-log primitive exceeds this entity's role-peer "
+                                    "benchmark — behavior is consistent with peers.")
+                else:
+                    st.caption("No composite score on record for this entity.")
+            except Exception as _ev_err:
+                st.caption(f"Evidence layer unavailable: {_ev_err}")
+
             if selected_user in ATTACK_ENTITIES:
                 st.markdown(f"""
                 <div style="background:linear-gradient(135deg, {NAVY} 0%, {BLUE} 100%); color:white; padding:16px 24px; border-radius:10px; margin-top:16px;">
@@ -1551,10 +1936,11 @@ elif page == "Behavioral Profile":
                     <p style="color:#A0C8E0; margin:0;">
                     Entity <strong>{selected_user}</strong> has injected attack scenario:
                     <em>{ATTACK_ENTITIES[selected_user]}</em>.<br><br>
-                    The behavioral decomposition above shows which signal dimensions deviated from baseline,
-                    confirming V-Intelligence UEBA's ability to detect anomalous behavioral drift — even when individual events
-                    appear benign. The per-signal breakdown reveals <strong>which aspect of behavior changed</strong>
-                    (not just that something changed), enabling targeted investigation and faster SOC response.
+                    The behavioral decomposition above shows <strong>which signal dimensions deviated from baseline</strong> —
+                    the explainable "why," not just a score. (Note: embedding-composite scoring cleanly separates only USR-156 and
+                    USR-118 above normal users; the stealth slow-APT and LOTL are caught by the multi-front threat-profile detector —
+                    see the Threat Profiles page.) The per-signal breakdown reveals which aspect of behavior changed, enabling
+                    targeted investigation and faster SOC response.
                     </p>
                 </div>
                 """, unsafe_allow_html=True)
@@ -1866,11 +2252,23 @@ elif page == "Traditional vs V-Intelligence UEBA":
 
     _cs = db_load_composite_scores()
     if not _cs.empty:
-        _threshold = _cs["composite"].quantile(0.90)
-        _tp_c = int(_cs.loc[_cs["uid"].isin(_atk_ids), "composite"].ge(_threshold).sum())
-        _fp_c = int(_cs.loc[~_cs["uid"].isin(_atk_ids), "composite"].ge(_threshold).sum())
-        _fp_c_pct = 100 * _fp_c / max(len(_cs) - len(_atk_ids), 1)
-        _table += f"| **Composite Scoring** | **{_tp_c} / 4** | **{_fp_c_pct:.1f}%** | **Ranked detection — no fixed thresholds** |\n"
+        _cs_sorted = _cs.sort_values("composite", ascending=False).reset_index(drop=True)
+        _clean = 0
+        for _u in _atk_ids:
+            _rk = _cs_sorted.index[_cs_sorted.uid == _u]
+            if len(_rk):
+                _r = int(_rk[0]) + 1
+                _na = int((~_cs_sorted.iloc[:_r - 1]["is_attack"]).sum()) if "is_attack" in _cs_sorted.columns else 0
+                if _na == 0:
+                    _clean += 1
+        _table += f"| Composite Scoring (ranking) | {_clean} / 4 *cleanly* | — | Tops USR-156 & USR-118; buries USR-234 (#7) & USR-042 (#24) below normal users |\n"
+    try:
+        _tpa = pd.read_csv("data/threat_profile_alerts.csv")
+        _tp_caught = int(_tpa["is_known_attack"].sum()); _tp_fp = int((~_tpa["is_known_attack"]).sum())
+        _tp_fp_pct = 100 * _tp_fp / max(250 - _tp_caught, 1)
+        _table += f"| **Threat-Profile Detector** | **{_tp_caught} / 4** | **{_tp_fp_pct:.1f}%** | **The only clean 4/4 — each attacker named by technique (C2-beacon, DGA, LOTL, cohort-rare access)** |\n"
+    except Exception:
+        pass
 
     st.markdown(_table)
 
@@ -2015,9 +2413,14 @@ elif page == "Three-Tier Detection":
     if comp_scores is not None:
         st.markdown("---")
         n_users = len(comp_scores)
+        _t3_sorted = comp_scores.sort_values("composite", ascending=False).reset_index(drop=True)
+        clean = 0
+        for _u in ["USR-156", "USR-234", "USR-042", "USR-118"]:
+            _rk = _t3_sorted.index[_t3_sorted["uid"] == _u]
+            if len(_rk) and int((~_t3_sorted.iloc[:int(_rk[0])]["is_attack"]).sum()) == 0:
+                clean += 1
         threshold_90 = comp_scores["composite"].quantile(0.90)
         flagged = comp_scores[comp_scores["composite"] >= threshold_90]
-        tp = len(flagged[flagged["is_attack"]])
         fp = len(flagged[~flagged["is_attack"]])
         fp_rate = fp / len(comp_scores[~comp_scores["is_attack"]]) * 100
 
@@ -2029,19 +2432,25 @@ elif page == "Three-Tier Detection":
             </div>""", unsafe_allow_html=True)
         with hero_c2:
             st.markdown(f"""<div class="metric-card gold">
-                <p class="metric-value">{tp}/4</p>
-                <p class="metric-label">Attacks Detected</p>
+                <p class="metric-value">{clean}/4</p>
+                <p class="metric-label">Cleanly Separated<br>(above all normals)</p>
             </div>""", unsafe_allow_html=True)
         with hero_c3:
             st.markdown(f"""<div class="metric-card">
                 <p class="metric-value">{fp_rate:.1f}%</p>
-                <p class="metric-label">False Positive Rate</p>
+                <p class="metric-label">FP to flag all 4<br>(90th-pct sweep)</p>
             </div>""", unsafe_allow_html=True)
         with hero_c4:
             st.markdown(f"""<div class="metric-card critical">
                 <p class="metric-value">5</p>
                 <p class="metric-label">Detection Phases</p>
             </div>""", unsafe_allow_html=True)
+        st.markdown(f"""
+        <div style="background:#FEF9E7; border:1px solid #F7DC6F; border-radius:6px; padding:10px 16px; margin-top:8px; font-size:0.85rem; color:#7D6608;">
+        Composite ranking cleanly separates only <b>{clean} of 4</b> (USR-156, USR-118 above every normal user); USR-234 (#7)
+        and USR-042 (#24) rank <b>below normal users</b> and only appear in a 90th-percentile sweep that also flags {fp} normals.
+        The <b>multi-front Threat-Profile detector catches all 4 at 0 false positives</b> — see the Threat Profiles page.
+        </div>""", unsafe_allow_html=True)
 
         # ── Attack user composite cards ──
         st.subheader("Attack Campaign Composite Scores")
@@ -2520,10 +2929,10 @@ elif page == "Three-Tier Detection":
         <div style="background:white; padding:20px; border-radius:12px; text-align:center;
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60; border:2px solid {GOLD};">
             <div style="font-size:1rem; font-weight:700; color:{GOLD}; margin-bottom:8px;">TIER 3</div>
-            <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">{_ct_comp_tp} / 4</div>
-            <p style="color:{NAVY}; font-weight:600;">Composite Detection</p>
-            <p style="color:#6C757D; font-size:0.85rem;">5-phase scoring + novelty persistence.<br>
-            All attacks detected at {_ct_comp_fp:.1f}% FP rate.</p>
+            <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">2 / 4 → 4 / 4</div>
+            <p style="color:{NAVY}; font-weight:600;">Composite + Threat Profiles</p>
+            <p style="color:#6C757D; font-size:0.85rem;">Composite cleanly separates 2/4; the multi-front<br>
+            threat-profile detector catches all 4 at 0% FP.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -3454,24 +3863,26 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         _comp_scores = db_load_composite_scores()
         _comp_sorted = _comp_scores.sort_values("composite", ascending=False).reset_index(drop=True) if len(_comp_scores) else pd.DataFrame()
 
-        ace_detected = 0
+        ace_clean = 0   # honestly "detected" = ranked above EVERY normal user
         for uid, info in ATTACK_USERS.items():
             _cr = _comp_sorted[_comp_sorted.uid == uid]
             if len(_cr):
-                _rank = _comp_sorted.index[_comp_sorted.uid == uid][0] + 1
+                _rank = int(_comp_sorted.index[_comp_sorted.uid == uid][0]) + 1
                 _score = float(_cr.iloc[0]["composite"])
-                _sig = float(_cr.iloc[0]["signal_strength"])
-                _breadth = int(_cr.iloc[0]["breadth_15"])
                 _novelty = float(_cr.iloc[0]["novelty_score"])
-                _pctile = 100 * (1 - _rank / len(_comp_sorted))
-                _sev_color = RED if _pctile >= 95 else "#E67E22" if _pctile >= 85 else GOLD
-                _severity = "CRITICAL" if _pctile >= 95 else "HIGH" if _pctile >= 85 else "ELEVATED"
-                _drift_desc = f"Composite score {_score:.1f} — signal strength {_sig:.1f}, {_breadth} anomalous features"
+                _norm_above = int((~_comp_sorted.iloc[:_rank - 1]["is_attack"]).sum()) if "is_attack" in _comp_sorted.columns else 0
+                if _norm_above == 0:
+                    ace_clean += 1
+                    _sev_color, _severity = RED, "DETECTED"
+                    _sep = "ranks above every normal user"
+                else:
+                    _sev_color, _severity = "#95A5A6", "BURIED"
+                    _sep = f"{_norm_above} normal users rank higher — not separated by composite alone"
+                _drift_desc = f"Composite {_score:.1f} · rank #{_rank} / {len(_comp_sorted)} — {_sep}"
                 if _novelty > 0:
-                    _drift_desc += f", novelty persistence {_novelty:.1f}"
-                ace_detected += 1
+                    _drift_desc += f" · novelty {_novelty:.1f}"
             else:
-                _rank, _score, _severity, _sev_color = "?", 0, "UNKNOWN", "#BDC3C7"
+                _score, _severity, _sev_color = 0, "UNKNOWN", "#BDC3C7"
                 _drift_desc = "No composite score data available"
 
             st.markdown(f"""
@@ -3488,20 +3899,28 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                 <div style="color:{NAVY}; font-size:0.8rem; margin-top:6px; font-weight:600;">
                     {_drift_desc}
                 </div>
-                <div style="display:flex; gap:16px; margin-top:4px;">
-                    <span style="color:{TEAL}; font-size:0.7rem; font-weight:600;">Rank #{_rank} / {len(_comp_sorted)}</span>
-                    <span style="color:#6C757D; font-size:0.7rem;">Percentile: {_pctile:.0f}th</span>
-                </div>
             </div>
             """, unsafe_allow_html=True)
 
         st.markdown(f"""
         <div style="background:#EAFAF1; padding:12px 18px; border-radius:8px; margin-top:12px;
                      border:1px solid #A9DFBF; text-align:center;">
-            <span style="color:#27AE60; font-weight:700;">{ace_detected} of {len(ATTACK_USERS)} attacks detected</span><br>
-            <span style="color:#6C757D; font-size:0.8rem;">V-Intelligence UEBA provides the semantic signal → Composite Scoring ranks and discriminates</span>
+            <span style="color:#27AE60; font-weight:700;">{ace_clean} of {len(ATTACK_USERS)} cleanly separated by composite</span><br>
+            <span style="color:#6C757D; font-size:0.8rem;">Composite tops the ranking for the loud attacks (USR-156, USR-118). The stealth slow-APT and
+            LOTL stay buried below normal users — caught by the multi-front detector below.</span>
         </div>
         """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="background:linear-gradient(90deg,#16243F,#0F1E3A); padding:16px 22px; border-radius:8px;
+                 margin-top:16px; text-align:center; border:1px solid #27AE60;">
+        <span style="color:#27AE60; font-weight:700; font-size:1.05rem;">Multi-Front Threat-Profile Detector &nbsp;→&nbsp; 4 of 4 attacks caught, 0 false positives</span>
+        <span style="color:#A0C8E0; font-size:0.85rem; display:block; margin-top:4px;">
+        Where composite buries the stealth attacks, measurable known-bad profiles catch them by technique —
+        slow-APT via <b>C2-beacon&nbsp;+&nbsp;DGA</b>, LOTL via <b>process profile</b>, insider via <b>cohort-rare access</b>.
+        See the <b>Threat Profiles</b> page for the full alert table.</span>
+    </div>
+    """, unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════
     # SECTION 2: DRIFT TRAJECTORY — FEATURE SPACE VS EMBEDDING SPACE
@@ -3510,7 +3929,9 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <h2 style="text-align:center; color:{NAVY};">Drift Trajectory: Feature Space vs Semantic Space</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:8px;">
-    CUSUM accumulation over {int(acecard_drift.week_idx.max())+1 if len(acecard_drift) else '?'} weeks. Watch where attack users separate from the crowd.</p>
+    CUSUM accumulation over {int(acecard_drift.week_idx.max())+1 if len(acecard_drift) else '?'} weeks. The embedding's edge is
+    <b>attack-dependent</b> — dramatic for behavioral-direction attacks (insider, LOTL, flagged weeks earlier), but neutral or
+    later for volume/footprint attacks (Salt Typhoon). Switch users to compare.</p>
     """, unsafe_allow_html=True)
 
     selected_user = st.selectbox(
@@ -3523,6 +3944,43 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
 
     normal_ids = [uid for uid in feat_df.user_id.unique() if uid not in ATTACK_USERS]
     sample_normals = sorted(normal_ids)[:8]
+
+    def _first_cross(drift_df, value_col, uid):
+        """First week the user begins a sustained (>=3 wk) run above the 95th-pct
+        normal band — its time-to-detection. None if it never sustains a crossing."""
+        nrm = drift_df[drift_df.user_id.isin(normal_ids)].groupby("week_idx")[value_col].quantile(0.95)
+        s = drift_df[drift_df.user_id == uid].set_index("week_idx")[value_col]
+        weeks = sorted(int(w) for w in s.index)
+        above = [bool(s.get(w, -9e9) > nrm.get(w, 9e9)) for w in weeks]
+        for i in range(len(above)):
+            if above[i] and all(above[i:i + 3]):
+                return weeks[i]
+        return None
+
+    _fc_week = _first_cross(feat_drift, "feat_cusum", selected_user)
+    _ac_week = _first_cross(acecard_drift, "acecard_cusum", selected_user)
+    _feat_anno = (f"Feature-space flags only at week {_fc_week}"
+                  if _fc_week is not None else "Never crosses the normal band")
+    _ace_anno = (f"Embedding flags at week {_ac_week}"
+                 if _ac_week is not None else "Never crosses — needs the threat-profile detector")
+    # Honest per-user verdict comparing the two spaces for the selected attacker
+    if _fc_week is None and _ac_week is None:
+        _verdict = "Neither feature nor embedding CUSUM separates this attacker — it needs the multi-front threat-profile detector."
+        _vcolor = "#E67E22"
+    elif _fc_week is None:
+        _verdict = f"Embedding flags it (wk {_ac_week}); feature-space never does — embedding wins here."
+        _vcolor = "#27AE60"
+    elif _ac_week is None or _ac_week >= _fc_week:
+        _w = "never" if _ac_week is None else f"wk {_ac_week}"
+        _verdict = (f"Feature-space flags first (wk {_fc_week}) vs embedding {_w} — both spaces look similar here; "
+                    "the embedding gives no edge for this volume/footprint attack.")
+        _vcolor = "#95A5A6"
+    else:
+        _verdict = (f"Embedding flags at wk {_ac_week} vs feature wk {_fc_week} — {_fc_week - _ac_week} weeks earlier. "
+                    "This is the embedding's real advantage: behavioral-direction attacks.")
+        _vcolor = "#1E8449"
+    st.markdown(f"<div style='text-align:center; color:{_vcolor}; font-weight:600; font-size:0.92rem; margin:2px 0 12px 0;'>{_verdict}</div>",
+                unsafe_allow_html=True)
 
     with drift_col1:
         st.markdown(f"""
@@ -3555,7 +4013,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         )
         fig_feat.add_annotation(
             x=0.5, y=1.08, xref="paper", yref="paper", showarrow=False,
-            text="Attack user HIDDEN in the crowd", font=dict(size=13, color=RED),
+            text=_feat_anno, font=dict(size=13, color=RED),
         )
         st.plotly_chart(fig_feat, use_container_width=True)
 
@@ -3596,7 +4054,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         )
         fig_ace.add_annotation(
             x=0.5, y=1.08, xref="paper", yref="paper", showarrow=False,
-            text="Attack user SEPARATES from the crowd", font=dict(size=13, color="#27AE60"),
+            text=_ace_anno, font=dict(size=13, color="#27AE60"),
         )
         st.plotly_chart(fig_ace, use_container_width=True)
 
@@ -3614,94 +4072,170 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <h2 style="text-align:center; color:{NAVY};">All Attack Users: Signal Separation</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:8px;">
-    Feature-space drift shows no separation. Semantic drift reveals all four attackers.</p>
+    Full ~70-week campaign, raw cumulative drift vs the normal band (★ = first sustained detection).
+    Both signals eventually flag the volume attacks, but embedding drift flags the behavioral-direction
+    attacks (insider, LOTL) ~30 weeks earlier; the slow APT clears neither band and needs composite scoring.</p>
     """, unsafe_allow_html=True)
+
+    # ── Like-for-like view: RAW cumulative CUSUM over the same ~70-week window ──
+    # The feature table was regenerated to the full telemetry horizon (~70 weeks),
+    # so both panels now cover the SAME window. Each line is the raw cumulative
+    # drift (CUSUM); the gray band is the 5-95% range of normal users per week; a
+    # ★ marks each attacker's first SUSTAINED crossing of the 95th-pct band
+    # (>=3 consecutive weeks) = its time-to-detection.
+    def _cusum_view(drift_df, value_col):
+        nrm = drift_df[drift_df.user_id.isin(normal_ids)].groupby("week_idx")[value_col]
+        weeks = sorted(int(w) for w in drift_df.week_idx.unique())
+        p05 = nrm.quantile(0.05).reindex(weeks)
+        p95 = nrm.quantile(0.95).reindex(weeks)
+        series, crossing, pct_above = {}, {}, {}
+        for uid in ATTACK_USERS:
+            s = drift_df[drift_df.user_id == uid].set_index("week_idx")[value_col].reindex(weeks)
+            series[uid] = s
+            above = (s > p95).values
+            pct_above[uid] = 100.0 * int(above.sum()) / len(weeks)
+            cw = None
+            for i in range(len(above)):
+                if above[i] and above[i:i + 3].all():
+                    cw = weeks[i]
+                    break
+            crossing[uid] = cw
+        return weeks, p05, p95, series, crossing, pct_above
+
+    def _panel(value_col, drift_df, title, title_color):
+        weeks, p05, p95, series, crossing, pct_above = _cusum_view(drift_df, value_col)
+        fig = go.Figure()
+        fig.add_trace(go.Scatter(
+            x=list(weeks) + list(weeks[::-1]),
+            y=list(p95.values) + list(p05.values[::-1]),
+            fill="toself", fillcolor="rgba(189,195,199,0.35)",
+            line=dict(width=0), name="Normal range (5-95%)", showlegend=True,
+        ))
+        for uid, info in ATTACK_USERS.items():
+            fig.add_trace(go.Scatter(
+                x=weeks, y=series[uid].values, mode="lines",
+                line=dict(color=info["color"], width=2.5), name=uid,
+            ))
+            cw = crossing[uid]
+            if cw is not None:
+                fig.add_trace(go.Scatter(
+                    x=[cw], y=[series[uid].get(cw)], mode="markers",
+                    marker=dict(symbol="star", size=12, color=info["color"],
+                                line=dict(width=1, color="white")),
+                    showlegend=False, hovertext=f"{uid} flagged wk {cw}", hoverinfo="text",
+                ))
+        fig.update_layout(
+            title=dict(text=title, font=dict(color=title_color)),
+            height=380, margin=dict(l=40, r=20, t=50, b=40),
+            xaxis_title="Week (Jan 2025 – Apr 2026)", yaxis_title="Cumulative drift (CUSUM)",
+            legend=dict(x=0.02, y=0.98, font=dict(size=10), bgcolor="rgba(255,255,255,0.8)"),
+            plot_bgcolor="white",
+        )
+        return fig, crossing
+
+    def _ttd_caption(crossing):
+        bits = []
+        for u in ["USR-156", "USR-042", "USR-118", "USR-234"]:
+            c = ATTACK_USERS[u]["color"]
+            w = crossing.get(u)
+            lab = f"wk {w}" if w is not None else "not flagged"
+            bits.append(f"<span style='color:{c}; font-weight:600;'>{u.split('-')[1]}: {lab}</span>")
+        return ("<div style='text-align:center; color:#6C757D; font-size:0.8rem;'>"
+                "first sustained detection (★) &nbsp; " + " &nbsp;·&nbsp; ".join(bits) + "</div>")
 
     all_col1, all_col2 = st.columns(2)
 
     with all_col1:
-        fig_all_feat = go.Figure()
-        normal_max = feat_drift.groupby("user_id").feat_cusum.max()
-        normal_band_upper = feat_drift[feat_drift.user_id.isin(normal_ids)].groupby("week_idx").feat_cusum.quantile(0.95).values
-        normal_band_lower = feat_drift[feat_drift.user_id.isin(normal_ids)].groupby("week_idx").feat_cusum.quantile(0.05).values
-        normal_band_median = feat_drift[feat_drift.user_id.isin(normal_ids)].groupby("week_idx").feat_cusum.median().values
-        weeks = list(range(len(normal_band_upper)))
-
-        fig_all_feat.add_trace(go.Scatter(
-            x=weeks + weeks[::-1],
-            y=list(normal_band_upper) + list(normal_band_lower[::-1]),
-            fill="toself", fillcolor="rgba(189,195,199,0.3)",
-            line=dict(width=0), name="Normal range (5-95%)", showlegend=True,
-        ))
-        fig_all_feat.add_trace(go.Scatter(
-            x=weeks, y=normal_band_median, mode="lines",
-            line=dict(color="#BDC3C7", width=2, dash="dash"), name="Normal median",
-        ))
-        for uid, info in ATTACK_USERS.items():
-            ud = feat_drift[feat_drift.user_id == uid]
-            fig_all_feat.add_trace(go.Scatter(
-                x=ud.week_idx, y=ud.feat_cusum, mode="lines",
-                line=dict(color=info["color"], width=2.5), name=f"{uid}",
-            ))
-        fig_all_feat.update_layout(
-            title=dict(text="Feature-Space CUSUM", font=dict(color=RED)),
-            height=380, margin=dict(l=40, r=20, t=50, b=40),
-            xaxis_title="Week", yaxis_title="CUSUM",
-            legend=dict(x=0.02, y=0.98, font=dict(size=10), bgcolor="rgba(255,255,255,0.8)"),
-            plot_bgcolor="white",
-        )
-        st.plotly_chart(fig_all_feat, use_container_width=True)
+        fig_f, cross_f = _panel("feat_cusum", feat_drift,
+                                "Feature-Space CUSUM (raw-magnitude drift)", RED)
+        st.plotly_chart(fig_f, use_container_width=True)
         st.markdown(f"""
         <div style="text-align:center; color:{RED}; font-weight:600; font-size:0.9rem;">
-            Attack users buried within normal band — UNDETECTABLE
+            Eventually flags volume/footprint attacks — but late, and never the slow APT
         </div>
+        {_ttd_caption(cross_f)}
         """, unsafe_allow_html=True)
 
     with all_col2:
-        fig_all_ace = go.Figure()
-        ace_normal_upper = acecard_drift[acecard_drift.user_id.isin(normal_ids)].groupby("week_idx").acecard_cusum.quantile(0.95).values
-        ace_normal_lower = acecard_drift[acecard_drift.user_id.isin(normal_ids)].groupby("week_idx").acecard_cusum.quantile(0.05).values
-        ace_normal_median = acecard_drift[acecard_drift.user_id.isin(normal_ids)].groupby("week_idx").acecard_cusum.median().values
-        ace_weeks = list(range(len(ace_normal_upper)))
-
-        fig_all_ace.add_trace(go.Scatter(
-            x=ace_weeks + ace_weeks[::-1],
-            y=list(ace_normal_upper) + list(ace_normal_lower[::-1]),
-            fill="toself", fillcolor="rgba(189,195,199,0.3)",
-            line=dict(width=0), name="Normal range (5-95%)", showlegend=True,
-        ))
-        fig_all_ace.add_trace(go.Scatter(
-            x=ace_weeks, y=ace_normal_median, mode="lines",
-            line=dict(color="#BDC3C7", width=2, dash="dash"), name="Normal median",
-        ))
-        for uid, info in ATTACK_USERS.items():
-            ua = acecard_drift[acecard_drift.user_id == uid]
-            fig_all_ace.add_trace(go.Scatter(
-                x=ua.week_idx, y=ua.acecard_cusum, mode="lines",
-                line=dict(color=info["color"], width=2.5), name=f"{uid}",
-            ))
-        fig_all_ace.update_layout(
-            title=dict(text="V-Intelligence UEBA Semantic CUSUM", font=dict(color="#27AE60")),
-            height=380, margin=dict(l=40, r=20, t=50, b=40),
-            xaxis_title="Week", yaxis_title="Semantic CUSUM",
-            legend=dict(x=0.02, y=0.98, font=dict(size=10), bgcolor="rgba(255,255,255,0.8)"),
-            plot_bgcolor="white",
-        )
-        st.plotly_chart(fig_all_ace, use_container_width=True)
+        fig_a, cross_a = _panel("acecard_cusum", acecard_drift,
+                                "V-Intelligence UEBA Embedding Drift (semantic)", "#27AE60")
+        st.plotly_chart(fig_a, use_container_width=True)
         st.markdown(f"""
-        <div style="text-align:center; color:#27AE60; font-weight:600; font-size:0.9rem;">
-            V-Intelligence UEBA signal separates attackers — Composite Scoring makes it actionable
+        <div style="text-align:center; color:#1E8449; font-weight:600; font-size:0.9rem;">
+            Flags the insider & LOTL ~30 weeks earlier — the slow APT still needs composite scoring
         </div>
+        {_ttd_caption(cross_a)}
         """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <h4 style="text-align:center; color:{NAVY}; margin-top:18px; margin-bottom:4px;">
+    How each signal is calculated (from the underlying data)</h4>
+    """, unsafe_allow_html=True)
+
+    exp_c1, exp_c2 = st.columns(2)
+    with exp_c1:
+        st.markdown(f"""
+<div style="background:#FDEDEC; border-left:4px solid {RED}; border-radius:8px; padding:14px 18px; height:340px;">
+  <div style="color:{RED}; font-weight:700; font-size:1.0rem;">Feature-Space CUSUM — raw magnitude</div>
+  <div style="color:#6C757D; font-size:0.75rem; margin-bottom:10px;">
+    <code>compute_feature_drift</code> &nbsp;·&nbsp; streamlit_app.py:3648</div>
+  <ol style="margin:0; padding-left:18px; color:#2C3E50; font-size:0.86rem; line-height:1.55;">
+    <li>Each user-week is <b>23 raw numeric features</b> (login counts, bytes moved, distinct
+        destinations, off-hours ratio, privilege ops…) from the <code>weekly_features</code> table.</li>
+    <li>The user's <b>first half of weeks</b> is their personal baseline; every feature is z-scored
+        against it: <code>|valueₜ − baseline_mean| / baseline_std</code>.</li>
+    <li>The 23 z-scores are averaged to one weekly drift, and only the excess over a 0.5 slack
+        accumulates: <b>CUSUMₜ = Σ max(driftₜ − 0.5, 0)</b>. It measures <i>"how numerically far is
+        this user from their own past?"</i> — magnitude only, no meaning.</li>
+  </ol>
+  <div style="margin-top:10px; color:{RED}; font-size:0.82rem;">
+    <b>→</b> This is why loud-but-legitimate-looking LOTL activity like <b>USR-042</b> scores high.</div>
+</div>
+""", unsafe_allow_html=True)
+    with exp_c2:
+        st.markdown(f"""
+<div style="background:#E9F7EF; border-left:4px solid #27AE60; border-radius:8px; padding:14px 18px; height:340px;">
+  <div style="color:#1E8449; font-weight:700; font-size:1.0rem;">V-Intelligence embedding drift — semantic</div>
+  <div style="color:#6C757D; font-size:0.75rem; margin-bottom:10px;">
+    <code>load_real_drift</code> &nbsp;·&nbsp; streamlit_app.py:3672</div>
+  <ol style="margin:0; padding-left:18px; color:#2C3E50; font-size:0.86rem; line-height:1.55;">
+    <li>Each user-week's activity is serialized to text and embedded into a <b>1536-d vector</b>
+        (OpenAI <code>text-embedding-3-small</code>); the per-week movement is precomputed as
+        <code>weekly_trajectories.composite_drift</code>.</li>
+    <li>Weekly drift = how far that behavior-embedding <b>moves in meaning</b> — distance from the
+        user's reference-concept anchors / role-peer centroid — composed across the 5 behavioral
+        signals (auth, privilege, data-access, network, communication) as a weighted average
+        (not concatenation).</li>
+    <li><b>CUSUMₜ = Σ driftₜ</b> — cumulative semantic distance travelled. A user "living off the
+        land" drifts in meaning even when raw counts look ordinary.</li>
+  </ol>
+  <div style="margin-top:10px; color:#1E8449; font-size:0.82rem;">
+    <b>→</b> This is how the stealth insider <b>USR-156</b> separates where magnitude can't.</div>
+</div>
+""", unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="text-align:center; color:#6C757D; font-size:0.8rem; margin-top:10px;">
+    <b>Reading the panels.</b> Both feature and embedding data now span the same ~70-week window, so the two
+    panels are a true like-for-like comparison (the y-scales differ — feature CUSUM reaches tens, embedding
+    CUSUM ~2 — so compare each line to <i>its own</i> normal band, not across panels). The ★ marks first
+    sustained detection: embedding flags the insider at wk 4 vs wk 39 for feature, and LOTL at wk 15 vs 47 —
+    roughly 30 weeks earlier on behavioral-direction attacks. The slow APT (USR-234) clears neither band —
+    and composite scoring buries it too (rank #7, below normal users). It is caught only by the multi-front
+    threat-profile detector (C2-beacon + DGA) — see the Threat Profiles page.
+    </div>
+    """, unsafe_allow_html=True)
 
     # ═══════════════════════════════════════════════════════════════
     # SECTION 3B: COMPOSITE SCORE DECOMPOSITION — WHY IT CATCHES WHAT CUSUM CAN'T
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.markdown(f"""
-    <h2 style="text-align:center; color:{NAVY};">Why Composite Scoring Catches What CUSUM Alone Can't</h2>
+    <h2 style="text-align:center; color:{NAVY};">Composite Scoring — How It Ranks, and Where It Falls Short</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:8px;">
-    Each attacker is caught by a different combination of the 5 scoring phases. No single phase catches everyone.</p>
+    The 5 phases below explain each attacker's composite score. But the score only ranks USR-156 and USR-118
+    above all normal users — the stealth slow-APT and LOTL stay buried, which is exactly why the multi-front
+    threat-profile detector (Threat Profiles page) is needed to catch all four.</p>
     """, unsafe_allow_html=True)
 
     _cs_df = db_load_composite_scores()
@@ -3713,12 +4247,19 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         _cs_normal = _cs_df[~_cs_df["uid"].isin(ATTACK_USERS)]
         _cs_attack = _cs_df[_cs_df["uid"].isin(ATTACK_USERS)]
 
-        _phase_mins = {col: float(_cs_df[col].min()) for col in _all_phase_cols}
-        _phase_maxs = {col: float(_cs_df[col].max()) for col in _all_phase_cols}
+        # Median-anchored scale: center (0) = normal-user median on that phase;
+        # outer ring (100) = the most extreme value observed on that phase.
+        # This avoids the percentile tie-inflation that collapsed the zero-heavy
+        # Novelty axis, and keeps the normal cloud clustered at the center.
+        _phase_med = {c: float(np.median(_cs_normal[c].values)) for c in _all_phase_cols}
+        _phase_top = {c: float(_cs_df[c].max()) for c in _all_phase_cols}
 
         def _minmax(val, col):
-            rng = _phase_maxs[col] - _phase_mins[col]
-            return 100.0 * (val - _phase_mins[col]) / rng if rng > 0 else 50.0
+            med = _phase_med[col]
+            rng = _phase_top[col] - med
+            if rng <= 1e-9:
+                return 0.0
+            return 100.0 * max(0.0, (val - med) / rng)
 
         _cs_scaled = {}
         for uid in ATTACK_USERS:
@@ -3833,8 +4374,8 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             fig_radar.update_layout(
                 polar=dict(
                     radialaxis=dict(visible=True, range=[0, 100],
-                                    tickvals=[0, 25, 50, 75, 100],
-                                    ticktext=["Min", "Low", "Mid", "High", "Max"],
+                                    tickvals=[0, 50, 100],
+                                    ticktext=["Normal median", "halfway", "Most extreme"],
                                     tickfont=dict(size=8), gridcolor="#E0E0E0"),
                     angularaxis=dict(tickfont=dict(size=11, color=NAVY)),
                     bgcolor="white",
@@ -3848,6 +4389,71 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {NAVY}; font-size:0.78rem; color:#555;">
     <strong>Grey dashed</strong> = Normal user median. <strong>Grey dotted</strong> = Normal 75th percentile.<br>
     Normal users cluster as a small shape in the center. Attackers extend far beyond on different phases — USR-234 spikes on Novelty Persistence, USR-156 dominates Signal Strength and Breadth. No normal user reaches these extremes across multiple phases simultaneously.
+</div>
+""", unsafe_allow_html=True)
+
+            # ── What the 5 phases are and how each is calculated ──
+            with st.expander("What the 5 phases mean — and how each is calculated", expanded=True):
+                st.markdown(f"""
+<div style="font-size:0.83rem; color:#333;">
+<p style="margin:4px 0;">Each phase asks a different question about the entity's behavior. Every input is a
+<strong>z-score</strong> — how many standard deviations a measure sits above the norm for the entity's
+<em>role peer group</em> (a developer judged against developers, not executives).</p>
+<table style="width:100%; border-collapse:collapse; font-size:0.82rem;">
+  <tr style="background:{NAVY}; color:white;">
+    <th style="padding:6px 8px; text-align:left;">Phase</th>
+    <th style="padding:6px 8px; text-align:left;">What it measures</th>
+    <th style="padding:6px 8px; text-align:left;">How the raw value is calculated</th>
+  </tr>
+  <tr>
+    <td style="padding:6px 8px;"><strong style="color:{BLUE};">Signal Strength</strong></td>
+    <td style="padding:6px 8px;">How extreme are the strongest deviations?</td>
+    <td style="padding:6px 8px;">Sum of the <strong>top-3 z-scores</strong> across all the entity's standardized drift statistics.</td>
+  </tr>
+  <tr style="background:#EAF0F6;">
+    <td style="padding:6px 8px;"><strong style="color:{BLUE};">Breadth</strong></td>
+    <td style="padding:6px 8px;">How many measures are elevated at once?</td>
+    <td style="padding:6px 8px;"><strong>Count</strong> of standardized statistics exceeding <strong>1.5σ</strong> (1.5 standard deviations above the peer norm).</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 8px;"><strong style="color:{BLUE};">Sustained Deviation</strong></td>
+    <td style="padding:6px 8px;">How persistent is the drift, week over week?</td>
+    <td style="padding:6px 8px;">Sum of the <strong>top-2 zone-sustained z-scores</strong> (the most persistently elevated behavioral zones).</td>
+  </tr>
+  <tr style="background:#EAF0F6;">
+    <td style="padding:6px 8px;"><strong style="color:{BLUE};">Context Divergence</strong></td>
+    <td style="padding:6px 8px;">Does the user look anomalous under attack-specific lenses?</td>
+    <td style="padding:6px 8px;">Z-score of the <strong>maximum context-weighted drift</strong> across the insider / APT-hunt / privilege-audit lenses.</td>
+  </tr>
+  <tr>
+    <td style="padding:6px 8px;"><strong style="color:{BLUE};">Novelty Persistence</strong></td>
+    <td style="padding:6px 8px;">Did a never-before-seen contact keep recurring?</td>
+    <td style="padding:6px 8px;"><strong>min(persistence / 5, 10)</strong> plus a weeks-fraction bonus — a recurrence count, <em>not</em> a z-score.</td>
+  </tr>
+</table>
+<p style="margin:8px 0 2px 0;"><strong>Radar axis (Normal median → Most extreme):</strong> each phase is centered on the
+<strong>normal-user median</strong> and scaled so the <strong>most extreme value reaches the outer ring</strong>. Normal users
+therefore cluster at the center; an attacker pushes outward only on the phases where it is genuinely anomalous. On the
+zero-heavy Novelty axis this means the one persistent-novelty user (USR-234) reaches the edge while everyone else stays
+pinned at the center — the lone spike the percentile view had collapsed. The composite score itself is the weighted sum
+of the five raw phase values.</p>
+</div>
+""", unsafe_allow_html=True)
+                st.markdown(f"""
+<div style="background:#FEF9E7; padding:10px 14px; border-radius:8px; border-left:3px solid {GOLD}; font-size:0.82rem; color:#333; margin-top:8px;">
+<p style="margin:2px 0;"><strong>How a z-score is calculated.</strong> A z-score answers: <em>how unusual is this value
+compared to peers, measured in standard deviations?</em></p>
+<p style="margin:6px 0; font-family:Consolas,monospace; font-size:0.82rem; background:white; padding:8px 10px; border-radius:6px;">
+z = (this entity's value − cohort mean) ÷ cohort standard deviation (σ)</p>
+<p style="margin:2px 0;">The <strong>cohort mean</strong> and <strong>σ</strong> are computed from the
+<strong>normal users in the same role group</strong> (attackers are excluded from the baseline), so each
+entity is judged against its own peers.</p>
+<p style="margin:6px 0 2px 0;"><strong>Worked example.</strong> If normal developers average a sustained-network-drift
+of 0.30 with σ = 0.08, and USR-234's is 0.44:</p>
+<p style="margin:2px 0; font-family:Consolas,monospace; background:white; padding:6px 10px; border-radius:6px;">
+z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
+<p style="margin:6px 0 2px 0;"><strong>Reading it:</strong> z = 0 is exactly average for peers · z = +1.5 is the
+"breadth" cut (top ~7%) · z = +2 is rare (top ~2.3%) · negative is below the peer average.</p>
 </div>
 """, unsafe_allow_html=True)
 
@@ -4304,11 +4910,11 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
             <h3 style="color:#27AE60; margin:0;">V-INTELLIGENCE UEBA + COMPOSITE SCORING</h3>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Digital Entity Features → 5-Phase Anomaly Detection</p>
-            <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">{_comp_tp} of 4</div>
-            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">All attacks detected at {_comp_fp_pct:.1f}% FP</p>
-            <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">V-Intelligence UEBA converts telemetry into behavioral
-            embeddings that capture <em>meaning</em>. Composite Scoring fuses 5 phases — signal strength, breadth,
-            sustained deviation, context divergence, novelty persistence — into one ranked list.</p>
+            <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">2 of 4 → 4 of 4</div>
+            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite cleanly separates 2/4; threat-profile detector catches 4/4 at 0% FP</p>
+            <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Composite scoring ranks USR-156 &amp; USR-118 above all normal
+            users but buries the stealth slow-APT &amp; LOTL. The multi-front <b>threat-profile detector</b> catches all four by named
+            technique (C2-beacon, DGA, LOTL-process, cohort-rare access) at zero false positives.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -4337,3 +4943,61 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         between 5 years of undetected access and immediate identification.</div>
     </div>
     """, unsafe_allow_html=True)
+
+
+# ── PAGE: THREAT PROFILES ──
+elif page == "Threat Profiles":
+    st.markdown(f"""
+    <h2 style="color:{NAVY};">Multi-Front Threat-Profile Detection</h2>
+    <p style="color:#6C757D;">Every entity is scored against a library of <strong>measurable known-bad behavior profiles</strong>
+    (C2 beacon, DGA, insider collection, LOTL, exfil, recon, …), each compared <strong>within the entity's role-group cohort</strong>.
+    A flag carries the matched technique + score — not a black-box number. Self-drift (change vs the entity's own past) is shown
+    as supporting corroboration.</p>
+    """, unsafe_allow_html=True)
+
+    _alert_path = Path("data/threat_profile_alerts.csv")
+    if not _alert_path.exists():
+        st.warning("No alert table found. Run `python threat_profile_detector.py` to generate "
+                   "`data/threat_profile_alerts.csv`, then reload this page.")
+    else:
+        _ta = pd.read_csv(_alert_path)
+        _n_att = int(_ta["is_known_attack"].sum())
+        _n_fp = int((~_ta["is_known_attack"]).sum())
+        _prec = 100 * _n_att / max(len(_ta), 1)
+
+        m1, m2, m3, m4 = st.columns(4)
+        m1.metric("Entities flagged", len(_ta))
+        m2.metric("Known attacks caught", f"{_n_att} / 4")
+        m3.metric("False positives", _n_fp)
+        m4.metric("Precision", f"{_prec:.0f}%")
+
+        st.markdown("##### Alert table — each flag with its technique evidence")
+        for _, r in _ta.iterrows():
+            known = bool(r["is_known_attack"])
+            bar = RED if known else "#E67E22"
+            tag = (f"<span style='color:{RED}; font-weight:700;'>KNOWN ATTACK — {r['attack_type']}</span>"
+                   if known else "<span style='color:#E67E22; font-weight:700;'>REVIEW</span>")
+            techs = " &nbsp;·&nbsp; ".join(
+                f"<code>{t.strip()}</code>" for t in str(r["techniques"]).split(";") if t.strip())
+            drift = (f" &nbsp;|&nbsp; <span style='color:#6C757D;'>+ self-drift {r['self_drift']}</span>"
+                     if bool(r.get("self_drift_elevated")) else "")
+            st.markdown(f"""
+            <div style="border-left:4px solid {bar}; background:#F7F8FA; padding:10px 16px; border-radius:6px; margin-bottom:8px;">
+                <strong style="color:{NAVY};">{r['user_id']}</strong>
+                <span style="color:#6C757D; font-size:0.85rem;">({r['cohort']} cohort)</span> &nbsp; {tag}
+                <span style="background:#EAEFF5; border-radius:10px; padding:1px 8px; font-size:0.75rem; color:{NAVY};">{int(r['n_fronts'])} front(s)</span>
+                <div style="margin-top:6px; font-size:0.9rem; color:#2C3E50;">{techs}{drift}</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with st.expander("How this works — the three fronts"):
+            st.markdown("""
+- **Known-bad profiles (cohort-relative):** each technique is a measurable fingerprint, scored against the entity's
+  role-group peers (robust IQR z). A *Marketing* user touching restricted files is abnormal *for Marketing*, even if IT users do it routinely.
+- **Raw-event profiles:** stealthy techniques that weekly aggregates miss — **C2 beacon** (regular callouts to a fixed
+  external IP), **DGA-DNS** (random domains resolving to one rare IP), **cohort-rare destination** (an IP nobody else in the
+  cohort contacts). These caught the slow APT that anomaly detection couldn't.
+- **Self-drift (supporting):** how far the entity has moved from its *own* past — corroboration, not a standalone flag.
+
+A flag from one strong profile is enough; multiple fronts raise confidence. Regenerate with `python threat_profile_detector.py`.
+""")

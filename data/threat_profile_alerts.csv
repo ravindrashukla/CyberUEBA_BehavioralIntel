@@ -1,0 +1,5 @@
+user_id,cohort,is_known_attack,attack_type,techniques,n_fronts,self_drift,self_drift_elevated
+USR-156,business,True,insider,mass_collection=5.9; cohort_rare_dst=76,2,19.6,True
+USR-234,developer,True,slow APT,c2_beacon=386; dga_dns=160,2,1.4,False
+USR-042,security,True,LOTL,lotl_process=4.5,1,1.8,False
+USR-118,developer,True,Salt Typhoon,recon_fanout=8.2,1,7.3,True

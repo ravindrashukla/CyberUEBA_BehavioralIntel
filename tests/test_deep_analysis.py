@@ -27,7 +27,7 @@ import pytest
 import numpy as np
 import pandas as pd
 
-from embeddings.embedder import MockEmbedder, EMBEDDING_DIM
+from embeddings.embedder import EMBEDDING_DIM
 from embeddings.composer import (
     SIGNAL_WEIGHTS,
     compose,
@@ -104,13 +104,17 @@ def unit_vec(rng):
 
 
 @pytest.fixture
-def mock_embedder():
-    return MockEmbedder()
+def real_embedder():
+    import os
+    if not os.environ.get("OPENAI_API_KEY"):
+        pytest.skip("requires OPENAI_API_KEY — real OpenAI embeddings (mock removed)")
+    from embeddings.embedder import Embedder
+    return Embedder(preload=False)
 
 
 @pytest.fixture
-def concept_library(mock_embedder):
-    lib = ConceptLibrary(embedder=mock_embedder)
+def concept_library(real_embedder):
+    lib = ConceptLibrary(embedder=real_embedder)
     lib.embed_concepts()
     return lib
 
@@ -852,14 +856,14 @@ class TestHierarchicalZones:
         assert insider["data_behavior"] >= insider["network_footprint"]
         assert insider["data_behavior"] >= insider["access_pattern"]
 
-    def test_da2_071_serialize_zone_returns_string(self, mock_embedder):
+    def test_da2_071_serialize_zone_returns_string(self, real_embedder):
         """DA2-071: serialize_zone produces non-empty string."""
         features = {"auth_total": 100, "auth_fail_rate": 0.05}
         text = serialize_zone("user", "access_pattern", {"role": "IT Admin"}, features)
         assert isinstance(text, str)
         assert len(text) > 10
 
-    def test_da2_072_build_zone_embeddings_all_zones(self, mock_embedder):
+    def test_da2_072_build_zone_embeddings_all_zones(self, real_embedder):
         """DA2-072: build_zone_embeddings produces 5 zone embeddings."""
         profile = {"role": "IT Admin", "department": "IT"}
         features = {
@@ -873,12 +877,12 @@ class TestHierarchicalZones:
             "endpoint_mean_risk": 1.5, "endpoint_unique_processes": 15,
             "endpoint_total": 200,
         }
-        zones = build_zone_embeddings("user", "U1", profile, features, mock_embedder)
+        zones = build_zone_embeddings("user", "U1", profile, features, real_embedder)
         assert len(zones) == 5
         for zone_name, emb in zones.items():
             assert emb.shape == (EMBEDDING_DIM,)
 
-    def test_da2_073_compose_zones_different_contexts(self, mock_embedder):
+    def test_da2_073_compose_zones_different_contexts(self, real_embedder):
         """DA2-073: Different contexts produce different composite vectors."""
         profile = {"role": "IT Admin", "department": "IT"}
         features = {
@@ -892,7 +896,7 @@ class TestHierarchicalZones:
             "endpoint_mean_risk": 1.5, "endpoint_unique_processes": 15,
             "endpoint_total": 200,
         }
-        zones = build_zone_embeddings("user", "U1", profile, features, mock_embedder)
+        zones = build_zone_embeddings("user", "U1", profile, features, real_embedder)
         apt_comp = compose_zones(zones, "apt_hunt", "user")
         insider_comp = compose_zones(zones, "insider_investigation", "user")
         sim = cosine_similarity(apt_comp, insider_comp)
@@ -909,7 +913,7 @@ class TestHierarchicalZones:
         result = softmax_attention(zone_vecs, context_weights)
         assert abs(sum(result.values()) - 1.0) < 1e-6
 
-    def test_da2_075_compose_zones_output_normalized(self, mock_embedder):
+    def test_da2_075_compose_zones_output_normalized(self, real_embedder):
         """DA2-075: Composed zone output is unit-normalized."""
         profile = {"role": "IT Admin"}
         features = {
@@ -923,7 +927,7 @@ class TestHierarchicalZones:
             "endpoint_mean_risk": 1.5, "endpoint_unique_processes": 15,
             "endpoint_total": 200,
         }
-        zones = build_zone_embeddings("user", "U1", profile, features, mock_embedder)
+        zones = build_zone_embeddings("user", "U1", profile, features, real_embedder)
         comp = compose_zones(zones, "normal_ops", "user")
         assert abs(np.linalg.norm(comp) - 1.0) < 1e-4
 
@@ -1283,17 +1287,17 @@ class TestIntegration:
         low_nov_score = with_nov[with_nov.uid == "LOW_NOV"]["composite"].iloc[0]
         assert low_nov_score > 5, "Novelty should significantly boost LOW_NOV"
 
-    def test_da2_109_drift_into_embedding_pipeline(self, mock_embedder, concept_library):
+    def test_da2_109_drift_into_embedding_pipeline(self, real_embedder, concept_library):
         """DA2-109: Embedding -> drift -> concept alignment full flow."""
         text_old = "Normal user activity, standard access patterns"
         text_new = "User accessing restricted files, off-hours authentication"
-        v_old = mock_embedder.embed_text(text_old)
-        v_new = mock_embedder.embed_text(text_new)
+        v_old = real_embedder.embed_text(text_old)
+        v_new = real_embedder.embed_text(text_new)
         analysis = analyze_entity_drift("user", "U1", v_old, v_new, concept_library)
         assert analysis.drift_magnitude >= 0
         assert isinstance(analysis.primary_direction, str)
 
-    def test_da2_110_zone_compose_drift_pipeline(self, mock_embedder):
+    def test_da2_110_zone_compose_drift_pipeline(self, real_embedder):
         """DA2-110: Build zones -> compose -> drift between two periods."""
         profile = {"role": "IT Admin"}
         feats_w1 = {
@@ -1312,8 +1316,8 @@ class TestIntegration:
         feats_w2["file_restricted_ratio"] = 0.15
         feats_w2["auth_off_hours_ratio"] = 0.40
 
-        zones_w1 = build_zone_embeddings("user", "U1", profile, feats_w1, mock_embedder)
-        zones_w2 = build_zone_embeddings("user", "U1", profile, feats_w2, mock_embedder)
+        zones_w1 = build_zone_embeddings("user", "U1", profile, feats_w1, real_embedder)
+        zones_w2 = build_zone_embeddings("user", "U1", profile, feats_w2, real_embedder)
 
         comp_w1 = compose_zones(zones_w1, "normal_ops", "user")
         comp_w2 = compose_zones(zones_w2, "normal_ops", "user")
@@ -1335,7 +1339,7 @@ class TestIntegration:
         mag = drift_magnitude(rel_w1, rel_w2)
         assert 0 <= mag <= 2
 
-    def test_da2_112_velocity_from_zone_series(self, mock_embedder):
+    def test_da2_112_velocity_from_zone_series(self, real_embedder):
         """DA2-112: Velocity computed from composed zone time series."""
         profile = {"role": "Software Engineer"}
         base_feats = {
@@ -1353,7 +1357,7 @@ class TestIntegration:
         for week in range(10):
             f = base_feats.copy()
             f["auth_fail_rate"] = 0.01 + week * 0.02
-            zones = build_zone_embeddings("user", "U1", profile, f, mock_embedder)
+            zones = build_zone_embeddings("user", "U1", profile, f, real_embedder)
             comp = compose_zones(zones, "normal_ops", "user")
             snapshots.append(comp)
 

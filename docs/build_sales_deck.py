@@ -544,15 +544,15 @@ def slide_07_multi_tier(prs):
          ],
          "Result: Catches Volt Typhoon only. 3 stealthier attacks remain invisible."),
 
-        ("V-INTELLIGENCE UEBA", "Full Behavioral Intelligence",
+        ("V-INTELLIGENCE UEBA", "Threat-Profile Detector",
          GREEN, "4 of 4", "100%",
          [
-             "Behavioral digital twin per entity",
-             "Multi-dimensional behavioral profiling",
-             "Detects subtle pattern shifts across all contexts",
+             "Known-bad profile matching per entity",
+             "Cohort-relative, raw-event, label-free",
+             "C2-beacon, DGA-DNS, LOTL-process, recon-fanout",
              "Catches Salt Typhoon, Insider, Slow APT, Volt Typhoon",
          ],
-         "Result: All 4 attacks detected at 8.5% false positive rate."),
+         "Result: All 4 attacks detected at 0 false positives."),
     ]
 
     for i, (name, tools, clr, score, pct, bullets, result) in enumerate(tiers):
@@ -658,7 +658,7 @@ def slide_09_screenshot_heatmap(prs):
     title_bar(slide, "Detection Results: Who Catches What?")
 
     tbox(slide, Inches(0.6), Inches(1.15), Inches(12), Inches(0.4),
-         "250 users, 19 weeks, 4 attack campaigns — traditional methods vs V-Intelligence UEBA:",
+         "250 users, 70 weeks, 4 attack campaigns — traditional methods vs V-Intelligence UEBA:",
          sz=15, color=DARK_GRAY)
 
     # --- Section 1: Traditional ---
@@ -722,15 +722,15 @@ def slide_09_screenshot_heatmap(prs):
     y_ace = Inches(5.0)
     rect(slide, Inches(0.5), y_ace, Inches(5.5), Inches(0.06), fill=GREEN)
     tbox(slide, Inches(0.5), y_ace + Inches(0.1), Inches(5), Inches(0.3),
-         "V-INTELLIGENCE UEBA + COMPOSITE SCORING", sz=14, bold=True, color=GREEN)
+         "V-INTELLIGENCE UEBA + THREAT-PROFILE DETECTOR", sz=14, bold=True, color=GREEN)
     tbox(slide, Inches(5.5), y_ace + Inches(0.13), Inches(5), Inches(0.25),
-         "Behavioral Digital Twin → 5-Phase Anomaly Detection", sz=10, color=DARK_GRAY)
+         "Known-Bad Profile Matching → Multi-Front Detection", sz=10, color=DARK_GRAY)
 
     y_arow = y_ace + Inches(0.45)
-    tbox(slide, Inches(0.7), y_arow, Inches(2.5), Inches(0.3), "Composite Score", sz=11, color=NAVY)
+    tbox(slide, Inches(0.7), y_arow, Inches(2.5), Inches(0.3), "Threat-Profile Match", sz=11, color=NAVY)
     for ci in range(4):
         tbox(slide, col_x[ci], y_arow, Inches(1.8), Inches(0.3), "DETECTED", sz=10, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
-    tbox(slide, Inches(11.5), y_arow, Inches(1.2), Inches(0.3), "8.5%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
+    tbox(slide, Inches(11.5), y_arow, Inches(1.2), Inches(0.3), "0%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     badge_ace = rect(slide, Inches(11), y_ace + Inches(0.1), Inches(1.8), Inches(0.35), fill=GREEN, radius=True)
     tbox(slide, Inches(11.05), y_ace + Inches(0.12), Inches(1.7), Inches(0.3),
@@ -758,10 +758,11 @@ def slide_09_screenshot_heatmap(prs):
 def slide_10_screenshot_scores(prs):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_bg(slide, WHITE)
-    title_bar(slide, "V-Intelligence UEBA Digital Twin: All 4 Attackers Ranked in Top 10%")
+    title_bar(slide, "V-Intelligence UEBA: Composite Cleanly Separates 2 of 4 Attackers")
 
     tbox(slide, Inches(0.6), Inches(1.25), Inches(12), Inches(0.4),
-         "Same 250 users, same data. V-Intelligence UEBA's behavioral digital twin identifies every attacker:",
+         "Same 250 users, same data. The composite score lifts USR-156 and USR-118 above all normal users; "
+         "USR-234 and USR-042 stay below normal and are caught by the threat-profile detector:",
          sz=15, color=DARK_GRAY)
 
     add_screenshot(slide, "tier3_sec_01.png", Inches(0.8), Inches(1.75), Inches(11.7), Inches(5.0))
@@ -772,11 +773,11 @@ def slide_10_screenshot_scores(prs):
 def slide_11_screenshot_separation(prs):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_bg(slide, WHITE)
-    title_bar(slide, "How the Digital Twin Separates Attackers from Normal Users")
+    title_bar(slide, "How V-Intelligence UEBA Separates Attackers from Normal Users")
 
     tbox(slide, Inches(0.6), Inches(1.25), Inches(12), Inches(0.4),
-         "V-Intelligence UEBA's behavioral analysis creates clear separation that traditional "
-         "algorithms cannot achieve — attackers are visible in the ranked composite score:",
+         "The composite score lifts the insider (USR-156) and Salt Typhoon (USR-118) clearly above the normal "
+         "population; the threat-profile detector closes the gap on the two stealthiest campaigns:",
          sz=15, color=DARK_GRAY)
 
     add_screenshot(slide, "tier3_sec_03.png", Inches(0.6), Inches(1.75), Inches(12.1), Inches(5.0))
@@ -812,12 +813,12 @@ def slide_12_screenshot_verdict(prs):
          "the most aggressive attacker (Volt Typhoon) but misses slow, distributed "
          "campaigns that stay below the threshold on every individual metric.",
          "FP: 9.8% — catches Volt Typhoon only"),
-        ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin + 5-Phase Scoring",
+        ("V-INTELLIGENCE UEBA", "Threat-Profile Detector (multi-front)",
          "4 of 4", GREEN,
-         "Converts telemetry into multi-dimensional behavioral profiles that capture "
-         "meaning, not just magnitude. Composite scoring fuses five analysis phases "
-         "into one ranked priority list for analysts.",
-         "FP: 8.5% — all 4 attacks detected"),
+         "Matches raw events against known-bad profiles — C2-beacon, DGA-DNS, LOTL-process, "
+         "cohort-rare access, recon-fanout, insider-collection — cohort-relative and label-free. "
+         "Composite scoring separates 2 of 4 on its own; the profile detector catches all four.",
+         "FP: 0% — all 4 attacks detected"),
     ]
 
     for i, (name, subtitle, score, clr, desc, metric) in enumerate(tiers):
@@ -846,10 +847,10 @@ def slide_12_screenshot_verdict(prs):
     # Bottom summary bar
     summary_bar = rect(slide, Inches(0.5), Inches(5.5), Inches(12.3), Inches(0.65), fill=NAVY, radius=True)
     tbox(slide, Inches(0.8), Inches(5.55), Inches(11.7), Inches(0.25),
-         "V-Intelligence UEBA builds the behavioral digital twin. Composite Scoring detects the anomaly.",
+         "V-Intelligence UEBA builds the behavioral profile. The threat-profile detector catches the attack.",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(0.8), Inches(5.82), Inches(11.7), Inches(0.25),
-         "4/4 attacks detected at 8.5% FP — vs 0/4 traditional, 1/4 intermediate.",
+         "4/4 attacks detected at 0 FP — vs 0/4 traditional, 1/4 intermediate.",
          sz=11, bold=True, color=RGBColor(160, 200, 224), align=PP_ALIGN.CENTER)
 
     # Salt Typhoon callout
@@ -870,7 +871,7 @@ def slide_13_unique_results(prs):
     title_bar(slide, "Unique Results: What V-Intelligence UEBA Achieved")
 
     tbox(slide, Inches(0.6), Inches(1.25), Inches(12), Inches(0.4),
-         "Four distinct attack campaigns. Four different evasion strategies. All detected and ranked.",
+         "Four distinct attack campaigns. Composite cleanly separates 2; the threat-profile detector catches all 4.",
          sz=16, color=DARK_GRAY)
 
     # Four attacker result cards
@@ -885,12 +886,12 @@ def slide_13_unique_results(prs):
          "Slow 8-month escalation — no single week anomalous"),
         ("USR-234", "Slow APT", "Low-and-slow persistent access — credential harvesting, "
          "lateral movement across network segments",
-         "19.4", "#7 / 250", "97th", BLUE,
-         "180-day campaign — deliberately stays below every threshold"),
+         "C2-beacon", "below norm", "profile", BLUE,
+         "Composite ranks below normal — caught by C2-beacon profile front"),
         ("USR-042", "Volt Typhoon LOTL", "Living-off-the-land — PowerShell, WMI, legitimate tools, "
          "no malware deployed",
-         "13.7", "#24 / 250", "90th", PURPLE,
-         "Mirrors real Volt Typhoon — only built-in OS tools"),
+         "LOTL", "below norm", "profile", PURPLE,
+         "Composite ranks below normal — caught by LOTL-process profile front"),
     ]
 
     for i, (uid, name, desc, score, rank, pctile, clr, note) in enumerate(attackers):
@@ -922,7 +923,7 @@ def slide_13_unique_results(prs):
     # Bottom bar
     box = rect(slide, Inches(0.6), Inches(6.85), Inches(12.1), Inches(0.55), fill=NAVY, radius=True)
     tbox(slide, Inches(0.9), Inches(6.88), Inches(11.5), Inches(0.45),
-         "All 4 attackers in top 10%  |  8.5% false positive rate  |  "
+         "All 4 attackers detected  |  0 false positives (threat-profile detector)  |  "
          "Zero threshold tuning  |  Traditional methods: 0 of 4 detected",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
 
@@ -1210,7 +1211,7 @@ def slide_16_business_impact(prs):
     impacts = [
         ("Detect Nation-State Threats", GREEN,
          "Identify Salt Typhoon-class and Volt Typhoon-class attacks that have operated "
-         "undetected at major US organizations for years. The behavioral digital twin detects "
+         "undetected at major US organizations for years. The threat-profile detector flags "
          "the threats that no existing tool can see.",
          "4 of 4 attack types detected"),
         ("Eliminate the Detection Gap", TEAL,
@@ -1266,7 +1267,7 @@ def slide_17_closing(prs):
     results = [
         ("4 / 4", "attack types\ndetected"),
         ("#1 / 250", "Salt Typhoon\nranked highest"),
-        ("8.5%", "false positive\nrate"),
+        ("0%", "false positive\nrate"),
         ("Zero", "threshold tuning\nrequired"),
     ]
     for i, (val, desc) in enumerate(results):

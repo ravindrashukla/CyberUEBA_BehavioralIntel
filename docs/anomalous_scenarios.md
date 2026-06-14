@@ -194,11 +194,13 @@
 
 ## Key Differentiator
 
-ATK-003 (slow APT), ATK-004 (insider threat), ATK-007 (Volt Typhoon), and ATK-008 (Salt Typhoon) are specifically designed to be **undetectable by traditional SIEM rules** -- no single event crosses any threshold. Only cumulative behavioral drift analysis catches them.
+ATK-003 (slow APT), ATK-004 (insider threat), ATK-007 (Volt Typhoon), and ATK-008 (Salt Typhoon) are specifically designed to be **undetectable by traditional SIEM rules** -- no single event crosses any threshold. Cumulative behavioral analysis is required to catch them.
 
-The system detects anomalies by tracking 5 independent behavioral signals per entity via high-dimensional embeddings, using CUSUM change-point detection to catch drift that no individual-threshold system would flag.
+The system detects anomalies by tracking 5 independent behavioral signals per entity via high-dimensional embeddings, complemented by direct known-bad behavioral profiles. The clean 4/4-at-0-false-positives result comes from the multi-front threat-profile detector (`threat_profile_detector.py`) — measurable profiles such as C2-beacon, DGA-DNS, LOTL-process, cohort-rare access, recon-fanout, and insider-collection, scored cohort-relative + raw-event, label-free.
 
-**Current data coverage:** 250 users, 300 devices, 130 days (2025-01-01 to 2025-05-10). Attacks within this window: ATK-003, ATK-004, ATK-007, ATK-008. Full 486-day generation required for ATK-001, ATK-002, ATK-005, ATK-006.
+CUSUM change-point detection contributes, but its value is **attack-dependent**, not universal: embedding CUSUM surfaces the insider (USR-156) and LOTL (USR-042) campaigns roughly 30 weeks earlier than threshold methods, fires LATER for the volume-driven Salt Typhoon (USR-118), and never separates the slow-APT (USR-234). It is one signal among several, not a stand-alone win.
+
+**Current data coverage:** 250 users, 300 devices, the full 485-day generation window (2025-01-01 to 2026-04-30). Slow-burn attacks ATK-003, ATK-004, ATK-007, ATK-008 are embedded across this window; the fast/loud scenarios ATK-001, ATK-002, ATK-005, ATK-006 are also injected on their respective dates within the 485-day span.
 
 **Attack spectrum coverage:**
 - **Fast/loud**: Brute force (4 hours), Ransomware (6 hours)

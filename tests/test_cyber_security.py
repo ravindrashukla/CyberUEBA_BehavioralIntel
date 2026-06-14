@@ -100,15 +100,17 @@ def _make_drift_analysis(
 
 
 @pytest.fixture
-def mock_embedder():
-    from embeddings.embedder import MockEmbedder
-    return MockEmbedder()
+def real_embedder():
+    if not os.environ.get("OPENAI_API_KEY"):
+        pytest.skip("requires OPENAI_API_KEY — real OpenAI embeddings (mock removed)")
+    from embeddings.embedder import Embedder
+    return Embedder(preload=False)
 
 
 @pytest.fixture
-def concept_library(mock_embedder):
+def concept_library(real_embedder):
     from detection.reference_concepts import ConceptLibrary
-    lib = ConceptLibrary(embedder=mock_embedder)
+    lib = ConceptLibrary(embedder=real_embedder)
     lib.embed_concepts()
     return lib
 

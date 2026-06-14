@@ -2,7 +2,7 @@
 import os
 import time
 import logging
-from datetime import date, datetime, timedelta
+from datetime import date, datetime, timedelta, timezone
 from threading import Thread, Event
 
 import numpy as np
@@ -83,7 +83,7 @@ class UEBAScheduler:
             error_msg = f"{func.__name__} failed: {e}"
             logger.error(error_msg, exc_info=True)
             self._errors.append({
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "function": func.__name__,
                 "error": str(e),
             })
@@ -116,12 +116,12 @@ class UEBAScheduler:
         existing = rows[0]["cnt"] if rows else 0
         if existing > 0:
             logger.info("Embedding refresh: %d snapshots already exist for this month, skipping", existing)
-            self.last_embedding_refresh = datetime.utcnow()
+            self.last_embedding_refresh = datetime.now(timezone.utc)
             return
 
         logger.info("No snapshots for current month — would need seed_snapshots_fast.py run")
         elapsed = time.time() - start_time
-        self.last_embedding_refresh = datetime.utcnow()
+        self.last_embedding_refresh = datetime.now(timezone.utc)
         logger.info("Embedding refresh check complete in %.1fs", elapsed)
 
     def run_detection_scan(self):
@@ -135,17 +135,23 @@ class UEBAScheduler:
         from detection.reference_concepts import ConceptLibrary
         from detection.alert_generator import AlertGenerator
         from detection.kill_chain import KillChainReconstructor
-        from embeddings.embedder import MockEmbedder
+        from embeddings.embedder import Embedder
 
         if not check_connection():
             logger.warning("Database not available, skipping detection scan")
             return
 
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise RuntimeError(
+                "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+                "(mock embeddings have been removed)."
+            )
+
         logger.info("Starting detection scan")
         start_time = time.time()
 
         # Initialize concept library
-        embedder = MockEmbedder()
+        embedder = Embedder()
         concept_lib = ConceptLibrary(embedder=embedder)
         concept_lib.embed_concepts()
 
@@ -165,7 +171,7 @@ class UEBAScheduler:
         )
         if not rows:
             logger.info("No snapshots found, skipping detection")
-            self.last_detection_scan = datetime.utcnow()
+            self.last_detection_scan = datetime.now(timezone.utc)
             return
 
         # Group by entity
@@ -250,7 +256,7 @@ class UEBAScheduler:
                 logger.error("Failed to save kill chain: %s", e)
 
         elapsed = time.time() - start_time
-        self.last_detection_scan = datetime.utcnow()
+        self.last_detection_scan = datetime.now(timezone.utc)
         logger.info(
             "Detection scan complete: %d alerts generated (%d after dedup) in %.1fs",
             total_alerts, len(deduped), elapsed,

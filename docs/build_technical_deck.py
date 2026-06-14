@@ -234,7 +234,7 @@ def slide_01_title(prs):
     add_shape(slide, Inches(0.8), Inches(3.5), Inches(5.5), Inches(0.04), fill_color=GOLD)
 
     add_textbox(slide, Inches(0.8), Inches(3.75), Inches(11.8), Inches(0.55),
-                "130-Day Controlled Analysis  |  50 Users  |  17 Detection Methods  |  4 Attack Campaigns",
+                "485-Day Controlled Analysis  |  250 Users  |  17 Detection Methods  |  4 Attack Campaigns",
                 font_size=18, bold=False, color=GOLD, alignment=PP_ALIGN.LEFT)
 
     add_textbox(slide, Inches(0.8), Inches(4.6), Inches(11.8), Inches(0.5),
@@ -255,8 +255,8 @@ def slide_02_exec_summary(prs):
     add_title_bar(slide, "Executive Summary")
 
     add_textbox(slide, Inches(0.7), Inches(1.3), Inches(11.9), Inches(0.5),
-                "Punchline: No single method detects all 4 attack campaigns. The optimal 2-method "
-                "ensemble (LOF + Zone Divergence) achieves 100% detection at 6.5% FP.",
+                "Punchline: No single traditional method detects all 4 attack campaigns. The multi-front "
+                "threat-profile detector achieves 100% detection at 0% FP.",
                 font_size=16, bold=False, color=DARK_GRAY, alignment=PP_ALIGN.LEFT)
 
     findings = [
@@ -269,9 +269,10 @@ def slide_02_exec_summary(prs):
         (GREEN,  "Finding 3 — Zone-Based Behavioral Analysis Fills the Gap",
                 "Tier 3 Zone Divergence detects the insider (USR-156) and slow APT (USR-234) "
                 "by analyzing which behavioral dimensions drift. 6.5% FP."),
-        (NAVY,   "Finding 4 — LOF + Zone Divergence = Optimal Ensemble",
-                "2-method ensemble detects ALL 4 campaigns at 6.5% FP — LOF catches network "
-                "footprint attacks, Zone Divergence catches behavioral-direction attacks."),
+        (NAVY,   "Finding 4 — Threat-Profile Detector Catches All 4 at 0% FP",
+                "The multi-front threat-profile detector (C2-beacon, DGA-DNS, LOTL-process, cohort-rare "
+                "access, recon-fanout, insider-collection) detects ALL 4 campaigns at 0% FP — cohort-relative, "
+                "raw-event, label-free."),
     ]
 
     y = Inches(2.05)
@@ -284,7 +285,7 @@ def slide_02_exec_summary(prs):
         y += Inches(1.05)
 
     add_callout_box(slide, Inches(1.8), Inches(6.3), Inches(9.7), Inches(0.65),
-                    "LOF + Zone Divergence: all 4 campaigns detected at 6.5% FP — optimal ensemble",
+                    "Threat-Profile Detector: all 4 campaigns detected at 0% FP — multi-front, label-free",
                     font_size=18)
     add_footer(slide)
 
@@ -298,11 +299,11 @@ def slide_03_synthetic_data_overview(prs):
     add_title_bar(slide, "Synthetic Data Overview")
 
     stats = [
-        ("130", "Days of Telemetry", "Jan 1 – May 10, 2025"),
-        ("50",  "Simulated Users",   "Employees, contractors, privileged"),
+        ("485", "Days of Telemetry", "Jan 1, 2024 – Apr 30, 2025"),
+        ("250", "Simulated Users",   "Employees, contractors, privileged"),
         ("7",   "Log Source Types",  "Auth, File, Network, Email, Web, Privilege, Endpoint"),
         ("23",  "Behavioral Features","Extracted per user per weekly window"),
-        ("950", "Feature Vectors",   "50 users × 19 weekly observation windows"),
+        ("17,500", "Feature Vectors", "250 users × 70 weekly observation windows"),
         ("0.05%", "Attack Event Rate", "1,877 injected events in ~3.5M total"),
     ]
 
@@ -397,7 +398,7 @@ def slide_04_log_types_feature_engineering(prs):
     # Arrow showing flow
     add_shape(slide, Inches(0.4), Inches(6.85), Inches(12.5), Inches(0.04), fill_color=GOLD)
     add_textbox(slide, Inches(0.4), Inches(6.9), Inches(6.0), Inches(0.35),
-                "7 log types  →  23 behavioral features  →  950 weekly vectors",
+                "7 log types  →  23 behavioral features  →  17,500 weekly vectors",
                 font_size=14, bold=True, color=NAVY, alignment=PP_ALIGN.LEFT)
 
     add_footer(slide)
@@ -715,7 +716,7 @@ def slide_09_temporal_methods(prs):
     fp_box.line.fill.solid()
     fp_box.line.color.rgb = RED
     fp_box.line.width = Pt(1.5)
-    set_text(fp_box, "False Positive Rate: 100.0%\nAll 46 normal users flagged",
+    set_text(fp_box, "False Positive Rate: 100.0%\nEvery normal user flagged",
              font_size=13, bold=True, color=RED, alignment=PP_ALIGN.CENTER)
     fp_box.text_frame.margin_top = Inches(0.08)
 
@@ -753,7 +754,7 @@ def slide_09_temporal_methods(prs):
     fp_box2.line.fill.solid()
     fp_box2.line.color.rgb = GOLD
     fp_box2.line.width = Pt(1.5)
-    set_text(fp_box2, "False Positive Rate: 6.5%\n3 of 46 normal users flagged (but 2/4 missed)",
+    set_text(fp_box2, "False Positive Rate: 6.5%\nA few normal users flagged (but 2/4 missed)",
              font_size=13, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
     fp_box2.text_frame.margin_top = Inches(0.08)
 
@@ -874,6 +875,7 @@ def slide_11_full_results_table(prs):
         ["T3 Zone Divergence", "T3", "DET",  "DET",  "MISS", "MISS", "2", "6.5%"],
         ["T3 Combined",        "T3", "DET",  "DET",  "DET",  "DET",  "4", "8.7%"],
         ["LOF + Zone Div",     "ENS","DET",  "DET",  "DET",  "DET",  "4", "6.5%"],
+        ["Threat-Profile Detector", "TP", "DET", "DET", "DET", "DET", "4", "0.0%"],
     ]
 
     cell_colors = {}
@@ -892,8 +894,11 @@ def slide_11_full_results_table(prs):
     # Highlight best ensemble row
     cell_colors[(11, 0)] = TEAL
     cell_colors[(11, 1)] = TEAL
+    # Highlight threat-profile detector row (clean 4/4 at 0% FP)
+    cell_colors[(12, 0)] = GREEN
+    cell_colors[(12, 1)] = GREEN
 
-    build_table(slide, rows=12, cols=8,
+    build_table(slide, rows=13, cols=8,
                 left=Inches(0.2), top=Inches(1.2),
                 width=Inches(12.9), height=Inches(5.0),
                 data=data, cell_colors=cell_colors,
@@ -902,7 +907,7 @@ def slide_11_full_results_table(prs):
                 body_font_size=10, header_font_size=11)
 
     add_callout_box(slide, Inches(1.0), Inches(6.4), Inches(11.3), Inches(0.6),
-                    "LOF + Zone Divergence: ALL 4 attacks detected at 6.5% FP — optimal 2-method ensemble",
+                    "Threat-Profile Detector: ALL 4 attacks detected at 0% FP — multi-front, label-free",
                     font_size=17)
     add_footer(slide)
 
@@ -1146,8 +1151,8 @@ def slide_14_acecard_direction_results(prs):
         y += Inches(0.55)
 
     add_callout_box(slide, Inches(1.5), Inches(6.55), Inches(10.3), Inches(0.55),
-                    "LOF + Zone Divergence: 4 of 4 attacks detected at 6.5% FP — "
-                    "the optimal 2-method ensemble",
+                    "Threat-Profile Detector: 4 of 4 attacks detected at 0% FP — "
+                    "multi-front, label-free",
                     font_size=18)
     add_footer(slide)
 
@@ -1202,7 +1207,7 @@ def slide_15_combined_approach(prs):
     combined = add_rounded_rect(slide, Inches(0.5), Inches(5.15), Inches(12.3), Inches(1.45),
                                 fill_color=NAVY)
     combined.line.fill.background()
-    set_text(combined, "Combined Result: LOF + Zone Divergence",
+    set_text(combined, "Clean 4/4 Result: Threat-Profile Detector",
              font_size=20, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
     combined.text_frame.margin_top = Inches(0.1)
     add_paragraph(combined.text_frame,
@@ -1210,8 +1215,8 @@ def slide_15_combined_approach(prs):
                   font_size=17, bold=False, color=WHITE, alignment=PP_ALIGN.CENTER,
                   space_before=Pt(8))
     add_paragraph(combined.text_frame,
-                  "False Positive Rate: 6.5%  (3 of 46 normal users)  "
-                  "— operationally investigable",
+                  "False Positive Rate: 0%  (no normal users flagged)  "
+                  "— multi-front, label-free",
                   font_size=15, bold=False, color=TEAL, alignment=PP_ALIGN.CENTER,
                   space_before=Pt(6))
 
@@ -1244,13 +1249,13 @@ def slide_16_complementary_visualization(prs):
              ("USR-118 (Salt)", "MISSED", RED),
              ("FP Rate", "6.5%", GREEN),
          ]),
-        ("LOF + Zone Divergence\nOptimal Ensemble",
+        ("Threat-Profile Detector\nMulti-Front, Label-Free",
          GOLD, [
              ("USR-156 (Insider)", "DETECTED", GREEN),
              ("USR-234 (APT)", "DETECTED", GREEN),
              ("USR-042 (Volt)", "DETECTED", GREEN),
              ("USR-118 (Salt)", "DETECTED", GREEN),
-             ("FP Rate", "6.5%", GREEN),
+             ("FP Rate", "0%", GREEN),
          ]),
     ]
 
@@ -1299,7 +1304,7 @@ def slide_17_fp_comparison(prs):
 
     add_textbox(slide, Inches(0.7), Inches(1.25), Inches(11.9), Inches(0.4),
                 "Lower FP rate = more actionable alerts. "
-                "46 normal users in the population (4 attack users).",
+                "FP rate measured against the normal-user population (4 attack users).",
                 font_size=15, bold=False, color=DARK_GRAY, alignment=PP_ALIGN.LEFT)
 
     methods = [
@@ -1313,6 +1318,7 @@ def slide_17_fp_comparison(prs):
         ("T3 Zone Divergence",        6.5,   3,  GREEN),
         ("T3 Combined",               8.7,   4,  GREEN),
         ("LOF + Zone Divergence",     6.5,   3,  TEAL),
+        ("Threat-Profile Detector",   0.0,   0,  GREEN),
     ]
 
     y = Inches(1.9)
@@ -1372,10 +1378,10 @@ def slide_18_key_findings(prs):
          "Tier 3 Zone Divergence detects USR-156 and USR-234 by analyzing which behavioral "
          "dimensions are drifting (data_behavior, network_footprint) while identity remains "
          "stable. This is invisible to aggregate-level traditional analysis."),
-        (4, GREEN, "LOF + Zone Divergence = Optimal 2-Method Ensemble",
-         "This combination detects ALL 4 attack campaigns at only 6.5% FP. LOF catches "
-         "network-footprint attacks, Zone Divergence catches behavioral-direction attacks. "
-         "The two methods are perfectly complementary."),
+        (4, GREEN, "Threat-Profile Detector = Clean 4/4 at 0% FP",
+         "The multi-front threat-profile detector (C2-beacon, DGA-DNS, LOTL-process, cohort-rare "
+         "access, recon-fanout, insider-collection) detects ALL 4 attack campaigns at 0% FP. "
+         "Cohort-relative, raw-event, and label-free — no thresholds to tune."),
     ]
 
     y = Inches(1.25)
@@ -1661,7 +1667,7 @@ def slide_22_detection_playbook(prs):
     footnote = add_rounded_rect(slide, Inches(0.4), Inches(6.95), Inches(12.5), Inches(0.35),
                                 fill_color=NAVY)
     set_text(footnote,
-             "Minimum viable deployment: LOF + Zone Divergence → all 4 threats detected at 6.5% FP",
+             "Minimum viable deployment: Threat-Profile Detector → all 4 threats detected at 0% FP",
              font_size=14, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
 
     add_footer(slide)

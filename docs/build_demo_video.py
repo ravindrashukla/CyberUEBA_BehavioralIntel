@@ -114,27 +114,27 @@ NARRATIONS = [
     (
         "Here are the results from our validation. "
         "We tested traditional detection methods — Isolation Forest, One-Class SVM, and LOF — "
-        "against four real attack campaigns embedded across 250 users over 19 weeks. "
+        "against four real attack campaigns embedded across 250 users over 70 weeks. "
         "Traditional methods detect zero out of four attacks. "
         "Our intermediate statistical analysis catches one — the Volt Typhoon campaign. "
         "But three attackers, including Salt Typhoon, remain completely invisible."
     ),
     # 9: V-Intelligence UEBA Scores
     (
-        "V-Intelligence UEBA's digital twin approach changes the picture entirely. "
-        "All four attackers are ranked in the top ten percent. "
+        "V-Intelligence UEBA changes the picture entirely. "
+        "The composite score cleanly separates two of the four attackers from the population. "
         "Salt Typhoon — the attack that went undetected for five years in the real world — "
         "is ranked number one out of 250 users, with a composite score of 51.3. "
         "The insider threat is ranked number two at 46.2. "
-        "Even the slow APT campaign is caught at rank seven."
+        "The two stealthiest campaigns rank below the average user on composite alone — "
+        "and that is exactly where the threat-profile detector takes over."
     ),
     # 10: Top 25 Separation
     (
-        "The separation is unmistakable. "
-        "In this composite score ranking, attackers shown in red "
-        "are clearly separated from the normal user population in blue. "
-        "This is not a marginal improvement — "
-        "it's a fundamentally different level of detection."
+        "In this composite score ranking, the insider and Salt Typhoon, shown in red, "
+        "rise clearly above the normal user population in blue. "
+        "The two stealthiest attackers stay hidden in the crowd on composite alone — "
+        "which is why the multi-front threat-profile detector is needed to catch all four."
     ),
     # 11: Insider Threat Deep Dive
     (
@@ -152,8 +152,8 @@ NARRATIONS = [
         "The verdict is clear. "
         "Traditional detection catches zero out of four attacks. "
         "Our intermediate analysis catches one. "
-        "V-Intelligence UEBA's full behavioral intelligence catches all four — "
-        "at just 8.5 percent false positive rate. "
+        "V-Intelligence UEBA's threat-profile detector catches all four — "
+        "at zero false positives. "
         "Same data. Same users. "
         "A fundamentally different understanding of behavior."
     ),
@@ -169,8 +169,8 @@ NARRATIONS = [
     # 14: Results Summary
     (
         "V-Intelligence UEBA delivers measurable results. "
-        "Four out of four attack types detected. "
-        "8.5 percent false positive rate. "
+        "Four out of four attack types detected by the threat-profile detector. "
+        "Zero false positives. "
         "A single ranked analyst priority list. "
         "Zero threshold tuning required. "
         "These are validation results against real-world attack patterns."
@@ -343,14 +343,14 @@ def create_detection_results_frame():
     # --- V-Intelligence UEBA section ---
     y_ace = 520
     draw.rectangle([(60, y_ace), (920, y_ace + 8)], fill=GREEN)
-    draw.text((60, y_ace + 18), "V-INTELLIGENCE UEBA + COMPOSITE SCORING", fill=GREEN, font=get_font(22, bold=True))
-    draw.text((520, y_ace + 20), "Behavioral Digital Twin → 5-Phase Anomaly Detection", fill=LIGHT, font=get_font(16))
+    draw.text((60, y_ace + 18), "V-INTELLIGENCE UEBA + THREAT-PROFILE DETECTOR", fill=GREEN, font=get_font(22, bold=True))
+    draw.text((520, y_ace + 20), "Known-Bad Profile Matching → Multi-Front Detection", fill=LIGHT, font=get_font(16))
 
     y_row2 = y_ace + 60
-    draw.text((70, y_row2), "Composite Score", fill=WHITE, font=get_font(16))
+    draw.text((70, y_row2), "Threat-Profile Match", fill=WHITE, font=get_font(16))
     for ci in range(4):
         draw.text((300 + ci * 175, y_row2), "DETECTED", fill=GREEN, font=get_font(14, bold=True))
-    draw.text((1000, y_row2), "8.5%", fill=LIGHT, font=get_font(14))
+    draw.text((1000, y_row2), "0%", fill=LIGHT, font=get_font(14))
 
     draw.rectangle([(1120, y_ace + 18), (1360, y_ace + 56)], fill=GREEN)
     draw.text((1140, y_ace + 24), "4 of 4 detected", fill=WHITE, font=get_font(18, bold=True))
@@ -417,11 +417,11 @@ def create_verdict_frame():
          "Catches Volt Typhoon (noisier campaign)\n"
          "but misses 3 stealthier attack types.",
          "FP Rate: 9.8%\ncatches Volt Typhoon only"),
-        ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin\n+ 5-Phase Composite Scoring", "4 of 4", GREEN,
-         "Multi-dimensional behavioral profiling.\n"
+        ("V-INTELLIGENCE UEBA", "Threat-Profile Detector\nMulti-Front, Label-Free", "4 of 4", GREEN,
+         "Known-bad profile matching on raw events.\n"
          "Detects all 4 attacks including Salt Typhoon\n"
          "which was undetected for 5+ years in reality.",
-         "FP Rate: 8.5%\nall attacks detected"),
+         "FP Rate: 0%\nall attacks detected"),
     ]
 
     for i, (name, subtitle, score, clr, desc, metric) in enumerate(tiers):
@@ -465,7 +465,7 @@ def create_verdict_frame():
     # Bottom summary bar
     y_bot = 790
     draw.rectangle([(60, y_bot), (WIDTH - 60, y_bot + 70)], fill=DARK_BG)
-    summary = "0 / 4  →  1 / 4  →  4 / 4   |   The behavioral digital twin detects what thresholds cannot."
+    summary = "0 / 4  →  1 / 4  →  4 / 4   |   The threat-profile detector catches what thresholds cannot."
     draw.text((100, y_bot + 20), summary, fill=GOLD, font=get_font(22, bold=True))
 
     # Salt Typhoon callout
@@ -682,15 +682,15 @@ def build_video():
     # 9: V-Intelligence UEBA composite scores
     add(create_screenshot_frame(
         "tier3_sec_01.png",
-        "V-Intelligence UEBA Results: All 4 Attackers Ranked",
-        subcaption="Salt Typhoon: Rank #1 (Score 51.3)  |  Insider: Rank #2 (Score 46.2)  |  All in top 10%",
+        "V-Intelligence UEBA Results: Composite Separates 2 of 4",
+        subcaption="Salt Typhoon: Rank #1 (Score 51.3)  |  Insider: Rank #2 (Score 46.2)  |  2 stealthiest caught by threat-profile detector",
     ), 12)
 
     # 10: Top 25 separation
     add(create_screenshot_frame(
         "tier3_sec_03.png",
-        "Clear Separation: Attackers Stand Out",
-        subcaption="Composite score ranking — attackers (red) clearly separated from normal users (blue)",
+        "Composite Separation: Insider and Salt Typhoon Stand Out",
+        subcaption="Composite score ranking — USR-156 and USR-118 (red) rise above normal users (blue); 2 stealthiest need the threat-profile detector",
     ), 10)
 
     # 11: Insider Threat Deep Dive
@@ -731,7 +731,7 @@ def build_video():
     add(create_stat_frame(
         [
             ("4 / 4", "attack types\ndetected", GREEN),
-            ("8.5%", "false positive\nrate", GOLD),
+            ("0%", "false positive\nrate", GOLD),
             ("Ranked", "single analyst\npriority list", GREEN),
             ("Zero", "threshold tuning\nrequired", GOLD),
         ],

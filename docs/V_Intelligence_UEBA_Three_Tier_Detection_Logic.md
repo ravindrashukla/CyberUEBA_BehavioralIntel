@@ -3,7 +3,7 @@
 ## Internal Technical Reference — Detection Architecture, Algorithms, and Results
 
 **Date**: May 2026
-**Version**: 3.0 — Multi-phase composite scoring with novelty persistence
+**Version**: 3.0 — Multi-phase composite scoring (2-of-4 clean) + multi-front threat-profile detector (4-of-4 at 0 FP)
 **Dataset**: 250 users, 485 days (70 weeks), 4 embedded attack campaigns
 
 ---
@@ -241,7 +241,7 @@ composite = compose_zones(zone_embeddings, context="apt_hunt", entity_type="user
 
 ### 5.3 Temporal Trajectory Analysis
 
-For each entity, 19 weekly snapshots form a trajectory in 1536-d space.
+For each entity, 70 weekly snapshots form a trajectory in 1536-d space.
 Six trajectory features are computed:
 
 | Feature | Definition | What It Detects |
@@ -402,7 +402,12 @@ Score = 0.6×max_cusum + 0.4×final_cusum. Flag top 10%.
 baseline in embedding space. Different from feature CUSUM because it
 operates on the full 1536-d vector, not individual scalars.
 
-**Current result**: 0/4 detected at 10.2% FP.
+**Current result**: 0/4 detected at 10.2% FP as a top-10% flag. Its value is in
+EARLINESS, and that value is **attack-dependent, not universal**: embedding CUSUM
+surfaces the insider (USR-156) and LOTL (USR-042) drift roughly 30 weeks earlier than
+threshold methods, fires LATER than thresholds for the volume-driven Salt Typhoon
+(USR-118), and never separates the slow-APT (USR-234). It is a per-attack early-warning
+signal, not a stand-alone detector and not attributable as an across-the-board embedding win.
 
 ### 6.8 Per-Zone Threat Direction
 
@@ -516,7 +521,15 @@ Novelty score computation:
 | USR-234 | Slow APT | #7 | 19.44 | 4.5 | 1 | 1.6 | 13.0 |
 | USR-042 | Volt Typhoon | #24 | 13.70 | 6.4 | 11 | 3.8 | 0.0 |
 
-**4/4 TP, 21 FP (8.5%), 100% recall at 90th percentile.**
+**Clean separation is only 2 of 4.** USR-156 (#2) and USR-118 (#1) rank above
+every normal user. USR-234 (#7) and USR-042 (#24) rank BELOW normal users — any
+threshold low enough to catch them admits false positives. At the 90th percentile
+the composite reaches 4/4 recall only by accepting 21 FP (8.5%). The clean
+**4/4-at-0-FP result does NOT belong to composite scoring** — it belongs to the
+multi-front threat-profile detector (`threat_profile_detector.py`), which matches
+USR-156/234/042/118 against measurable known-bad profiles (C2-beacon, DGA-DNS,
+LOTL-process, cohort-rare access, recon-fanout, insider-collection) scored
+cohort-relative + raw-event, label-free, with zero false positives.
 
 ### 7.6 Threshold Sweep
 
@@ -541,7 +554,10 @@ The fix: compute novelty persistence directly from qualitative strings
 before embedding. A novel IP appearing in 60/60 post-baseline weeks is
 unambiguously suspicious regardless of what the embedding model produces.
 This direct numeric feature boosted USR-234 from rank #99 (invisible) to
-rank #7 (clearly detected).
+rank #7 — but #7 is still BELOW six normal users, so composite scoring does
+not cleanly separate USR-234. Clean separation of USR-234 (and USR-042)
+comes from the threat-profile detector's raw-event C2-beacon / DGA-DNS and
+LOTL-process profiles, not from the embedding composite.
 
 ---
 
@@ -697,7 +713,15 @@ at #24/250 (above the 90th percentile threshold)
 | Beh Progression | ✓ | ✓ | — | ✓ | 3 | 22 | 8.9% |
 | Zone Threat Dir | ✓ | ✓ | — | ✓ | 3 | 190 | 77.2% |
 | T3 Combined (v1) | ✓ | — | — | ✓ | 2 | 39 | 15.9% |
-| **Composite (v3.0)** | **✓** | **✓** | **✓** | **✓** | **4** | **21** | **8.5%** |
+| Composite (v3.0) — embedding | ✓ (clean) | ✓ (#7, below normals) | ✓ (#24, below normals) | ✓ (clean) | 4 | 21 | 8.5% |
+| **Threat-Profile Detector** | **✓** | **✓** | **✓** | **✓** | **4** | **0** | **0%** |
+
+The embedding composite reaches 4/4 only at the 90th-percentile threshold and 8.5% FP,
+and cleanly separates just 2 of 4 (USR-156, USR-118); USR-234 and USR-042 sit below
+normal users. The **clean 4/4-at-0-FP win is the threat-profile detector**
+(`threat_profile_detector.py`), which matches each attacker against a measurable
+known-bad profile — C2-beacon, DGA-DNS, LOTL-process, cohort-rare access, recon-fanout,
+insider-collection — scored cohort-relative + raw-event, label-free.
 
 ### 10.2 Tier 3 Qualitative Analysis (Unique to Tier 3)
 
@@ -730,7 +754,7 @@ Raw Log CSVs (auth, file_access, network, dns, endpoint)
     │
     ▼
 engineer_weekly_features()
-    │   23 features × 250 users × 19 weeks = 4,750 vectors
+    │   23 features × 250 users × 70 weeks = 17,500 vectors
     │
     ├──▶ Tier 1: 6 traditional ML algorithms
     │       └─ IForest, OCSVM, LOF, Z-Score, Temporal-Z, Feature CUSUM
@@ -742,9 +766,9 @@ engineer_weekly_features()
     │
     └──▶ Tier 3: Digital Entity
             │
-            ├─ Pass 1: Serialize 47,500 zone texts
-            │     250 users × 19 weeks × 5 user zones
-            │     + 250 users × 19 weeks × 5 device zones
+            ├─ Pass 1: Serialize 175,000 zone texts
+            │     250 users × 70 weeks × 5 user zones
+            │     + 250 users × 70 weeks × 5 device zones
             │
             ├─ Pass 2: Batch embed all texts (100/batch via OpenAI API)
             │
@@ -767,7 +791,15 @@ engineer_weekly_features()
                 └─ Phase 5: Novelty Persistence (novel IP weeks)
                     │
                     ▼
-                Composite Score → Percentile Threshold → 4/4 TP at 8.5% FP
+                Composite Score → Percentile Threshold → 4/4 recall at 8.5% FP
+                (clean separation only 2 of 4; USR-234/USR-042 below normals)
+
+    Threat-Profile Detector (threat_profile_detector.py):
+        Known-bad profiles (C2-beacon, DGA-DNS, LOTL-process, cohort-rare access,
+        recon-fanout, insider-collection), cohort-relative + raw-event, label-free
+                    │
+                    ▼
+                4/4 TP at 0 FP  ← the clean detection win
 ```
 
 ---
@@ -801,7 +833,9 @@ interpretive serialization. Still fails for moderate anomalies (1-2σ).
 **Resolution (v3.0)**: The multi-phase composite scorer bypasses concept
 alignment entirely. Detection uses group-relative z-scores on per-zone
 drift features plus novelty persistence — neither requires concept
-projection. Result: 4/4 detection at 8.5% FP.
+projection. Result: 4/4 recall at 8.5% FP, but clean separation of only
+2 of 4 (USR-234 and USR-042 still rank below normal users). Clean 4/4
+separation at 0 FP is achieved by the separate threat-profile detector.
 
 ### 13.2 Top-10% Ranking Floor — Resolved
 
@@ -809,8 +843,10 @@ projection. Result: 4/4 detection at 8.5% FP.
 
 **Resolution (v3.0)**: Composite scoring uses a continuous score with
 percentile-based thresholds. At 90th percentile: 8.5% FP. At 85th: 13.8%.
-At 75th: 24.0%. The composite scale separates attackers from normals
-sufficiently to achieve 100% recall below the 10% FP mark.
+At 75th: 24.0%. This achieves 100% recall below the 10% FP mark, but the
+composite still does not cleanly separate USR-234 and USR-042 from normals
+(they rank #7 and #24, below normal users). The label-free threat-profile
+detector is what delivers clean 4/4 separation at 0 FP.
 
 ### 13.3 Embedding Model IP Limitation
 

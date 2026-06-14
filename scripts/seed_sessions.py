@@ -7,7 +7,7 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import pandas as pd
-from embeddings.embedder import Embedder, MockEmbedder
+from embeddings.embedder import Embedder
 from embeddings.composer import compose
 from embeddings.snapshot_builder import (
     _summarize_session_activity,
@@ -40,12 +40,13 @@ def load_week(data_dir: Path, week_start: date) -> dict:
 
 def seed_sessions(n_months: int = 6, max_sessions: int = 100, data_dir: str = "data/generated"):
     data_path = Path(data_dir)
-    if os.environ.get("OPENAI_API_KEY"):
-        embedder = Embedder()
-        print("Using REAL OpenAI embeddings (text-embedding-3-small)")
-    else:
-        embedder = MockEmbedder()
-        print("Using MockEmbedder (no OPENAI_API_KEY)")
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise SystemExit(
+            "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+            "(mock embeddings have been removed)."
+        )
+    embedder = Embedder()
+    print("Using REAL OpenAI embeddings (text-embedding-3-small)")
     inserted = 0
     start = date(2025, 1, 1)
 

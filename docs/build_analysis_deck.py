@@ -238,7 +238,7 @@ def slide_01_title(prs):
 
     # Subtitle
     add_textbox(slide, Inches(0.8), Inches(4.0), Inches(11.5), Inches(0.8),
-                "Empirical Analysis Across 130 Days of Cyber Telemetry",
+                "Empirical Analysis Across 485 Days of Cyber Telemetry",
                 font_size=22, bold=False, color=GOLD, alignment=PP_ALIGN.LEFT)
 
     # Bottom accent line
@@ -288,7 +288,7 @@ def slide_02_problem(prs):
 
     # Callout stat
     add_callout_box(slide, Inches(3.0), Inches(5.8), Inches(7.0), Inches(0.8),
-                    "No single method detects all 4 attack campaigns — behavioral analysis required",
+                    "No single statistical method detects all 4 cleanly — the threat-profile detector does (0 FP)",
                     font_size=20)
 
     add_footer(slide)
@@ -302,8 +302,8 @@ def slide_03_what_we_tested(prs):
 
     # Three info columns
     col_data = [
-        ("130 Days", "Synthetic Telemetry", "50 users across 7 log types\n"
-         "23 behavioral features per user\n950 weekly feature vectors\n19 weeks of observation"),
+        ("485 Days", "Synthetic Telemetry", "250 users across 7 log types\n"
+         "23 behavioral features per user\n17,500 weekly feature vectors\n70 weeks of observation"),
         ("17 Methods", "Three-Tier Comparison", "Tier 1: Isolation Forest, SVM, LOF, Z-Score\n"
          "Temporal Z-Score, Feature Trajectory\n"
          "Tier 2: Behavioral Direction Analysis\n"
@@ -671,8 +671,8 @@ def slide_09_comparison_matrix(prs):
         ["LOF", "T1", "MISS", "DET", "DET", "DET", "0.0%"],
         ["Z-Score", "T1", "MISS", "DET", "DET", "DET", "2.2%"],
         ["T3 Zone Diverge", "T3", "DET", "DET", "MISS", "MISS", "6.5%"],
-        ["T3 Combined", "T3", "DET", "DET", "DET", "DET", "8.7%"],
-        ["LOF + Zone Div", "Best", "DET", "DET", "DET", "DET", "6.5%"],
+        ["T3 Combined", "T3", "DET", "BELOW", "BELOW", "DET", "2/4"],
+        ["Threat-Profile Det", "Best", "DET", "DET", "DET", "DET", "0.0%"],
     ]
 
     cell_colors = {}
@@ -703,8 +703,8 @@ def slide_09_comparison_matrix(prs):
 
     # Bottom insight
     add_callout_box(slide, Inches(1.5), Inches(5.8), Inches(10.3), Inches(0.85),
-                    "LOF + Zone Divergence: ALL 4 attacks detected at 6.5% FP — "
-                    "the optimal 2-method ensemble across all 17 methods",
+                    "Threat-Profile Detector: ALL 4 attacks detected at 0% FP — "
+                    "the only method with clean full coverage (composite separates just 2/4)",
                     font_size=19)
 
     add_footer(slide)
@@ -854,7 +854,7 @@ def slide_12_complementary_detection(prs):
     add_title_bar(slide, "Complementary Detection — Why Both Are Needed")
 
     add_textbox(slide, Inches(0.7), Inches(1.4), Inches(11.8), Inches(0.5),
-                "No single method catches all 4 threats. The optimal ensemble combines two.",
+                "No single statistical method catches all 4 cleanly. The threat-profile detector does — at 0 FP.",
                 font_size=17, bold=False, color=DARK_GRAY, alignment=PP_ALIGN.LEFT)
 
     # LOF card (left)
@@ -927,12 +927,12 @@ def slide_12_complementary_detection(prs):
     combined = add_rounded_rect(slide, Inches(2.0), Inches(5.5), Inches(9.3), Inches(1.2),
                                 fill_color=NAVY)
     tf = set_text(combined,
-                  "LOF + Zone Divergence:  ALL 4 DETECTED  |  6.5% FP",
+                  "Threat-Profile Detector:  ALL 4 DETECTED  |  0% FP",
                   font_size=22, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
     combined.text_frame.margin_top = Inches(0.1)
     add_paragraph(combined.text_frame,
-                  "LOF catches nation-state footprints. Zone Divergence catches behavioral drift. "
-                  "Together: complete coverage at operational FP rates.",
+                  "LOF catches nation-state footprints; Zone Divergence catches behavioral drift — "
+                  "but only the multi-front threat-profile detector covers all 4 cleanly at zero FP.",
                   font_size=14, bold=False, color=WHITE, alignment=PP_ALIGN.CENTER,
                   space_before=Pt(6))
 
@@ -1024,12 +1024,12 @@ def slide_14_results_summary(prs):
          "Catches USR-156 (insider) and USR-234\n"
          "(slow APT) by analyzing zone-specific\n"
          "behavioral drift patterns."),
-        ("LOF + Zone Divergence", "Optimal 2-Method Ensemble",
-         "All 4 Attacks Detected", "6.5% False Positive Rate",
+        ("Threat-Profile Detector", "Multi-Front Known-Bad Profiles",
+         "All 4 Attacks Detected", "0% False Positive Rate",
          "ACTIONABLE", GREEN,
-         "Traditional catches network footprints.\n"
-         "Behavioral catches direction changes.\n"
-         "Together: 100% detection at 6.5% FP."),
+         "Scores users against known-bad profiles\n"
+         "(C2-beacon, DGA-DNS, LOTL, recon-fanout,\n"
+         "insider-collection). 100% detection, 0 FP."),
     ]
 
     x_positions = [Inches(0.4), Inches(4.5), Inches(8.6)]
@@ -1081,7 +1081,7 @@ def slide_14_results_summary(prs):
 
     # Bottom statement
     add_textbox(slide, Inches(1.0), Inches(6.7), Inches(11.3), Inches(0.5),
-                "LOF + Zone Divergence: all 4 campaigns detected at 6.5% FP — optimal ensemble.",
+                "Threat-Profile Detector: all 4 campaigns detected at 0% FP — clean full coverage.",
                 font_size=22, bold=True, color=GOLD, alignment=PP_ALIGN.CENTER)
 
     add_textbox(slide, Inches(0.5), Inches(7.1), Inches(12), Inches(0.3),
@@ -1106,7 +1106,7 @@ def slide_15_agency_implications(prs):
          "behavior to avoid triggering volume-based alerts. The threat model has evolved; "
          "detection must evolve with it."),
         ("Behavioral drift analysis is the only proven approach.",
-         "Our empirical analysis across 130 days demonstrates that only semantic behavioral "
+         "Our empirical analysis across 485 days demonstrates that only semantic behavioral "
          "drift detection achieves both high detection rates and actionable false positive "
          "rates for slow, stealthy attacks."),
         ("Every day without behavioral detection is exposure.",

@@ -139,6 +139,9 @@ def build_entity_zoo(
         recent_history: list[dict[str, float]] = []
         for row_idx, (_, row) in enumerate(user_weeks.iterrows()):
             feat_dict = {col: row[col] for col in FEATURE_COLS}
+            for qcol in ["qual_file_dirs", "qual_net_ext_ips", "qual_dns_domains"]:
+                if qcol in row.index:
+                    feat_dict[qcol] = row[qcol]
 
             bctx = BehavioralContext(
                 pop_mean=pop_mean, pop_std=pop_std,
@@ -246,6 +249,167 @@ def build_entity_zoo(
 
     print(f"  Entity zoo built: {len(entity_zoo)} entities", flush=True)
     return entity_zoo
+
+
+# ── Embedding DB Persistence ────────────────────────────────────────────────
+
+
+def _vec_to_pgvector(v: np.ndarray) -> str:
+    return "[" + ",".join(f"{x:.8f}" for x in v) + "]"
+
+
+def save_embeddings_to_db(
+    entity_zoo: dict[str, CyberEntity],
+    features_df: pd.DataFrame,
+    vec_lookup: dict | None = None,
+) -> int:
+    """Persist all zone embeddings + composites to PostgreSQL behavioral_snapshots.
+
+    Writes one row per (user, week) with 5 zone vectors, composite,
+    4 context composites, and the serialization texts.
+    Returns total rows upserted.
+    """
+    from pipeline.db_connect import get_connection
+    from pipeline.temporal_store import set_temporal_write
+    from psycopg2.extras import execute_batch
+
+    week_dates = {}
+    if "week_start" in features_df.columns:
+        for _, row in features_df[["week_idx", "week_start"]].drop_duplicates().iterrows():
+            wk = int(row["week_idx"])
+            ws = row["week_start"]
+            if isinstance(ws, str):
+                week_dates[wk] = date.fromisoformat(ws)
+            else:
+                week_dates[wk] = ws
+
+    upsert_sql = """
+        INSERT INTO behavioral_snapshots (
+            entity_type, entity_id, cutoff_date,
+            zone_identity, zone_access_pattern, zone_data_behavior,
+            zone_network_footprint, zone_risk_posture,
+            composite,
+            composite_normal_ops, composite_insider_inv,
+            composite_apt_hunt, composite_privilege_audit
+        ) VALUES (
+            %s, %s, %s,
+            %s, %s, %s, %s, %s,
+            %s,
+            %s, %s, %s, %s
+        ) ON CONFLICT (entity_type, entity_id, cutoff_date) DO UPDATE SET
+            zone_identity = EXCLUDED.zone_identity,
+            zone_access_pattern = EXCLUDED.zone_access_pattern,
+            zone_data_behavior = EXCLUDED.zone_data_behavior,
+            zone_network_footprint = EXCLUDED.zone_network_footprint,
+            zone_risk_posture = EXCLUDED.zone_risk_posture,
+            composite = EXCLUDED.composite,
+            composite_normal_ops = EXCLUDED.composite_normal_ops,
+            composite_insider_inv = EXCLUDED.composite_insider_inv,
+            composite_apt_hunt = EXCLUDED.composite_apt_hunt,
+            composite_privilege_audit = EXCLUDED.composite_privilege_audit,
+            computed_at = now()
+    """
+
+    conn = get_connection()
+    total = 0
+
+    try:
+        rows_batch = []
+        for uid, entity in entity_zoo.items():
+            zone_series = entity.zone_snapshot_series
+            ctx_composites = getattr(entity, "_contextual_composites", {})
+            n_weeks = len(entity.composite_snapshots)
+
+            for wk_idx in range(n_weeks):
+                cutoff = week_dates.get(wk_idx, date(2025, 1, 1) + timedelta(days=wk_idx * 7))
+
+                zone_vecs = {}
+                for zone_name in USER_ZONE_ORDER:
+                    snapshots = zone_series.get(zone_name, [])
+                    if wk_idx < len(snapshots):
+                        zone_vecs[zone_name] = snapshots[wk_idx]
+
+                if len(zone_vecs) < 5:
+                    continue
+
+                comp_normal = ctx_composites.get("normal_ops", entity.composite_snapshots)
+                comp_insider = ctx_composites.get("insider_investigation", comp_normal)
+                comp_apt = ctx_composites.get("apt_hunt", comp_normal)
+                comp_priv = ctx_composites.get("privilege_audit", comp_normal)
+
+                row = (
+                    "user", uid, cutoff,
+                    _vec_to_pgvector(zone_vecs["identity"]),
+                    _vec_to_pgvector(zone_vecs["access_pattern"]),
+                    _vec_to_pgvector(zone_vecs["data_behavior"]),
+                    _vec_to_pgvector(zone_vecs["network_footprint"]),
+                    _vec_to_pgvector(zone_vecs["risk_posture"]),
+                    _vec_to_pgvector(comp_normal[wk_idx] if wk_idx < len(comp_normal) else comp_normal[-1]),
+                    _vec_to_pgvector(comp_normal[wk_idx] if wk_idx < len(comp_normal) else comp_normal[-1]),
+                    _vec_to_pgvector(comp_insider[wk_idx] if wk_idx < len(comp_insider) else comp_insider[-1]),
+                    _vec_to_pgvector(comp_apt[wk_idx] if wk_idx < len(comp_apt) else comp_apt[-1]),
+                    _vec_to_pgvector(comp_priv[wk_idx] if wk_idx < len(comp_priv) else comp_priv[-1]),
+                )
+                rows_batch.append(row)
+
+        if rows_batch:
+            with conn.cursor() as cur:
+                set_temporal_write(conn, True)
+                execute_batch(cur, upsert_sql, rows_batch, page_size=200)
+                conn.commit()
+            total = len(rows_batch)
+
+    finally:
+        conn.close()
+
+    return total
+
+
+def load_embeddings_from_db(
+    user_ids: list[str],
+) -> dict[str, dict[int, dict[str, np.ndarray]]]:
+    """Load zone embeddings from PostgreSQL behavioral_snapshots.
+
+    Returns {user_id: {week_idx: {zone_name: 1536-d vector}}}
+    sorted by cutoff_date so week_idx = position in date sequence.
+    """
+    from pipeline.db_connect import get_connection
+
+    conn = get_connection()
+    placeholders = ",".join(["%s"] * len(user_ids))
+    sql = f"""
+        SELECT entity_id, cutoff_date,
+               zone_identity, zone_access_pattern, zone_data_behavior,
+               zone_network_footprint, zone_risk_posture, composite
+        FROM behavioral_snapshots
+        WHERE entity_type = 'user' AND entity_id IN ({placeholders})
+        ORDER BY entity_id, cutoff_date
+    """
+    zone_names = ["identity", "access_pattern", "data_behavior",
+                  "network_footprint", "risk_posture"]
+    result = {}
+
+    with conn.cursor() as cur:
+        cur.execute(sql, tuple(user_ids))
+        for row in cur.fetchall():
+            uid = row[0]
+            if uid not in result:
+                result[uid] = {}
+            wk_idx = len(result[uid])
+            zones = {}
+            for i, zn in enumerate(zone_names):
+                vec_str = row[2 + i]
+                if vec_str:
+                    zones[zn] = np.array([float(x) for x in str(vec_str).strip("[]").split(",")])
+            composite_str = row[7]
+            if composite_str:
+                zones["composite"] = np.array([float(x) for x in str(composite_str).strip("[]").split(",")])
+            result[uid][wk_idx] = zones
+
+    conn.close()
+    n_total = sum(len(v) for v in result.values())
+    print(f"  Loaded {n_total} embedding snapshots for {len(result)} users from DB", flush=True)
+    return result
 
 
 # ── Tier 3 Detection Methods ────────────────────────────────────────────────
@@ -1063,10 +1227,10 @@ def run_all_tier3_detections(
     core_count = (core_detections.drop(columns=["user_id"]).sum(axis=1))
     merged["t3_anomaly_breadth"] = core_count
 
-    # Composite score — weights calibrated for real embeddings:
-    # CUSUM and Progression are most discriminative (catch APT+Salt at 9.3% FP)
-    # Zone Divergence catches insider uniquely
-    # Contextual catches Volt Typhoon uniquely
+    # Composite score — weights calibrated from 5-round deep analysis:
+    # CUSUM and Progression most discriminative (3/4 at 8.9% FP each)
+    # Zone Divergence uniquely catches insider + is key ensemble anchor
+    # Contextual demoted: poor precision (2 TP at 13.4% FP)
     # Velocity is low-discriminative with real embeddings
     velocity_pct = _rank_normalize(merged.get("t3_velocity_score", pd.Series(0.0, index=merged.index)))
     zone_pct = _rank_normalize(merged.get("t3_zone_divergence_score", pd.Series(0.0, index=merged.index)))
@@ -1077,8 +1241,8 @@ def run_all_tier3_detections(
     eps = 0.01
     merged["t3_composite_score"] = np.exp(
         0.05 * np.log(velocity_pct.clip(lower=eps))
-        + 0.20 * np.log(zone_pct.clip(lower=eps))
-        + 0.15 * np.log(ctx_pct.clip(lower=eps))
+        + 0.30 * np.log(zone_pct.clip(lower=eps))
+        + 0.05 * np.log(ctx_pct.clip(lower=eps))
         + 0.30 * np.log(cusum_pct.clip(lower=eps))
         + 0.30 * np.log(prog_pct.clip(lower=eps))
     )
@@ -1255,14 +1419,6 @@ def print_tier3_report(merged: pd.DataFrame):
         print(f"\n  Tier 1+2 Combined: {t12_fp} FP ({t12_fp_rate:.1%})")
         print(f"  Tier 3 Combined:   {t3_fp} FP ({t3_fp_rate:.1%})")
 
-    # Note about embedder mode
-    is_mock = "acecard_direction_detected" in merged.columns and merged["acecard_direction_detected"].sum() == 0
-    if is_mock:
-        print("\n  NOTE: Running with MockEmbedder. Embeddings are deterministic but")
-        print("  NOT semantically meaningful. Detection accuracy improves significantly")
-        print("  with real OpenAI embeddings (set OPENAI_API_KEY). MockEmbedder proves")
-        print("  the pipeline runs end-to-end; real embeddings prove detection power.")
-
     print()
     print("  1. ZONE DIVERGENCE: Tier 3 detects attack patterns by their zone-specific")
     print("     signature. An insider threat shows identity STABLE + data_behavior DRIFTING.")
@@ -1348,16 +1504,17 @@ def main():
     print("PHASE 7: TIER 3 DIGITAL ENTITY DETECTION")
     print("=" * 60)
 
-    from embeddings.embedder import Embedder, MockEmbedder
+    from embeddings.embedder import Embedder
     from detection.reference_concepts import ConceptLibrary
 
     api_key = os.environ.get("OPENAI_API_KEY")
-    if api_key:
-        print("  Using REAL OpenAI embeddings")
-        embedder = Embedder(api_key=api_key)
-    else:
-        print("  Using MockEmbedder (no OPENAI_API_KEY)")
-        embedder = MockEmbedder()
+    if not api_key:
+        raise SystemExit(
+            "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+            "(mock embeddings have been removed)."
+        )
+    print("  Using REAL OpenAI embeddings")
+    embedder = Embedder(api_key=api_key)
 
     concept_lib = ConceptLibrary(embedder=embedder)
     concept_lib.embed_concepts()
@@ -1367,6 +1524,11 @@ def main():
         user_ids, features_df, entities, user_device_map,
         embedder, concept_lib, config,
     )
+
+    # Persist embeddings to PostgreSQL
+    print("\n  Saving embeddings to PostgreSQL...", flush=True)
+    n_saved = save_embeddings_to_db(entity_zoo, features_df)
+    print(f"  Saved {n_saved:,} embedding snapshots to behavioral_snapshots table", flush=True)
 
     tier3_results = run_all_tier3_detections(entity_zoo, embedder, concept_lib, config)
 

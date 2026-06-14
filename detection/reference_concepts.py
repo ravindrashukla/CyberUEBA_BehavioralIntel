@@ -39,7 +39,10 @@ THREAT_CONCEPTS = [
             "including encoded PowerShell commands, connection to known C2 "
             "infrastructure, registry modifications for persistence, and defense "
             "evasion through disabling security tools. Network beaconing at regular "
-            "intervals to external IPs not seen before."
+            "intervals to external IPs not seen before. Behavioral metrics show "
+            "endpoint_suspicious_ratio increasing from baseline, endpoint_max_risk "
+            "exceeding historical maximum, and new unique processes appearing that "
+            "were never seen in the entity's prior behavioral window."
         ),
         mitre_techniques=["T1059", "T1547", "T1562", "T1071"],
         severity="critical",
@@ -52,7 +55,11 @@ THREAT_CONCEPTS = [
             "outside the organization. Large file copies from restricted shares to "
             "staging directories, followed by compression and upload to external "
             "cloud storage or email to personal accounts. Data volume increasing "
-            "exponentially over days."
+            "exponentially over days. Behavioral metrics show file_total_bytes "
+            "spiking 5-10x above baseline, file_restricted_ratio and "
+            "file_confidential_ratio increasing sharply, file_write_ratio elevated "
+            "from staging activity, and net_bytes_out increasing with asymmetric "
+            "outbound-heavy traffic patterns."
         ),
         mitre_techniques=["T1005", "T1074", "T1048", "T1567"],
         severity="critical",
@@ -65,7 +72,10 @@ THREAT_CONCEPTS = [
             "standard access followed by requests for elevated permissions, "
             "exploitation of misconfigurations to access admin functions, or token "
             "manipulation. Access scope expanding from department-level to "
-            "organization-wide."
+            "organization-wide. Behavioral metrics show auth_unique_dests increasing "
+            "as new systems are accessed, auth_methods_used expanding with new "
+            "authentication types, and file_restricted_ratio rising as the entity "
+            "accesses increasingly classified resources beyond their normal scope."
         ),
         mitre_techniques=["T1078", "T1068", "T1134", "T1548"],
         severity="high",
@@ -90,7 +100,10 @@ THREAT_CONCEPTS = [
             "Slowly expanding file access scope, increasing off-hours activity, "
             "accessing documents outside their role, subtle privilege accumulation. "
             "Changes are individually innocuous but directionally concerning when "
-            "viewed over months."
+            "viewed over months. Behavioral metrics show file_unique_paths gradually "
+            "increasing week over week, file_restricted_ratio trending upward from "
+            "near-zero, auth_off_hours_ratio creeping higher, and file_total_bytes "
+            "growing steadily as data collection expands."
         ),
         mitre_techniques=["T1078", "T1083", "T1005", "T1052"],
         severity="high",
@@ -102,7 +115,11 @@ THREAT_CONCEPTS = [
             "A user rapidly collecting and exfiltrating sensitive data, likely "
             "triggered by imminent termination or grievance. Sudden spike in file "
             "downloads, bulk access to restricted documents, USB device usage, large "
-            "email attachments to personal addresses, all within days."
+            "email attachments to personal addresses, all within days. Behavioral "
+            "metrics show file_total spiking dramatically, file_restricted_ratio "
+            "and file_confidential_ratio jumping to high values, file_write_ratio "
+            "elevated from local staging, file_total_bytes orders of magnitude above "
+            "baseline, and auth_off_hours_ratio suddenly elevated."
         ),
         mitre_techniques=["T1005", "T1052", "T1048", "T1567"],
         severity="critical",
@@ -127,7 +144,11 @@ THREAT_CONCEPTS = [
             "periodic connections to external infrastructure with consistent "
             "intervals (with jitter), small packet sizes, DNS-based or HTTP-based "
             "tunneling, and connections to newly-registered domains or cloud services "
-            "not previously seen."
+            "not previously seen. Behavioral metrics show dns_unique_domains "
+            "increasing with new previously-unseen domains, net_external_ratio "
+            "elevated above baseline, net_unique_dsts growing with new external "
+            "destinations, and dns_nxdomain_ratio elevated from domain generation "
+            "algorithm probing."
         ),
         mitre_techniques=["T1071", "T1573", "T1568", "T1102"],
         severity="critical",
@@ -156,6 +177,77 @@ THREAT_CONCEPTS = [
         ),
         mitre_techniques=["T1195", "T1059", "T1071"],
         severity="critical",
+    ),
+    ReferenceConcept(
+        name="living_off_the_land",
+        category="threat",
+        description=(
+            "An entity using only built-in operating system tools for malicious "
+            "purposes with no malware deployed. Execution of certutil for downloads, "
+            "wmic for remote process execution, netsh for port forwarding, schtasks "
+            "for persistence, and PowerShell with obfuscated commands. Network "
+            "connections to internal admin ports only. Blends with legitimate admin "
+            "activity but exhibits systematic progression through network segments "
+            "using native tools. Behavioral metrics show endpoint_unique_processes "
+            "increasing with new LOLBin usage, endpoint_suspicious_ratio elevated "
+            "from tool repurposing, auth_unique_dests expanding across systems, "
+            "net_unique_dsts growing with lateral movement, and data_behavior plus "
+            "network_footprint drifting simultaneously."
+        ),
+        mitre_techniques=["T1218", "T1053", "T1059.001", "T1036"],
+        severity="critical",
+    ),
+    ReferenceConcept(
+        name="telecom_infrastructure_pivot",
+        category="threat",
+        description=(
+            "An entity targeting telecommunications infrastructure for surveillance. "
+            "Access to call detail record databases, CDR metadata harvesting, "
+            "lawful intercept system manipulation, router and switch configuration "
+            "access, and cross-segment network flows to restricted management zones. "
+            "Behavioral metrics show file_total and file_total_bytes increasing "
+            "dramatically from CDR bulk reads, file_restricted_ratio spiking from "
+            "classified telecom database access, net_unique_dsts expanding across "
+            "restricted network segments, auth_unique_dests increasing as new "
+            "infrastructure systems are accessed, and auth_off_hours_ratio elevated "
+            "from covert off-hours operations."
+        ),
+        mitre_techniques=["T1557", "T1040", "T1005", "T1556"],
+        severity="critical",
+    ),
+    ReferenceConcept(
+        name="dns_tunneling_exfil",
+        category="threat",
+        description=(
+            "An entity using DNS queries as a covert data exfiltration channel. "
+            "High-entropy subdomain labels encoding stolen data, elevated TXT and "
+            "MX record queries to attacker-controlled domains, persistent low-"
+            "throughput data channel disguised as legitimate DNS resolution. "
+            "Behavioral metrics show dns_unique_domains increasing significantly "
+            "with newly-seen tunnel domains, dns_nxdomain_ratio elevated from "
+            "probing queries, net_bytes_out showing persistent low-volume outbound "
+            "traffic, and net_external_ratio increasing with external tunnel "
+            "communication."
+        ),
+        mitre_techniques=["T1071.004", "T1048.003", "T1041"],
+        severity="critical",
+    ),
+    ReferenceConcept(
+        name="credential_harvesting_slow",
+        category="threat",
+        description=(
+            "An entity systematically collecting credentials through native tools "
+            "over an extended campaign. LSASS memory access, SAM database dumps via "
+            "reg.exe, Kerberoasting service ticket requests, and gradual credential "
+            "accumulation distinct from brute-force attacks. Behavioral metrics show "
+            "auth_methods_used expanding with new authentication protocols, "
+            "auth_fail_rate showing periodic spikes from credential testing, "
+            "auth_unique_dests increasing as harvested credentials are validated "
+            "across systems, and endpoint_suspicious_ratio elevated from credential "
+            "tool execution."
+        ),
+        mitre_techniques=["T1003", "T1558", "T1110.002", "T1555"],
+        severity="high",
     ),
 ]
 
@@ -216,7 +308,7 @@ class ConceptLibrary:
     def embed_concepts(self):
         """Embed all concept descriptions to create reference vectors.
 
-        Requires an embedder (Embedder or MockEmbedder instance).
+        Requires an Embedder instance.
         """
         if self._embedder is None:
             raise RuntimeError(
@@ -265,6 +357,20 @@ class ConceptLibrary:
             if c.name == name:
                 return c
         raise KeyError(f"Unknown concept: '{name}'")
+
+    def filter_concepts(self, concept_names: list[str]) -> "ConceptLibrary":
+        """Return a new ConceptLibrary containing only the named concepts.
+
+        Used for zone-specific concept filtering so each behavioral zone
+        is only compared against semantically relevant concepts.
+        """
+        filtered = ConceptLibrary.__new__(ConceptLibrary)
+        filtered.concepts = [c for c in self.concepts if c.name in concept_names]
+        filtered._embeddings = {
+            k: v for k, v in self._embeddings.items() if k in concept_names
+        }
+        filtered._embedder = self._embedder
+        return filtered
 
     def save(self, path: str = "data/concept_embeddings.npz"):
         """Persist concept embeddings to disk."""

@@ -72,7 +72,8 @@ def load_week_csvs(log_type: str, start: date, end: date) -> pd.DataFrame:
 
 
 def engineer_weekly_features(start: date, end: date, user_ids: list[str],
-                             user_device_map: dict | None = None) -> pd.DataFrame:
+                             user_device_map: dict | None = None,
+                             user_role_groups: dict | None = None) -> pd.DataFrame:
     """Extract per-user weekly feature vectors, loading one week at a time."""
     print("Engineering features (incremental, one week at a time)...")
 
@@ -93,7 +94,8 @@ def engineer_weekly_features(start: date, end: date, user_ids: list[str],
 
         for uid in user_ids:
             dev_ids = (user_device_map or {}).get(uid, [])
-            features = _user_features(uid, auth_week, net_week, file_week, ep_week, dns_week, dev_ids)
+            rg = (user_role_groups or {}).get(uid)
+            features = _user_features(uid, auth_week, net_week, file_week, ep_week, dns_week, dev_ids, role_group=rg)
             features["user_id"] = uid
             features["week_idx"] = week_idx
             features["week_start"] = w_start
@@ -107,7 +109,30 @@ def engineer_weekly_features(start: date, end: date, user_ids: list[str],
     return pd.DataFrame(rows)
 
 
-def _user_features(uid, auth_df, net_df, file_df, ep_df, dns_df, dev_ids=None) -> dict:
+SENSITIVE_DIR_KEYWORDS = {
+    "finance", "budget", "executive", "strategy", "merger", "acquisition",
+    "audit", "compliance", "legal", "hr", "org-chart", "salary",
+    "security/audit", "security/policies", "incident", "customer",
+    "confidential", "restricted", "classified",
+}
+
+ROLE_NORMAL_KEYWORDS = {
+    "developer": {"engineering", "repos", "internal-tools", "architecture",
+                  "shared/docs", "shared/projects", "code", "project", "tech"},
+    "admin": {"engineering", "infrastructure", "it-ops", "shared",
+              "repos", "internal-tools", "network"},
+    "security": {"security", "siem", "incident", "audit", "shared",
+                 "engineering", "compliance"},
+    "business": {"finance", "budget", "hr", "sales", "legal", "shared",
+                 "compliance", "customer", "merger", "vendor", "rfp",
+                 "patent", "forecast"},
+    "executive": {"executive", "strategy", "finance", "budget", "shared",
+                  "merger", "board", "legal"},
+}
+
+
+def _user_features(uid, auth_df, net_df, file_df, ep_df, dns_df,
+                   dev_ids=None, role_group=None) -> dict:
     """Compute behavioral features for one user in one time window."""
     features = {}
     dev_ids = dev_ids or []
@@ -185,6 +210,33 @@ def _user_features(uid, auth_df, net_df, file_df, ep_df, dns_df, dev_ids=None) -
         features["dns_nxdomain_ratio"] = float((ud["response_code"] == "NXDOMAIN").sum()) / total_dns
     else:
         features["dns_nxdomain_ratio"] = 0.0
+
+    # Qualitative features — passed through to embedding text, not used in numeric analysis
+    if not uf.empty and "file_path" in uf.columns:
+        parent_dirs = uf["file_path"].apply(
+            lambda p: '/'.join(str(p).replace('\\', '/').split('/')[:-1]) or str(p)
+        )
+        top_dirs = parent_dirs.value_counts().head(8).index.tolist()
+        features["qual_file_dirs"] = "; ".join(top_dirs)
+    else:
+        features["qual_file_dirs"] = ""
+
+    if not un.empty and "dst_ip" in un.columns:
+        ext_mask = ~un["dst_ip"].astype(str).str.startswith(("10.", "192.168.", "172."))
+        ext_flows = un[ext_mask]
+        if not ext_flows.empty:
+            top_ips = ext_flows["dst_ip"].value_counts().head(5).index.tolist()
+            features["qual_net_ext_ips"] = "; ".join(str(ip) for ip in top_ips)
+        else:
+            features["qual_net_ext_ips"] = ""
+    else:
+        features["qual_net_ext_ips"] = ""
+
+    if not ud.empty and domain_col in ud.columns:
+        top_doms = ud[domain_col].value_counts().head(8).index.tolist()
+        features["qual_dns_domains"] = "; ".join(str(d) for d in top_doms)
+    else:
+        features["qual_dns_domains"] = ""
 
     return features
 
@@ -475,18 +527,19 @@ def run_acecard_detection(features_df: pd.DataFrame) -> pd.DataFrame:
     print("ACECARD BEHAVIORAL DRIFT DETECTION")
     print("=" * 60)
 
-    from embeddings.embedder import Embedder, MockEmbedder
+    from embeddings.embedder import Embedder
     from embeddings.composer import compose, drift_magnitude, drift_vector, cosine_similarity
     from detection.cusum import cusum_detect, CUSUMResult
     from detection.reference_concepts import ConceptLibrary
 
     api_key = os.environ.get("OPENAI_API_KEY")
-    if api_key:
-        print("  Using REAL OpenAI embeddings (text-embedding-3-small)")
-        embedder = Embedder(api_key=api_key)
-    else:
-        print("  WARNING: No OPENAI_API_KEY — falling back to MockEmbedder")
-        embedder = MockEmbedder()
+    if not api_key:
+        raise SystemExit(
+            "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+            "(mock embeddings have been removed)."
+        )
+    print("  Using REAL OpenAI embeddings (text-embedding-3-small)")
+    embedder = Embedder(api_key=api_key)
 
     # Embed 12 reference concepts (10 threat + 2 benign)
     print("  Embedding 12 reference concepts...")
@@ -502,7 +555,11 @@ def run_acecard_detection(features_df: pd.DataFrame) -> pd.DataFrame:
     user_ids = features_df["user_id"].unique()
     results_rows = []
 
-    for uid in user_ids:
+    for i_uid, uid in enumerate(user_ids):
+        if (i_uid + 1) % 10 == 0 or i_uid == 0:
+            import sys
+            print(f"  Processing user {i_uid+1}/{len(user_ids)} ({uid})...", flush=True)
+            sys.stdout.flush()
         user_weeks = features_df[features_df["user_id"] == uid].sort_values("week_idx")
         if len(user_weeks) < 3:
             continue

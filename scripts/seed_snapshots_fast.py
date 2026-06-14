@@ -9,7 +9,7 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
 import pandas as pd
-from embeddings.embedder import Embedder, MockEmbedder
+from embeddings.embedder import Embedder
 from embeddings.composer import compose
 from embeddings.snapshot_builder import (
     _summarize_user_auth, _summarize_user_privilege,
@@ -60,12 +60,13 @@ def seed(n_months: int, max_users: int, max_devices: int, data_dir: str, entity_
     do_segments = entity_types in ("all", "segment")
     do_apps = entity_types in ("all", "app")
 
-    if os.environ.get("OPENAI_API_KEY"):
-        embedder = Embedder()
-        print("Using REAL OpenAI embeddings (text-embedding-3-small)")
-    else:
-        embedder = MockEmbedder()
-        print("Using MockEmbedder (no OPENAI_API_KEY)")
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise SystemExit(
+            "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+            "(mock embeddings have been removed)."
+        )
+    embedder = Embedder()
+    print("Using REAL OpenAI embeddings (text-embedding-3-small)")
     inserted = 0
     start = date(2025, 1, 1)
 

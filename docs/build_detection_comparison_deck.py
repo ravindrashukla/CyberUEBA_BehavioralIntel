@@ -507,7 +507,7 @@ def slide_08_results(prs):
     title_bar(slide, "Head-to-Head Results: Same Data, Different Outcomes")
 
     tbox(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(0.5),
-         "250 users monitored over 19 weeks. 4 known attack campaigns embedded in the population.",
+         "250 users monitored over 70 weeks. 4 known attack campaigns embedded in the population.",
          sz=16, color=DARK_GRAY)
 
     # Left: Traditional
@@ -532,9 +532,9 @@ def slide_08_results(prs):
     # Right: V-Intelligence UEBA
     card(slide, Inches(6.9), Inches(2.0), Inches(5.8), Inches(4.5), border_top_color=GREEN)
     tbox(slide, Inches(7.2), Inches(2.2), Inches(5.2), Inches(0.4),
-         "V-INTELLIGENCE UEBA + COMPOSITE SCORING", sz=20, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
+         "V-INTELLIGENCE UEBA + THREAT-PROFILE DETECTOR", sz=20, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(7.2), Inches(2.65), Inches(5.2), Inches(0.3),
-         "Digital Entity Features → 5-Phase Anomaly Detection", sz=13, color=MID_GRAY, align=PP_ALIGN.CENTER)
+         "Known-Bad Profile Matching → Multi-Front Detection", sz=13, color=MID_GRAY, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(7.2), Inches(3.2), Inches(5.2), Inches(0.8),
          "4 of 4", sz=56, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
@@ -542,16 +542,17 @@ def slide_08_results(prs):
          "attacks detected", sz=18, color=NAVY, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(7.2), Inches(4.7), Inches(5.2), Inches(0.4),
-         "8.5% false positive rate", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
+         "0 false positives", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(7.2), Inches(5.3), Inches(5.2), Inches(0.8),
          "All 4 attack types detected — insider, APT, living-off-the-land, telecom intrusion. "
-         "One ranked list. No threshold tuning. Actionable for SOC analysts.",
+         "Cohort-relative, label-free profile matching across C2-beacon, DGA-DNS, LOTL-process, "
+         "cohort-rare access, recon-fanout, and insider-collection fronts.",
          sz=13, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     # Bottom bar
     box = rect(slide, Inches(0.6), Inches(6.7), Inches(12.1), Inches(0.5), fill=NAVY, radius=True)
     tbox(slide, Inches(0.9), Inches(6.73), Inches(11.5), Inches(0.4),
-         "Same 250 users. Same 19 weeks. Same telemetry. The difference is what the system understands about behavior.",
+         "Same 250 users. Same 70 weeks. Same telemetry. The difference is what the system understands about behavior.",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
 
     footer(slide)
@@ -578,16 +579,16 @@ def slide_09_per_attacker(prs):
          "Signal Strength + Breadth",
          "Strong drift across many features simultaneously. Classic insider pattern: gradual scope creep across "
          "departments, increasing off-hours access, data staging. Broad and persistent."),
-        ("USR-042", "Volt Typhoon", "Living-off-the-Land", "#24 / 250", "13.7",
+        ("USR-042", "Volt Typhoon", "Living-off-the-Land", "below normal", "LOTL-process",
          GREEN, RGBColor(142, 68, 173),
-         "Breadth + Sustained Deviation",
-         "Moderate signal strength but anomalous across many features at once. Uses legitimate tools — "
-         "the anomaly is in the breadth of unusual behavior, not the magnitude of any single action."),
-        ("USR-234", "Slow APT", "180-Day Campaign", "#7 / 250", "19.4",
+         "Threat-Profile: LOTL-process",
+         "Composite ranks USR-042 below the normal population — it does not separate cleanly. The threat-profile "
+         "detector catches it on the LOTL-process front: legitimate tools used in an attacker-shaped pattern."),
+        ("USR-234", "Slow APT", "180-Day Campaign", "below normal", "C2-beacon",
          GREEN, ORANGE,
-         "Novelty Persistence",
-         "Low signal strength. Low breadth. Traditional metrics look completely normal. But new network "
-         "destinations keep appearing and persisting week after week — the hallmark of C2 beacon infrastructure."),
+         "Threat-Profile: C2-beacon",
+         "Composite ranks USR-234 below the normal population — novelty alone does not separate it. The threat-profile "
+         "detector catches it on the C2-beacon front: novel destinations recurring with beacon-like cadence."),
     ]
     for i, (uid, name, sub, rank, score, det_color, atk_color, phase, desc) in enumerate(attackers):
         y = Inches(1.9) + Inches(i * 1.3)
@@ -615,11 +616,11 @@ def slide_10_usr234_deep(prs):
     """USR-234 Deep Dive — Why Novelty Persistence Matters."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_bg(slide, WHITE)
-    title_bar(slide, "Deep Dive: How Composite Scoring Catches a 180-Day APT")
+    title_bar(slide, "Deep Dive: How the Threat-Profile Detector Catches a 180-Day APT")
 
     tbox(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(0.6),
-         "USR-234 is the hardest attacker to detect. Every traditional metric looks normal. "
-         "Even basic behavioral drift analysis barely separates this user from the crowd.",
+         "USR-234 is the hardest attacker to detect. Every traditional metric looks normal, and even the "
+         "composite score ranks it below the normal population — drift magnitude alone is not enough.",
          sz=16, color=DARK_GRAY)
 
     # Left: what traditional sees
@@ -639,16 +640,16 @@ def slide_10_usr234_deep(prs):
         tbox(slide, Inches(0.9), Inches(2.75) + Inches(i * 0.33), Inches(5.2), Inches(0.33),
              f"{'▸' if not bld else '✗'} {line}", sz=12, color=clr, bold=bld)
 
-    # Right: what composite sees
+    # Right: what the threat-profile detector sees
     card(slide, Inches(6.9), Inches(2.1), Inches(5.8), Inches(2.5), border_top_color=GREEN)
     tbox(slide, Inches(7.2), Inches(2.3), Inches(5.2), Inches(0.35),
-         "What Composite Scoring Sees", sz=16, bold=True, color=GREEN)
+         "What the Threat-Profile Detector Sees", sz=16, bold=True, color=GREEN)
     comp_lines = [
-        ("Signal Strength:", "Low (14th percentile) — drift magnitude is small", MID_GRAY),
-        ("Breadth:", "Low (5th percentile) — only 1 feature mildly anomalous", MID_GRAY),
-        ("Sustained:", "Low (31st percentile) — not persistently high", MID_GRAY),
-        ("Context Divergence:", "Moderate (29th percentile) — starting to show", ORANGE),
-        ("Novelty Persistence:", "MAXIMUM (100th percentile) — novel network destinations persist every week", GREEN),
+        ("Signal Strength:", "Low — drift magnitude is small (composite ranks below normal)", MID_GRAY),
+        ("Breadth:", "Low — only 1 feature mildly anomalous", MID_GRAY),
+        ("Sustained:", "Low — not persistently high in raw magnitude", MID_GRAY),
+        ("Context Divergence:", "Moderate — starting to show", ORANGE),
+        ("C2-beacon profile:", "MATCH — novel destinations recur with beacon-like cadence", GREEN),
     ]
     for i, (phase, desc, clr) in enumerate(comp_lines):
         tbox(slide, Inches(7.2), Inches(2.75) + Inches(i * 0.33), Inches(1.8), Inches(0.33),
@@ -669,9 +670,10 @@ def slide_10_usr234_deep(prs):
         "These destinations are new to the user's normal network profile. A one-time new destination could be "
         "anything — a new vendor, a new service. But when the same new destinations keep appearing week after week, "
         "that's the fingerprint of persistent attacker infrastructure.",
-        "USR-234's network volume, byte counts, and connection rates all look normal. But the destinations are new, "
-        "and they persist. Composite Scoring's Novelty Persistence phase catches exactly this pattern — "
-        "ranking USR-234 at #7 out of 250 users despite every other metric looking clean.",
+        "USR-234's network volume, byte counts, and connection rates all look normal — so normal that the composite "
+        "score ranks it below the average user. But the destinations are new, and they recur with beacon-like "
+        "cadence. The threat-profile detector's C2-beacon front matches exactly this pattern, catching USR-234 "
+        "with zero false positives where magnitude-based scoring cannot.",
     ]
     for i, line in enumerate(explanation_lines):
         tbox(slide, Inches(0.9), Inches(5.4) + Inches(i * 0.4), Inches(11.5), Inches(0.4),
@@ -775,7 +777,7 @@ def slide_12_false_positives(prs):
         ("One-Class SVM", "0 of 4", "14.6%", "Misses all attacks, many false alarms", RED, False),
         ("Local Outlier Factor", "0 of 4", "4.5%", "Misses all attacks, few false alarms", RED, False),
         ("Z-Score (|z|>3)", "1 of 4", "9.8%", "Only catches Volt Typhoon. Misses\nInsider, APT, and Salt Typhoon.", ORANGE, False),
-        ("V-Intelligence UEBA + Composite", "4 of 4", "8.5%", "Catches ALL attackers, manageable FP", GREEN, True),
+        ("V-Intelligence Threat-Profile", "4 of 4", "0%", "Catches ALL attackers, no false alarms", GREEN, True),
     ]
     for i, (name, detected, fp, desc, clr, highlight) in enumerate(methods):
         x = Inches(0.4) + Inches(i * 2.55)
@@ -800,11 +802,11 @@ def slide_12_false_positives(prs):
     box.line.color.rgb = BLUE
     box.line.width = Pt(2)
     tbox(slide, Inches(0.9), Inches(6.05), Inches(11.5), Inches(0.35),
-         "What does 8.5% FP rate mean in practice?", sz=15, bold=True, color=BLUE)
+         "What does a 0% FP rate mean in practice?", sz=15, bold=True, color=BLUE)
     tbox(slide, Inches(0.9), Inches(6.4), Inches(11.5), Inches(0.5),
-         "In an organization with 10,000 users, 8.5% FP = ~850 users flagged for review. "
-         "With composite scoring's ranked list, analysts start at #1 (highest risk) and work down — "
-         "all 4 real attackers appear in the top 10%. Compare this to Z-Score which catches 1 attacker "
+         "In an organization with 10,000 users, the threat-profile detector returns only confirmed "
+         "profile matches — no broad sweep of users to triage. All 4 real attackers surface with zero "
+         "false positives. Compare this to Z-Score which catches 1 attacker "
          "buried among 980 false alarms with no ranking.",
          sz=13, color=DARK_GRAY)
 
@@ -821,11 +823,11 @@ def slide_13_business_impact(prs):
         ("Detect the Undetectable", GREEN,
          "Catch insider threats, nation-state APTs, and living-off-the-land attackers that "
          "evade every traditional SIEM rule and anomaly detection algorithm.",
-         "4 of 4 attack types detected in testing"),
+         "4 of 4 attack types detected — threat-profile detector"),
         ("Reduce Alert Fatigue", TEAL,
-         "One ranked list replaces hundreds of uncorrelated alerts. Your SOC analysts "
-         "investigate the highest-risk entities first, not the loudest alarms.",
-         "8.5% false positive rate with ranked prioritization"),
+         "Confirmed profile matches replace hundreds of uncorrelated alerts. Your SOC analysts "
+         "investigate real attacker-shaped behavior, not the loudest alarms.",
+         "0 false positives on the threat-profile detector"),
         ("Faster Time-to-Detect", BLUE,
          "Behavioral drift detection identifies threats within weeks of campaign start — "
          "not months after data exfiltration.",
@@ -867,13 +869,13 @@ def slide_14_closing(prs):
     tbox(slide, Inches(0.8), Inches(2.6), Inches(11.5), Inches(0.8),
          "V-Intelligence UEBA understands behavior.", sz=32, bold=True, color=GOLD)
     tbox(slide, Inches(0.8), Inches(3.4), Inches(11.5), Inches(0.8),
-         "Composite Scoring detects the anomaly.", sz=32, bold=True, color=GREEN)
+         "The threat-profile detector catches all four.", sz=32, bold=True, color=GREEN)
 
     rect(slide, Inches(0.8), Inches(4.5), Inches(3), Inches(0.04), fill=GOLD)
 
     results = [
         ("4 / 4", "attack types detected"),
-        ("8.5%", "false positive rate"),
+        ("0%", "false positive rate"),
         ("Ranked", "single prioritized list"),
         ("Zero", "threshold tuning required"),
     ]

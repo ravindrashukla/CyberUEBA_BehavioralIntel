@@ -27,7 +27,6 @@ os.environ.setdefault("DB_NAME", "cyber_ueba")
 os.environ.setdefault("DB_USER", "cyber_ueba")
 os.environ.setdefault("DB_PASSWORD", "password")
 
-from embeddings.embedder import MockEmbedder
 from embeddings.composer import cosine_similarity, compose_with_attention, hadamard_compose
 from models.hierarchical_zones import (
     CYBER_ZONES, CONTEXT_WEIGHTS, ALL_CONTEXTS, USER_ZONE_ORDER,
@@ -45,8 +44,11 @@ ATTACK_USERS = ["USR-156", "USR-234", "USR-042", "USR-118"]
 # ─── Fixtures ─────────────────────────────────────────────────────────────────
 
 @pytest.fixture(scope="module")
-def mock_embedder():
-    return MockEmbedder()
+def real_embedder():
+    if not os.environ.get("OPENAI_API_KEY"):
+        pytest.skip("requires OPENAI_API_KEY — real OpenAI embeddings (mock removed)")
+    from embeddings.embedder import Embedder
+    return Embedder(preload=False)
 
 
 @pytest.fixture(scope="module")
@@ -90,8 +92,8 @@ def sample_features():
 
 
 @pytest.fixture(scope="module")
-def zone_embeddings(mock_embedder, sample_profile, sample_features):
-    return build_zone_embeddings("user", "USR-TEST", sample_profile, sample_features, mock_embedder)
+def zone_embeddings(real_embedder, sample_profile, sample_features):
+    return build_zone_embeddings("user", "USR-TEST", sample_profile, sample_features, real_embedder)
 
 
 def _random_unit_vector(dim=EMBED_DIM, seed=None):

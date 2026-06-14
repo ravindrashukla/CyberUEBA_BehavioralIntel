@@ -9,7 +9,7 @@ from datetime import datetime
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 import numpy as np
-from embeddings.embedder import Embedder, MockEmbedder
+from embeddings.embedder import Embedder
 from detection.cusum import cusum_scan_entity
 from detection.drift_direction import analyze_entity_drift
 from detection.reference_concepts import ConceptLibrary
@@ -62,12 +62,13 @@ def run_detection(
     print("=" * 60)
 
     # Initialize concept library
-    if os.environ.get("OPENAI_API_KEY"):
-        embedder = Embedder()
-        print("Using REAL OpenAI embeddings for concept vectors")
-    else:
-        embedder = MockEmbedder()
-        print("Using MockEmbedder for concept vectors")
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise SystemExit(
+            "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+            "(mock embeddings have been removed)."
+        )
+    embedder = Embedder()
+    print("Using REAL OpenAI embeddings for concept vectors")
     concept_lib = ConceptLibrary(embedder=embedder)
     concept_lib.embed_concepts()
     print(f"\nConcept library: {len(concept_lib.all_threat_vectors())} threat + "
@@ -86,8 +87,6 @@ def run_detection(
 
     # Initialize detection components
     # Use alignment_threshold=0 so all concept alignments are stored (enrichment).
-    # With MockEmbedder, random vectors have near-zero cosine similarity in 1536-d,
-    # so a positive threshold would filter out all concept context.
     alert_gen = AlertGenerator(
         drift_threshold=drift_threshold,
         cusum_threshold=cusum_threshold,

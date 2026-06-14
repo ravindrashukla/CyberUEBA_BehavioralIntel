@@ -6,7 +6,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-from embeddings.embedder import Embedder, MockEmbedder
+from embeddings.embedder import Embedder
 from embeddings.composer import compose
 
 
@@ -18,13 +18,14 @@ class SnapshotBuilder:
     a single composite vector via weighted average.
     """
 
-    def __init__(self, data_dir: str = "data/generated", use_mock: bool = None):
+    def __init__(self, data_dir: str = "data/generated"):
         self.data_dir = Path(data_dir)
-        # Use mock if no API key or explicitly requested
-        use_mock = use_mock if use_mock is not None else (
-            not os.environ.get("OPENAI_API_KEY")
-        )
-        self.embedder = MockEmbedder() if use_mock else Embedder()
+        if not os.environ.get("OPENAI_API_KEY"):
+            raise RuntimeError(
+                "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+                "(mock embeddings have been removed)."
+            )
+        self.embedder = Embedder()
 
     def build_all_snapshots(
         self, start_month: date = None, end_month: date = None
