@@ -127,7 +127,7 @@ with st.sidebar:
         "Navigation",
         ["Story Mode", "Proof of Realism", "Dashboard", "Alerts", "Kill Chains", "Behavioral Drift", "Behavioral Profile",
          "Drift Trajectory", "Digital Entity", "Telemetry Explorer", "Traditional vs V-Intelligence UEBA",
-         "Three-Tier Detection", "Detection Comparison", "Threat Profiles"],
+         "Three-Tier Detection", "Detection Comparison", "Threat Profiles", "Detection Pipeline"],
         label_visibility="collapsed",
     )
 
@@ -5023,3 +5023,73 @@ elif page == "Threat Profiles":
 
 A flag from one strong profile is enough; multiple fronts raise confidence. Regenerate with `python threat_profile_detector.py`.
 """)
+
+
+# ── PAGE: DETECTION PIPELINE ──
+elif page == "Detection Pipeline":
+    st.markdown(f"""
+    <h2 style="color:{NAVY};">Detection Pipeline: Catch Early, Escalate Smartly</h2>
+    <p style="color:#6C757D; font-size:1.02rem;">No single method catches every intruder, and the most powerful one is also the most
+    expensive. So we run detection in <b>phases</b> — cheap, fast checks first to catch the loud and obvious intruders the moment they act,
+    and we escalate to the deep <b>Vector Intelligence</b> lens only for the subtle ones who slip through. Every intruder is caught at its
+    earliest point, at the lowest cost.</p>
+    """, unsafe_allow_html=True)
+
+    _phases = [
+        ("#3498DB", "Phase 1", "Known-Bad Signatures", "instant · near-free",
+         "Does this behavior match a <b>known attack technique</b>? (A beacon calling home, random throwaway domains, a sudden mass download, suspicious programs running.)",
+         "The obvious intruders — flagged the moment their fingerprint appears, with the technique named.",
+         "USR-234 (slow APT): its steady beacon to one outside server is an unmistakable fingerprint."),
+        ("#1ABC9C", "Phase 2", "Peer Comparison", "cheap · daily",
+         "Is this person or machine acting <b>unlike their team</b>? (Someone in Marketing opening restricted files; a laptop talking to servers no teammate uses.)",
+         "The odd-one-out — abnormal for their role, even if it looks normal company-wide.",
+         "USR-118 reaches out to far more outside destinations than any of its developer peers."),
+        ("#E67E22", "Phase 3", "Single-Signal Drift", "moderate · weekly",
+         "Is <b>any one number climbing fast</b> versus this entity's own past? (Network volume, file counts, failed logins.)",
+         "The loud, single-dimension attacks — volume floods — caught early, before they get extreme.",
+         "USR-118 (Salt Typhoon): a network-volume flood — caught at <b>week 36</b>, before the deep lens."),
+        ("#8E44AD", "Phase 4", "Vector Intelligence — the fusion lens", "deep · the heavy hitter",
+         "Has the <b>whole behavioral picture shifted</b> — even when no single number looks alarming? Vector Intelligence <b>combines every angle</b> "
+         "(logins, files, network, programs) into one unified view and watches it move over time.",
+         "The subtle, distributed threats that hide in <b>how behaviors combine</b> — an insider whose intent is turning, a stealth hacker using only legitimate tools.",
+         "USR-156 (insider) caught at <b>week 4</b> and USR-042 (living-off-the-land) at <b>week 15</b> — weeks before any single raw number budges."),
+    ]
+    for color, ph, name, cost, ask, catches, example in _phases:
+        st.markdown(f"""
+        <div style="background:white; border-left:6px solid {color}; border-radius:8px; padding:14px 20px; margin-bottom:12px; box-shadow:0 1px 5px rgba(0,0,0,0.07);">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+                <span style="font-weight:700; color:{color}; font-size:1.05rem;">{ph} &nbsp;·&nbsp; {name}</span>
+                <span style="background:#EAEFF5; border-radius:10px; padding:2px 10px; font-size:0.75rem; color:{NAVY};">{cost}</span>
+            </div>
+            <div style="margin-top:6px; font-size:0.92rem; color:#2C3E50;"><b>Asks:</b> {ask}</div>
+            <div style="margin-top:4px; font-size:0.92rem; color:#2C3E50;"><b>Catches:</b> {catches}</div>
+            <div style="margin-top:4px; font-size:0.86rem; color:#6C757D;"><b>In our data:</b> {example}</div>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown(f"""
+    <div style="background:#F4ECF7; border:1px solid #D7BDE2; border-radius:8px; padding:12px 18px; margin:6px 0 16px 0; font-size:0.92rem; color:#4A235A;">
+    <b>What Vector Intelligence really is.</b> It is <b>not a summary</b> that throws away detail. It <b>fuses every behavioral angle into one combined
+    picture</b> and tracks how that picture drifts — so it can spot a threat that lives in the <i>relationship</i> between signals, where no single number
+    is alarming. That is exactly why it catches the insider and the stealth hacker weeks early, and why it is <i>not</i> the fastest on USR-118: a raw
+    volume flood is one loud number, not a combined-pattern shift — so a single-signal check (Phase 3) naturally beats it there. Different threats reveal
+    themselves in different phases; that is the whole point of running them in sequence.
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("##### Which phase catches each attacker first")
+    _map = pd.DataFrame([
+        ["USR-234 — slow APT", "Phase 1 · Signature", "on contact", "Unmistakable beacon to a fixed outside server"],
+        ["USR-118 — Salt Typhoon", "Phase 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
+        ["USR-156 — insider", "Phase 4 · Vector Intelligence", "week 4", "Intent shift visible only in the combined picture"],
+        ["USR-042 — living-off-the-land", "Phase 4 · Vector Intelligence", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
+    ], columns=["Attacker", "Caught earliest by", "When", "Why there"])
+    st.table(_map)
+
+    st.markdown(f"""
+    <div style="background:{NAVY}; border-radius:10px; padding:16px 24px; text-align:center; margin-top:8px;">
+        <span style="color:{GOLD}; font-weight:700; font-size:1.05rem;">Catch the easy ones cheaply and instantly. Spend the deep lens only on the hard ones.</span>
+        <span style="color:#A0C8E0; font-size:0.9rem; display:block; margin-top:4px;">
+        Result: every intruder caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on.</span>
+    </div>
+    """, unsafe_allow_html=True)
