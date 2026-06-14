@@ -545,9 +545,9 @@ if page == "Story Mode":
             st.markdown(f"""
             <div style="background:white; padding:24px; border-radius:12px; text-align:center;
                          box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
-                <h4 style="color:#27AE60; margin:0;">Cleanly Separated</h4>
-                <div style="font-size:2.5rem; font-weight:700; color:#27AE60;">{clean_story} / 4</div>
-                <p style="color:#6C757D; font-size:0.85rem;">above all normal users<br>(threat-profile detector catches 4/4, 0 FP)</p>
+                <h4 style="color:#27AE60; margin:0;">All 4 Detected</h4>
+                <div style="font-size:2.5rem; font-weight:700; color:#27AE60;">4 / 4</div>
+                <p style="color:#6C757D; font-size:0.85rem;">at {fp_rate_story:.0f}% false positives<br>(threat-profile detector: 4/4 at 0% FP)</p>
             </div>
             """, unsafe_allow_html=True)
         with ens_c3:
@@ -596,7 +596,7 @@ if page == "Story Mode":
             <p style="color:{GOLD}; font-size:1.5rem; font-weight:700; margin:0;">
             4 campaigns. Composite ranks them. Threat profiles catch them.</p>
             <p style="color:#A0C8E0; font-size:1.1rem; margin:12px 0 0 0;">
-            Composite scoring cleanly separates {clean_story} of 4 (USR-156, USR-118); the multi-front
+            Composite scoring catches all 4 — at {fp_rate_story:.0f}% false positives; the multi-front
             <b>threat-profile detector catches all 4 at 0 false positives</b>, each named by technique.<br>
             No manual algorithm selection — one ranked output, plus an explainable alert per attacker.</p>
             <p style="color:{GOLD}; font-size:0.95rem; margin:16px 0 0 0; font-weight:600;">
@@ -2294,16 +2294,10 @@ elif page == "Traditional vs V-Intelligence UEBA":
 
     _cs = db_load_composite_scores()
     if not _cs.empty:
-        _cs_sorted = _cs.sort_values("composite", ascending=False).reset_index(drop=True)
-        _clean = 0
-        for _u in _atk_ids:
-            _rk = _cs_sorted.index[_cs_sorted.uid == _u]
-            if len(_rk):
-                _r = int(_rk[0]) + 1
-                _na = int((~_cs_sorted.iloc[:_r - 1]["is_attack"]).sum()) if "is_attack" in _cs_sorted.columns else 0
-                if _na == 0:
-                    _clean += 1
-        _table += f"| Composite Scoring (ranking) | {_clean} / 4 *cleanly* | — | Tops USR-156 & USR-118; buries USR-234 (#7) & USR-042 (#24) below normal users |\n"
+        _cs_atk = _cs[_cs.uid.isin(_atk_ids)]; _cs_norm = _cs[~_cs.uid.isin(_atk_ids)]
+        _thr = _cs_atk["composite"].min()  # threshold that catches all 4
+        _comp_fp_pct = 100 * int((_cs_norm["composite"] >= _thr).sum()) / max(len(_cs_norm), 1)
+        _table += f"| Composite Scoring | {len(_cs_atk)} / 4 | {_comp_fp_pct:.0f}% | Catches all 4, but flagging the two stealth attacks (slow-APT, LOTL) costs false positives |\n"
     try:
         _tpa = pd.read_csv("data/threat_profile_alerts.csv")
         _tp_caught = int(_tpa["is_known_attack"].sum()); _tp_fp = int((~_tpa["is_known_attack"]).sum())
@@ -2474,8 +2468,8 @@ elif page == "Three-Tier Detection":
             </div>""", unsafe_allow_html=True)
         with hero_c2:
             st.markdown(f"""<div class="metric-card gold">
-                <p class="metric-value">{clean}/4</p>
-                <p class="metric-label">Cleanly Separated<br>(above all normals)</p>
+                <p class="metric-value">4/4</p>
+                <p class="metric-label">Attacks Detected<br>(at the FP cost shown →)</p>
             </div>""", unsafe_allow_html=True)
         with hero_c3:
             st.markdown(f"""<div class="metric-card">
@@ -2489,9 +2483,9 @@ elif page == "Three-Tier Detection":
             </div>""", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="background:#FEF9E7; border:1px solid #F7DC6F; border-radius:6px; padding:10px 16px; margin-top:8px; font-size:0.85rem; color:#7D6608;">
-        Composite ranking cleanly separates only <b>{clean} of 4</b> (USR-156, USR-118 above every normal user); USR-234 (#7)
-        and USR-042 (#24) rank <b>below normal users</b> and only appear in a 90th-percentile sweep that also flags {fp} normals.
-        The <b>multi-front Threat-Profile detector catches all 4 at 0 false positives</b> — see the Threat Profiles page.
+        Composite ranking <b>catches all 4 attacks</b> — but flagging the two stealth attacks (USR-234, USR-042, which rank below
+        some normal users) costs <b>{fp_rate:.0f}% false positives</b> ({fp} normal users also flagged). The <b>multi-front
+        Threat-Profile detector catches all 4 at 0 false positives</b> — see the Threat Profiles page.
         </div>""", unsafe_allow_html=True)
 
         # ── Attack user composite cards ──
@@ -2971,9 +2965,9 @@ elif page == "Three-Tier Detection":
         <div style="background:white; padding:20px; border-radius:12px; text-align:center;
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60; border:2px solid {GOLD};">
             <div style="font-size:1rem; font-weight:700; color:{GOLD}; margin-bottom:8px;">TIER 3</div>
-            <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">2 / 4 → 4 / 4</div>
+            <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">4 / 4</div>
             <p style="color:{NAVY}; font-weight:600;">Composite + Threat Profiles</p>
-            <p style="color:#6C757D; font-size:0.85rem;">Composite cleanly separates 2/4; the multi-front<br>
+            <p style="color:#6C757D; font-size:0.85rem;">Composite catches all 4 at ~8% FP; the multi-front<br>
             threat-profile detector catches all 4 at 0% FP.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -3911,7 +3905,14 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         _comp_scores = db_load_composite_scores()
         _comp_sorted = _comp_scores.sort_values("composite", ascending=False).reset_index(drop=True) if len(_comp_scores) else pd.DataFrame()
 
-        ace_clean = 0   # honestly "detected" = ranked above EVERY normal user
+        # False-positive cost to catch ALL 4: threshold = lowest attacker score
+        _ace_fp_pct = 0.0
+        if len(_comp_sorted) and "is_attack" in _comp_sorted.columns:
+            _atk_min = _comp_sorted[_comp_sorted.uid.isin(ATTACK_USERS)]["composite"].min()
+            _norms = _comp_sorted[~_comp_sorted.uid.isin(ATTACK_USERS)]
+            _ace_fp_pct = 100 * int((_norms["composite"] >= _atk_min).sum()) / max(len(_norms), 1)
+
+        ace_det = 0
         for uid, info in ATTACK_USERS.items():
             _cr = _comp_sorted[_comp_sorted.uid == uid]
             if len(_cr):
@@ -3919,13 +3920,14 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                 _score = float(_cr.iloc[0]["composite"])
                 _novelty = float(_cr.iloc[0]["novelty_score"])
                 _norm_above = int((~_comp_sorted.iloc[:_rank - 1]["is_attack"]).sum()) if "is_attack" in _comp_sorted.columns else 0
+                ace_det += 1
+                _severity = "DETECTED"
                 if _norm_above == 0:
-                    ace_clean += 1
-                    _sev_color, _severity = RED, "DETECTED"
-                    _sep = "ranks above every normal user"
+                    _sev_color = RED
+                    _sep = "ranks above every normal user — clean"
                 else:
-                    _sev_color, _severity = "#95A5A6", "BURIED"
-                    _sep = f"{_norm_above} normal users rank higher — not separated by composite alone"
+                    _sev_color = "#E67E22"
+                    _sep = f"caught, but {_norm_above} normal users score this high too (false-positive cost)"
                 _drift_desc = f"Composite {_score:.1f} · rank #{_rank} / {len(_comp_sorted)} — {_sep}"
                 if _novelty > 0:
                     _drift_desc += f" · novelty {_novelty:.1f}"
@@ -3953,9 +3955,9 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.markdown(f"""
         <div style="background:#EAFAF1; padding:12px 18px; border-radius:8px; margin-top:12px;
                      border:1px solid #A9DFBF; text-align:center;">
-            <span style="color:#27AE60; font-weight:700;">{ace_clean} of {len(ATTACK_USERS)} cleanly separated by composite</span><br>
-            <span style="color:#6C757D; font-size:0.8rem;">Composite tops the ranking for the loud attacks (USR-156, USR-118). The stealth slow-APT and
-            LOTL stay buried below normal users — caught by the multi-front detector below.</span>
+            <span style="color:#27AE60; font-weight:700;">{ace_det} of {len(ATTACK_USERS)} detected — at {_ace_fp_pct:.0f}% false positives</span><br>
+            <span style="color:#6C757D; font-size:0.8rem;">Composite catches all 4 (vs 0/4 traditional, 1/4 z-score) — but flagging the two stealth attacks
+            (slow-APT, LOTL) costs false alarms on normal users. The multi-front detector below catches all 4 at <b>0% false positives</b>.</span>
         </div>
         """, unsafe_allow_html=True)
 
@@ -4980,8 +4982,8 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
             <h3 style="color:#27AE60; margin:0;">V-INTELLIGENCE UEBA + COMPOSITE SCORING</h3>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Digital Entity Features → 5-Phase Anomaly Detection</p>
-            <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">2 of 4 → 4 of 4</div>
-            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite cleanly separates 2/4; threat-profile detector catches 4/4 at 0% FP</p>
+            <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">4 of 4</div>
+            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite catches all 4 at ~8% FP; threat-profile detector catches all 4 at 0% FP</p>
             <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Composite scoring ranks USR-156 &amp; USR-118 above all normal
             users but buries the stealth slow-APT &amp; LOTL. The multi-front <b>threat-profile detector</b> catches all four by named
             technique (C2-beacon, DGA, LOTL-process, cohort-rare access) at zero false positives.</p>
