@@ -3990,15 +3990,16 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             for _mn, _mc in [("Isolation Forest", "iforest_anomaly"), ("One-Class SVM", "ocsvm_anomaly"), ("LOF", "lof_anomaly")]:
                 if bool(_tr.iloc[0].get(_mc, False)):
                     _trad_hits.append(_mn)
-    _trad_line = (f"flagged by {', '.join(_trad_hits)}" if _trad_hits
-                  else "scored NORMAL by Isolation Forest, SVM, and LOF — a genuine miss")
-    _trad_color = "#E67E22" if _trad_hits else RED
+    if _trad_hits:
+        _trad_msg = f"<b style='color:#E67E22;'>The security tools most agencies run today raised an alarm on {selected_user}.</b>"
+    else:
+        _trad_msg = f"<b style='color:{RED};'>The security tools most agencies run today see {selected_user} as a normal employee — no alarm at all.</b>"
     st.markdown(f"""
-    <div style="background:#FDEDEC; border:1px solid #F5B7B1; border-radius:8px; padding:10px 16px; margin-bottom:12px; text-align:center; font-size:0.88rem;">
-        <b style="color:{_trad_color};">Real traditional SIEM (point-anomaly): {selected_user} {_trad_line}.</b>
-        <span style="color:#6C757D;"> The Feature-Space CUSUM panel below is a <b>temporal-drift</b> method, not a SIEM — it tracks
-        loud attacks but fires on ~99% of normal users, so its "flag" is not actionable. The genuine traditional failure
-        is that the point-anomaly methods (Isolation Forest / SVM / LOF) never flag these attacks at all.</span>
+    <div style="background:#FDEDEC; border:1px solid #F5B7B1; border-radius:8px; padding:12px 18px; margin-bottom:12px; text-align:center; font-size:0.9rem;">
+        {_trad_msg}
+        <span style="color:#555;"> The left chart below does react to this attacker — but it reacts the same way to almost
+        every normal employee, so a security team would be buried in false alarms and couldn't act on it.
+        <b>Bottom line: today's standard tools miss this attack.</b></span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -4006,7 +4007,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.markdown(f"""
         <div style="background:#FDEDEC; padding:8px 14px; border-radius:6px; text-align:center; margin-bottom:8px;">
             <span style="color:{RED}; font-weight:700;">Feature-Space CUSUM</span>
-            <span style="color:#6C757D; font-size:0.8rem;"> — temporal feature drift (~99% FP, not a SIEM)</span>
+            <span style="color:#6C757D; font-size:0.8rem;"> — reacts to change, but alarms on almost everyone (too noisy to use)</span>
         </div>
         """, unsafe_allow_html=True)
 
