@@ -616,6 +616,9 @@ elif page == "Proof of Realism":
         cumulative drift in real time — proving attackers hide within normal statistical ranges.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.info("This page proves the attacks are realistic — they blend into normal ranges, which is why standard tools miss them. "
+            "How we catch them anyway: see the **Detection Pipeline** page (phased: signatures → peer comparison → Vector Intelligence) "
+            "and **Threat Profiles** (the confirmed 4/4 alerts).")
 
     _ATTACK_LABELS = {"USR-234": "Slow APT", "USR-118": "Salt Typhoon",
                       "USR-156": "Insider Threat", "USR-042": "Volt Typhoon"}
@@ -1126,6 +1129,45 @@ elif page == "Alerts":
         <p>All behavioral anomaly alerts with drift analysis and MITRE ATT&CK correlation.</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── Threat-Profile Detector alerts (the multi-front detector — plain language) ──
+    _tp_path = Path("data/threat_profile_alerts.csv")
+    _tech_plain = {
+        "c2_beacon": "calls home to one fixed outside server on a robotic schedule (C2 beacon)",
+        "dga_dns": "looks up many random throwaway domains that all point to one server (DGA)",
+        "cohort_rare_dst": "contacts outside servers no one else on their team ever touches",
+        "recon_fanout": "reaches far more destinations than their teammates (network fan-out)",
+        "mass_collection": "pulls far more files than their teammates (mass data collection)",
+        "insider_collection": "opens restricted/confidential files that are unusual for their role",
+        "lotl_process": "abnormal program activity using legitimate tools (living-off-the-land)",
+        "data_exfil": "moves a large volume of sensitive data",
+        "highrisk_endpoint": "runs high-risk processes on its device",
+        "brute_force": "an unusual number of failed logins (possible brute force)",
+        "ransomware": "mass file writes (possible ransomware)",
+    }
+    if _tp_path.exists():
+        _tpa = pd.read_csv(_tp_path)
+        _n_att = int(_tpa["is_known_attack"].sum()); _n_fp = int((~_tpa["is_known_attack"]).sum())
+        st.markdown(f"""
+        <div style="background:#FDEDEC; border:1px solid #F5B7B1; border-radius:8px; padding:12px 18px; margin-bottom:10px;">
+            <span style="color:{RED}; font-weight:700; font-size:1.05rem;">Threat-Profile Detector — {_n_att} confirmed intruder(s), {_n_fp} false positive(s)</span>
+            <span style="color:#6C757D; font-size:0.85rem; display:block; margin-top:2px;">Each flag names the attack technique in plain terms. See the <b>Detection Pipeline</b> and <b>Threat Profiles</b> pages for how these are found.</span>
+        </div>
+        """, unsafe_allow_html=True)
+        for _, r in _tpa.iterrows():
+            _bar = RED if bool(r["is_known_attack"]) else "#E67E22"
+            _reasons = [_tech_plain.get(t.strip().split("=")[0].strip(), t.strip().split("=")[0].strip())
+                        for t in str(r["techniques"]).split(";") if t.strip()]
+            _label = str(r["attack_type"]) if str(r["attack_type"]).strip() else "needs review"
+            st.markdown(f"""
+            <div style="border-left:4px solid {_bar}; background:#fff; padding:10px 16px; border-radius:6px; margin-bottom:8px; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                <b style="color:{NAVY};">{r['user_id']}</b> <span style="color:#6C757D; font-size:0.85rem;">({r['cohort']} team)</span>
+                &nbsp;<span style="background:{_bar}; color:white; border-radius:10px; padding:1px 9px; font-size:0.72rem; font-weight:700;">{_label}</span>
+                <div style="margin-top:5px; color:#2C3E50; font-size:0.9rem;"><b>Why flagged:</b> {'; '.join(_reasons)}.</div>
+            </div>
+            """, unsafe_allow_html=True)
+        st.markdown("---")
+        st.markdown("##### Behavioral anomaly alerts (embedding pipeline)")
 
     if alerts_df.empty:
         st.warning("No alerts found. Run the pipeline: `python run_pipeline.py`")
@@ -3073,6 +3115,9 @@ elif page == "Drift Trajectory":
         <p>Per-week zone drift over time. Compare individual entity drift against cohort baseline. Shows which behavioral dimension is changing and when.</p>
     </div>
     """, unsafe_allow_html=True)
+    st.info("This drift view is **one input** to detection, not a verdict on its own. See the **Detection Pipeline** page "
+            "for how raw signals, peer comparison, and the Vector Intelligence fusion lens combine to catch each intruder — "
+            "and **Threat Profiles** for the confirmed alerts.")
 
     traj_df = db_load_weekly_trajectories()
     if traj_df.empty:
@@ -3382,6 +3427,9 @@ elif page == "Digital Entity":
         <p>Inspect the transformation pipeline: Raw Features → Zone Partitioning → Text Serialization → 1536-d Embedding → Phase State</p>
     </div>
     """, unsafe_allow_html=True)
+    st.info("The 1536-d embedding here is the **Vector Intelligence fusion lens** — it combines every behavioral angle into one view. "
+            "It's the *deep* phase of detection (best for subtle, distributed threats); see the **Detection Pipeline** page for where it fits, "
+            "and **Threat Profiles** for the confirmed alerts.")
 
     TIER3_RESULTS = DATA_DIR / "tier3_results"
     struct_file = TIER3_RESULTS / "entity_structures.json"
