@@ -167,3 +167,19 @@ In `docs/`:
 - USR-234 is the acid test: it escapes both drift lenses; only the known-bad profile + novelty
   persistence catch it. Any "drift catches all 4" claim is wrong.
 - Editing a doc/deck builder does not update its rendered output — re-run the builder.
+
+## 9. Document collateral — canonical consistency
+
+Builders: `docs/build_*.py` (this repo) and `CyberUEBA_Whitepapers/docs/build_*.py`.
+**Editing a builder does NOT regenerate its .docx/.pptx — re-run the builder.** All UEBA doc
+builders were aligned (2026-06) to the canonical facts:
+- FP for "catches all 4" = **8.1%** (catch-all-four threshold), never 8.5% (that's the 90th-pct point).
+- Dataset = 250 users · 70 weeks · 485 days · 17,500 rows (never "19 weeks / 4,750").
+- Detection ladder: traditional 0/4 → z-score 1/4 → composite 4/4 @ 8.1% (cleanly separates only 2/4) → **Threat-Profile detector 4/4 @ 0 FP** (primary; named techniques C2-beacon/DGA/LOTL-process/cohort-rare/recon-fanout/insider-collection).
+- We measure **magnitude AND direction** (not "direction instead of magnitude").
+- Real OpenAI text-embedding-3-small is **mandatory** (no mock/fallback embedder).
+- No self-promotional "honest/honestly" wording.
+
+**CAVEAT — do NOT force the 250-user canon onto these:** `CyberUEBA_Whitepapers/docs/build_analysis_doc.py`,
+`build_analysis_deck.py`, and `build_technical_deck.py` describe a *separate* 50-user / 130-day /
+19-week / 950-vector controlled study with its own LOF-ensemble results (50×19=950 is internally consistent).

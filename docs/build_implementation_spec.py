@@ -791,7 +791,8 @@ def build():
     add_callout(doc, "DETECTION SCOPE: The embedding/composite scorer cleanly separates "
         "only 2 of the 4 injected attackers. USR-156 (#2) and USR-118 (#1) rank above every "
         "normal user; USR-234 (#7) and USR-042 (#24) rank BELOW normal users, so any threshold "
-        "that catches all 4 also admits false positives (~8.5% FP at the 90th percentile). "
+        "that catches all 4 also admits false positives (8.1% FP — 20 of 246 normals — at "
+        "the catch-all-four threshold of composite 13.70). "
         "The clean 4/4-at-0-FP result is delivered by a separate component — the multi-front "
         "threat-profile detector (threat_profile_detector.py) — not by composite scoring.")
 

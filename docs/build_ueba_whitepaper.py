@@ -329,7 +329,8 @@ def _build_exec_summary(doc, audience_key):
 
     add_callout(doc,
         "Key insight: The insider changes WHAT they access, not HOW MUCH. "
-        "Traditional algorithms measure magnitude. UEBA measures direction."
+        "Traditional algorithms measure magnitude alone. UEBA measures magnitude AND "
+        "direction — accumulated over time, relative to peers."
     )
 
     add_page_break(doc)
@@ -1221,7 +1222,7 @@ def _build_core(doc):
             ["Attack campaigns", "4 long-duration campaigns (100-240 days each)"],
             ["Analysis window", "70 weeks (weekly aggregation)"],
             ["Detection threshold", "90th percentile of composite scores"],
-            ["False positive rate", "8.5% (21 FP / 246 normal users)"],
+            ["False positive rate", "8.1% (20 FP / 246 normal users)"],
         ],
         col_widths=[2.0, 5.0],
     )
@@ -2000,7 +2001,8 @@ def _build_universal():
 
     add_callout(doc,
         "Key insight: The insider changes WHAT they access, not HOW MUCH. "
-        "Traditional algorithms measure magnitude. UEBA measures direction."
+        "Traditional algorithms measure magnitude alone. UEBA measures magnitude AND "
+        "direction — accumulated over time, relative to peers."
     )
     add_page_break(doc)
 

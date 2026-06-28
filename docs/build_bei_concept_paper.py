@@ -261,7 +261,8 @@ def build():
 
     callout(doc,
         "The entity changes WHAT it does, not HOW MUCH. Traditional analytics measure "
-        "magnitude. Behavioral Entity Intelligence measures direction."
+        "magnitude alone. Behavioral Entity Intelligence measures magnitude AND direction — "
+        "accumulated over time, relative to peers."
     )
 
     page_break(doc)
@@ -1157,7 +1158,8 @@ def build():
     body(doc, (
         "The core insight is universal: sophisticated threats change WHAT they do, not "
         "HOW MUCH. They stay within normal volume ranges while shifting behavioral "
-        "direction. Traditional systems measure magnitude. BEI measures direction. "
+        "direction. Traditional systems measure magnitude alone. BEI measures magnitude AND "
+        "direction — accumulated over time, relative to peers. "
         "This directional intelligence — applied across entity profiles, relationship "
         "dynamics, and network graphs — is the analytical foundation required to "
         "detect the threats that matter most."
