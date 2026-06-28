@@ -1,0 +1,57 @@
+name: cyber-ueba-enhanced
+
+services:
+  db:
+    image: pgvector/pgvector:pg16
+    container_name: cyber-ueba-db-enhanced
+    environment:
+      POSTGRES_DB: cyber_ueba
+      POSTGRES_USER: cyber_ueba
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-password}
+    ports:
+      - "5438:5432"
+    volumes:
+      - pgdata_enhanced:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cyber_ueba"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyber-ueba-api-enhanced
+    ports:
+      - "8003:8000"
+    env_file:
+      - .env
+    environment:
+      # override the host-only value from .env so in-container db_connect uses the service network
+      DATABASE_URL_HOST: postgresql://cyber_ueba:password@db:5432/cyber_ueba
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+    command: uvicorn api.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: cyber-ueba-worker-enhanced
+    env_file:
+      - .env
+    environment:
+      DATABASE_URL_HOST: postgresql://cyber_ueba:password@db:5432/cyber_ueba
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - ./:/app
+    command: python -m services.scheduler
+
+volumes:
+  pgdata_enhanced:

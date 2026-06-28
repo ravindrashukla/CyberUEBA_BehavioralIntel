@@ -94,7 +94,7 @@ def analyze_entity_drift(
     v_old: np.ndarray,
     v_new: np.ndarray,
     concept_library: ConceptLibrary,
-    alignment_threshold: float = 0.3,
+    alignment_threshold: float = 0.15,
 ) -> DriftAnalysis:
     """Full drift analysis for an entity between two time periods.
 
@@ -145,7 +145,7 @@ def batch_drift_analysis(
     entity_snapshots: dict[str, tuple[np.ndarray, np.ndarray]],
     entity_type: str,
     concept_library: ConceptLibrary,
-    alignment_threshold: float = 0.3,
+    alignment_threshold: float = 0.15,
     min_drift_magnitude: float = 0.01,
 ) -> list[DriftAnalysis]:
     """Analyze drift for multiple entities. Return only those with significant drift.
@@ -184,19 +184,45 @@ def batch_drift_analysis(
 # ── Tier 3 zone-specific drift analysis ──────────────────────────────────────
 
 
+ZONE_RELEVANT_CONCEPTS = {
+    "identity": [],
+    "access_pattern": [
+        "credential_stuffing", "privilege_escalation", "lateral_movement",
+        "insider_threat_slow", "insider_threat_fast", "credential_harvesting_slow",
+        "living_off_the_land", "normal_role_change", "seasonal_variation",
+    ],
+    "data_behavior": [
+        "data_exfiltration", "insider_threat_slow", "insider_threat_fast",
+        "privilege_escalation", "telecom_infrastructure_pivot",
+        "normal_role_change", "seasonal_variation",
+    ],
+    "network_footprint": [
+        "c2_beacon", "lateral_movement", "reconnaissance",
+        "compromised_endpoint", "dns_tunneling_exfil",
+        "insider_threat_slow", "living_off_the_land",
+        "telecom_infrastructure_pivot", "seasonal_variation",
+    ],
+    "risk_posture": [
+        "compromised_endpoint", "privilege_escalation", "supply_chain_compromise",
+        "credential_harvesting_slow", "living_off_the_land",
+        "dns_tunneling_exfil", "normal_role_change",
+    ],
+}
+
+
 def analyze_zone_drift(
     entity_type: str,
     entity_id: str,
     zone_old: dict[str, np.ndarray],
     zone_new: dict[str, np.ndarray],
     concept_library: ConceptLibrary,
-    alignment_threshold: float = 0.3,
+    alignment_threshold: float = 0.15,
 ) -> dict[str, DriftAnalysis]:
-    """Per-zone drift analysis. Returns {zone_name: DriftAnalysis}.
+    """Per-zone drift analysis with zone-specific concept filtering.
 
-    Computes drift analysis independently per zone, enabling detection of
-    patterns like "identity stable but network_footprint drifting toward
-    c2_beacon."
+    Each zone is compared only against semantically relevant concepts,
+    preventing cross-domain false alignments (e.g., data_behavior zone
+    spuriously aligning with c2_beacon, a network concept).
     """
     results = {}
     for zone_name in zone_old:
@@ -204,12 +230,19 @@ def analyze_zone_drift(
             continue
         v_old = zone_old[zone_name]
         v_new = zone_new[zone_name]
+
+        relevant = ZONE_RELEVANT_CONCEPTS.get(zone_name)
+        if relevant:
+            filtered_library = concept_library.filter_concepts(relevant)
+        else:
+            filtered_library = concept_library
+
         analysis = analyze_entity_drift(
             entity_type=entity_type,
             entity_id=f"{entity_id}:{zone_name}",
             v_old=v_old,
             v_new=v_new,
-            concept_library=concept_library,
+            concept_library=filtered_library,
             alignment_threshold=alignment_threshold,
         )
         results[zone_name] = analysis

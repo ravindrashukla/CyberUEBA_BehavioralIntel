@@ -1,7 +1,7 @@
 """Run the full UEBA pipeline: embed → detect → alert → kill-chain.
 
 Usage: python run_pipeline.py [--months N]
-Runs with MockEmbedder (no API key needed) on whatever data is available.
+Requires OPENAI_API_KEY — real OpenAI embeddings are mandatory.
 """
 import os
 import sys
@@ -12,9 +12,7 @@ from pathlib import Path
 import numpy as np
 import pandas as pd
 
-os.environ.setdefault("OPENAI_API_KEY", "")
-
-from embeddings.embedder import MockEmbedder
+from embeddings.embedder import Embedder
 from embeddings.composer import compose, drift_magnitude
 from embeddings.signals import user_signals, device_signals
 from detection.cusum import cusum_scan_entity, CUSUMResult
@@ -187,7 +185,12 @@ def main():
     print("=" * 60)
     print("PHASE 1: BEHAVIORAL EMBEDDING")
     print("=" * 60)
-    embedder = MockEmbedder()
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise SystemExit(
+            "OPENAI_API_KEY is required — real OpenAI embeddings are mandatory "
+            "(mock embeddings have been removed)."
+        )
+    embedder = Embedder()
     snapshots = build_monthly_snapshots(data_dir, embedder, months)
     print(f"\nSnapshots built: {sum(len(v) for v in snapshots.values())} total")
     print(f"Embedder stats: {embedder.stats()}")
@@ -229,12 +232,10 @@ def main():
         for a in sorted(detections, key=lambda x: x.drift_magnitude, reverse=True)[:5]:
             print(f"    [{a.severity.value}] {a.entity_id}: {a.title} (drift={a.drift_magnitude:.4f})")
     else:
-        print("  No alerts generated (drift below threshold with MockEmbedder)")
-        print("  This is expected — mock embeddings produce random vectors,")
-        print("  so drift patterns are uniform noise rather than semantically meaningful.")
+        print("  No alerts generated (drift below threshold).")
         print()
-        print("  With real OpenAI embeddings, attack scenarios would produce")
-        print("  measurable concept alignment (e.g., insider_threat_slow for USR-156)")
+        print("  Real OpenAI embeddings should surface measurable concept alignment")
+        print("  for attack scenarios (e.g., insider_threat_slow for USR-156)")
 
     # Save results
     results_dir = Path("data/pipeline_results")

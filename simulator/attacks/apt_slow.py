@@ -59,6 +59,9 @@ class APTSlowAttack(AttackScenario):
         self.beacon_jitter_min = config.get("beacon_jitter_min", 90)
         default_interval = max(5, self.duration_days // 10)
         self.staging_interval_days = config.get("staging_interval_days", default_interval)
+        self.staging_file_min = config.get("staging_file_min", 1)
+        self.staging_file_max = config.get("staging_file_max", 4)
+        self.dga_probability = config.get("dga_probability", 0.4)
         self._start_date = (
             self.start if isinstance(self.start, date) else datetime.fromisoformat(self.start).date()
         )
@@ -161,7 +164,7 @@ class APTSlowAttack(AttackScenario):
             beacon_time += timedelta(minutes=float(max(interval, 20)))
 
         # --- DGA DNS: 0-1 queries per day, mostly resolving (stealthy) ---
-        if rng.random() < 0.4:
+        if rng.random() < self.dga_probability:
             query_time = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(8, 18))
             )
@@ -181,7 +184,7 @@ class APTSlowAttack(AttackScenario):
             # Access progressively more sensitive directories
             accessible_dirs = _DIRECTORIES[: sensitivity + 1]
             # Read 1-3 files (stealthy — fewer files, looks like normal browsing)
-            num_files = rng.integers(1, 4)
+            num_files = rng.integers(self.staging_file_min, self.staging_file_max)
             staging_start = datetime.combine(current_date, datetime.min.time()) + timedelta(
                 hours=float(rng.uniform(10, 16))
             )

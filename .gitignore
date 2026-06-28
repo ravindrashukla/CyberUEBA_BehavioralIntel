@@ -9,3 +9,21 @@ data/concept_embeddings.npz
 *.parquet
 .venv/
 .pytest_cache/
+
+# session review + regenerable media artifacts (reproducible from the builder scripts)
+docs/_*.log
+docs/_*.out
+docs/page_audit/
+docs/demo_frames/
+docs/demo_frames_v2/
+docs/demo_record_frames/
+docs/narration_audio/
+docs/narration_audio_guided/
+docs/narration_audio_v2/
+docs/screenshots/
+docs/*.mp4
+data/comparison_results/
+data/tier3_results/all250_trajectories.csv
+data/tier3_results/test50_trajectories.csv
+data/tier3_results/*_backup*.csv
+data/tier3_results/*_pre234*.csv

@@ -585,7 +585,7 @@ def init_db():
             cur.execute(
                 "SELECT EXISTS ("
                 "  SELECT FROM information_schema.tables "
-                "  WHERE table_name = 'users'"
+                "  WHERE table_name = 'trajectory_snapshots'"
                 ")"
             )
             exists = cur.fetchone()[0]
