@@ -309,10 +309,10 @@ def slide_03_what_we_tested(prs):
          "Tier 2: Behavioral Direction Analysis\n"
          "Tier 3: Digital Entity Analysis\n"
          "(9 zone/trajectory/relationship methods)"),
-        ("4 Campaigns", "Injected Attack Patterns", "8-month insider threat escalation\n"
-         "180-day slow APT with C2 beaconing\n"
-         "115-day Volt Typhoon living-off-the-land\n"
-         "100-day Salt Typhoon telecom interception\n"
+        ("4 Campaigns", "Injected Attack Patterns", "14-month insider threat escalation\n"
+         "417-day slow APT with C2 beaconing\n"
+         "412-day Volt Typhoon living-off-the-land\n"
+         "412-day Salt Typhoon telecom interception\n"
          "Only 0.05% of events are attack-injected"),
     ]
 
@@ -370,8 +370,8 @@ def slide_04_attack_spectrum(prs):
         (Inches(1.8), "Ransomware", "6 hours", "File encryption burst", GREEN),
         (Inches(3.8), "Credential Theft", "5 days", "Phishing + lateral move", GOLD),
         (Inches(7.0), "Supply Chain", "90 days dormant", "Implant activation", RED),
-        (Inches(9.0), "APT C2", "180 days", "~4 beacons/day", RED),
-        (Inches(11.0), "Insider Threat", "8 months", "4-phase escalation", RED),
+        (Inches(9.0), "APT C2", "417 days", "~4 beacons/day", RED),
+        (Inches(11.0), "Insider Threat", "14 months", "4-phase escalation", RED),
     ]
 
     card_y = Inches(2.3)
@@ -411,22 +411,22 @@ def slide_05_meet_attackers(prs):
     add_title_bar(slide, "Meet the Attackers")
 
     attackers = [
-        ("USR-156: Insider Threat", "8-Month, 4-Phase Escalation",
+        ("USR-156: Insider Threat", "14-Month, 4-Phase Escalation",
          "Subtle mood shifts → curiosity browsing →\n"
          "restricted access → trickle exfiltration\n"
          "Activity volumes stay within normal ranges",
          RED),
-        ("USR-234: Slow APT", "180-Day Persistent Campaign",
+        ("USR-234: Slow APT", "417-Day Persistent Campaign",
          "~4 C2 beacons/day at 6-hour intervals\n"
          "DGA DNS queries blend with normal traffic\n"
          "Progressive data staging over months",
          GOLD),
-        ("USR-042: Volt Typhoon", "115-Day LOTL Pre-Positioning",
+        ("USR-042: Volt Typhoon", "412-Day LOTL Pre-Positioning",
          "Living-off-the-land with RDP, WMI, PsExec\n"
          "Credential harvesting via legitimate tools\n"
          "Lateral movement mimics admin activity",
          RGBColor(142, 68, 173)),
-        ("USR-118: Salt Typhoon", "100-Day Telecom Interception",
+        ("USR-118: Salt Typhoon", "412-Day Telecom Interception",
          "DNS tunneling for covert C2 channel\n"
          "CDR/lawful intercept data access\n"
          "Staged exfiltration mimics normal ops",
@@ -488,8 +488,8 @@ def slide_06_isolation_forest(prs):
                 "RESULTS", font_size=18, bold=True, color=RED, alignment=PP_ALIGN.LEFT)
 
     results = [
-        ("USR-156 (Insider, 8mo):", "MISSED", RED),
-        ("USR-234 (APT, 180d):", "MISSED", RED),
+        ("USR-156 (Insider, 14mo):", "MISSED", RED),
+        ("USR-234 (APT, 417d):", "MISSED", RED),
         ("USR-042 (Volt Typhoon):", "DETECTED", GREEN),
         ("USR-118 (Salt Typhoon):", "DETECTED", GREEN),
         ("False Positive Rate:", "2.2% (1 normal user flagged)", DARK_GRAY),
@@ -1110,7 +1110,7 @@ def slide_15_agency_implications(prs):
          "drift detection achieves both high detection rates and actionable false positive "
          "rates for slow, stealthy attacks."),
         ("Every day without behavioral detection is exposure.",
-         "If an 8-month insider threat campaign is running in your environment today, your "
+         "If a 14-month insider threat campaign is running in your environment today, your "
          "current tools will not detect it until data has already been exfiltrated."),
     ]
 
@@ -1285,7 +1285,7 @@ def slide_18_detection_playbook(prs):
          "Zone Divergence misses\n(uniform change)"),
         ("Telecom Pivot", "USR-118", RGBColor(41, 128, 185),
          "LOF + Embed CUSUM", "0%* / 6.5%",
-         "Network footprint +\npersistent 100-day drift.",
+         "Network footprint +\npersistent 412-day drift.",
          "Zone Divergence misses\n(broad multi-zone)"),
     ]
 

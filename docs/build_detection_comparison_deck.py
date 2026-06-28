@@ -177,7 +177,7 @@ def slide_02_agenda(prs):
     items = [
         ("1", "The Problem", "Why do sophisticated attackers evade your current SIEM?"),
         ("2", "How Traditional Detection Works", "Thresholds, rules, and statistical algorithms"),
-        ("3", "What Traditional Detection Misses", "Real attack profiles that look perfectly normal"),
+        ("3", "What Traditional Detection Lacks", "Flagged as anomalous — but with no actionable direction"),
         ("4", "How V-Intelligence UEBA Changes Detection", "Building a behavioral digital entity for every user"),
         ("5", "Composite Scoring: 5-Phase Detection", "The scoring engine that separates attackers from noise"),
         ("6", "Head-to-Head Results", "Same data, same users — completely different outcomes"),
@@ -231,8 +231,8 @@ def slide_03_problem(prs):
 
     # Three attacker types
     types = [
-        ("Insider Threat", "8-month slow escalation", "Accesses 5% more files per week.\nNever crosses a threshold.", RED),
-        ("Nation-State APT", "180-day persistent access", "Uses legitimate tools and protocols.\nBlends with normal traffic.", ORANGE),
+        ("Insider Threat", "14-month slow escalation", "Accesses 5% more files per week.\nNever crosses a threshold.", RED),
+        ("Nation-State APT", "417-day persistent access", "Uses legitimate tools and protocols.\nBlends with normal traffic.", ORANGE),
         ("Living-off-the-Land", "Uses built-in system tools", "No malware to detect. Appears as\nnormal admin activity.", RGBColor(142, 68, 173)),
     ]
     for i, (name, sub, desc, clr) in enumerate(types):
@@ -294,8 +294,8 @@ def slide_04_traditional(prs):
     box.line.color.rgb = RED
     box.line.width = Pt(2)
     tbox(slide, Inches(0.9), Inches(6.35), Inches(11.5), Inches(0.5),
-         "Fundamental limitation: Each algorithm looks at individual numbers in isolation. If no single metric "
-         "is abnormal enough, the attacker passes every test — even when the overall behavior pattern has changed.",
+         "Fundamental limitation: These algorithms can flag anomalous users, but provide NO directional intelligence. "
+         "They say \"anomalous\" without telling the analyst WHICH behavioral zone changed or TOWARD WHAT threat pattern.",
          sz=14, bold=True, color=RED)
 
     footer(slide)
@@ -308,18 +308,18 @@ def slide_05_what_it_misses(prs):
     title_bar(slide, "What Your SOC Analyst Sees: Four Real Attack Profiles")
 
     tbox(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(0.5),
-         "Same telemetry data, same time period, same users. Traditional detection classifies all four as NORMAL.",
+         "Same telemetry data, same time period, same users. Traditional methods flag anomalies but give no directional intelligence.",
          sz=16, color=DARK_GRAY)
 
     attackers = [
-        ("USR-156", "Insider Threat", "8-month slow escalation", "NORMAL",
-         "All metrics within normal ranges.\nNo alerts triggered.", RED),
-        ("USR-234", "Slow APT", "180-day persistent access", "NORMAL",
-         "Anomaly score within expected bounds.\nNo thresholds crossed.", ORANGE),
-        ("USR-042", "Volt Typhoon (LOTL)", "115-day campaign", "NORMAL",
-         "Uses legitimate tools only.\nStatistically indistinguishable.", RGBColor(142, 68, 173)),
-        ("USR-118", "Salt Typhoon", "100-day telecom intrusion", "NORMAL",
-         "Blends with normal network activity.\nNo individual spike detected.", BLUE),
+        ("USR-156", "Insider Threat", "14-month slow escalation", "FLAGGED",
+         "Flagged as anomalous, but no indication\nof WHICH behavior zone changed.", RED),
+        ("USR-234", "Slow APT", "417-day persistent access", "MISSED",
+         "Only attack missed by LOF and Isolation\nForest — too slow to trigger.", ORANGE),
+        ("USR-042", "Volt Typhoon (LOTL)", "412-day campaign", "FLAGGED",
+         "Flagged as anomalous, but no directional\nintelligence on threat pattern.", RGBColor(142, 68, 173)),
+        ("USR-118", "Salt Typhoon", "412-day telecom intrusion", "FLAGGED",
+         "Flagged by Z-Score/OCSVM, but buried\nin false positives with no ranking.", BLUE),
     ]
     for i, (uid, name, sub, status, desc, clr) in enumerate(attackers):
         y = Inches(1.9) + Inches(i * 1.15)
@@ -333,8 +333,9 @@ def slide_05_what_it_misses(prs):
         tbox(slide, Inches(3.8), y + Inches(0.15), Inches(5.5), Inches(0.7),
              desc, sz=13, color=DARK_GRAY)
         # Right: status badge
+        badge_color = RED if status == "MISSED" else ORANGE
         badge = rect(slide, Inches(10.2), y + Inches(0.25), Inches(2.2), Inches(0.5),
-                     fill=GREEN, radius=True)
+                     fill=badge_color, radius=True)
         set_text(badge, f"  {status}", sz=16, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
 
     # Bottom callout
@@ -343,8 +344,8 @@ def slide_05_what_it_misses(prs):
     box.line.color.rgb = RED
     box.line.width = Pt(2)
     tbox(slide, Inches(0.9), Inches(6.55), Inches(11.5), Inches(0.5),
-         "Result: 0 of 4 attacks detected.  Your SOC analyst clears these users and moves on. "
-         "The attacker continues operating undetected for months.",
+         "Result: 3 of 4 flagged as anomalous, but with NO directional intelligence.  Your SOC analyst sees \"anomalous\" "
+         "without knowing WHICH behavioral zone changed or TOWARD WHAT threat pattern — and the slow APT is missed entirely.",
          sz=15, bold=True, color=RED)
 
     footer(slide)
@@ -507,7 +508,7 @@ def slide_08_results(prs):
     title_bar(slide, "Head-to-Head Results: Same Data, Different Outcomes")
 
     tbox(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(0.5),
-         "250 users monitored over 19 weeks. 4 known attack campaigns embedded in the population.",
+         "250 users monitored over 70 weeks (485 days). 4 known attack campaigns embedded in the population.",
          sz=16, color=DARK_GRAY)
 
     # Left: Traditional
@@ -518,15 +519,15 @@ def slide_08_results(prs):
          "Isolation Forest, SVM, LOF, Z-Score", sz=13, color=MID_GRAY, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(0.9), Inches(3.2), Inches(5.2), Inches(0.8),
-         "1 of 4", sz=56, bold=True, color=RED, align=PP_ALIGN.CENTER)
+         "3–4 of 4", sz=56, bold=True, color=ORANGE, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(0.9), Inches(4.1), Inches(5.2), Inches(0.4),
-         "attacks detected", sz=18, color=NAVY, align=PP_ALIGN.CENTER)
+         "flagged as anomalous — but no direction", sz=18, color=NAVY, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(0.9), Inches(4.7), Inches(5.2), Inches(0.4),
-         "Best method: Z-Score — catches only Volt Typhoon (USR-042)", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
+         "Z-Score and OCSVM flag 4/4; LOF and IF miss the slow APT", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(0.9), Inches(5.3), Inches(5.2), Inches(0.8),
-         "Insider, Slow APT, and Salt Typhoon all operate undetected. "
-         "No traditional algorithm flags them — every metric stays within normal ranges.",
+         "Traditional methods say \"anomalous\" but cannot tell the analyst "
+         "WHICH behavioral zone shifted or TOWARD WHAT threat pattern. FP rates range from 3.3% to 29.7%.",
          sz=13, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     # Right: V-Intelligence UEBA
@@ -542,16 +543,16 @@ def slide_08_results(prs):
          "attacks detected", sz=18, color=NAVY, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(7.2), Inches(4.7), Inches(5.2), Inches(0.4),
-         "8.5% false positive rate", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
+         "8.1% FP rate + directional intelligence", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(7.2), Inches(5.3), Inches(5.2), Inches(0.8),
-         "All 4 attack types detected — insider, APT, living-off-the-land, telecom intrusion. "
-         "One ranked list. No threshold tuning. Actionable for SOC analysts.",
+         "All 4 detected with actionable direction: tells the analyst WHICH behavioral "
+         "zone changed and TOWARD WHAT threat pattern. Ranked list, no threshold tuning.",
          sz=13, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     # Bottom bar
     box = rect(slide, Inches(0.6), Inches(6.7), Inches(12.1), Inches(0.5), fill=NAVY, radius=True)
     tbox(slide, Inches(0.9), Inches(6.73), Inches(11.5), Inches(0.4),
-         "Same 250 users. Same 19 weeks. Same telemetry. The difference is what the system understands about behavior.",
+         "Same 250 users. Same 70 weeks. Same telemetry. The difference is what the system understands about behavior.",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
 
     footer(slide)
@@ -568,26 +569,26 @@ def slide_09_per_attacker(prs):
          sz=16, color=DARK_GRAY)
 
     attackers = [
-        ("USR-118", "Salt Typhoon", "Telecom Intrusion", "#1 / 250", "51.3",
+        ("USR-118", "Salt Typhoon", "412-Day Telecom Intrusion", "#1 / 250", "51.3",
          GREEN, RGBColor(41, 128, 185),
          "Signal Strength + Sustained Deviation",
-         "Missed by all 4 traditional methods — mirrors the real Salt Typhoon (5 years undetected in US telecom). "
-         "Composite scoring ranks it #1: strongest sustained behavioral drift across all analytical contexts."),
-        ("USR-156", "Insider Threat", "8-Month Escalation", "#2 / 250", "46.2",
+         "Flagged by Z-Score and OCSVM but buried in false positives with no directional context. "
+         "Composite scoring ranks it #1 with actionable intelligence: WHICH zones shifted and TOWARD WHAT pattern."),
+        ("USR-156", "Insider Threat", "14-Month Escalation", "#2 / 250", "46.2",
          GREEN, RED,
          "Signal Strength + Breadth",
-         "Strong drift across many features simultaneously. Classic insider pattern: gradual scope creep across "
-         "departments, increasing off-hours access, data staging. Broad and persistent."),
-        ("USR-042", "Volt Typhoon", "Living-off-the-Land", "#24 / 250", "13.7",
+         "Flagged as anomalous by LOF/Z-Score/OCSVM but with no direction. Composite provides actionable "
+         "intelligence: gradual scope creep across departments, off-hours access, data staging — broad and persistent."),
+        ("USR-042", "Volt Typhoon", "412-Day LOTL Campaign", "#24 / 250", "13.7",
          GREEN, RGBColor(142, 68, 173),
          "Breadth + Sustained Deviation",
-         "Moderate signal strength but anomalous across many features at once. Uses legitimate tools — "
-         "the anomaly is in the breadth of unusual behavior, not the magnitude of any single action."),
-        ("USR-234", "Slow APT", "180-Day Campaign", "#7 / 250", "19.4",
+         "Traditional methods flag it but cannot explain WHY. Composite reveals the anomaly is in the breadth "
+         "of unusual behavior across zones — uses legitimate tools, so direction matters more than detection."),
+        ("USR-234", "Slow APT", "417-Day Campaign", "#7 / 250", "19.4",
          GREEN, ORANGE,
          "Novelty Persistence",
-         "Low signal strength. Low breadth. Traditional metrics look completely normal. But new network "
-         "destinations keep appearing and persisting week after week — the hallmark of C2 beacon infrastructure."),
+         "The only attacker missed by LOF and Isolation Forest. Z-Score and OCSVM flag it but without direction. "
+         "Composite uniquely identifies persistent novel network destinations — the hallmark of C2 beacons."),
     ]
     for i, (uid, name, sub, rank, score, det_color, atk_color, phase, desc) in enumerate(attackers):
         y = Inches(1.9) + Inches(i * 1.3)
@@ -615,7 +616,7 @@ def slide_10_usr234_deep(prs):
     """USR-234 Deep Dive — Why Novelty Persistence Matters."""
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_bg(slide, WHITE)
-    title_bar(slide, "Deep Dive: How Composite Scoring Catches a 180-Day APT")
+    title_bar(slide, "Deep Dive: How Composite Scoring Catches a 417-Day APT")
 
     tbox(slide, Inches(0.6), Inches(1.3), Inches(12), Inches(0.6),
          "USR-234 is the hardest attacker to detect. Every traditional metric looks normal. "
@@ -694,7 +695,7 @@ def slide_11_salt_typhoon(prs):
     # Left: Why it evaded detection
     card(slide, Inches(0.6), Inches(2.1), Inches(5.8), Inches(3.5), border_top_color=RED)
     tbox(slide, Inches(0.9), Inches(2.3), Inches(5.2), Inches(0.35),
-         "Why Traditional Detection Missed It — For 5 Years", sz=16, bold=True, color=RED)
+         "Why Traditional Detection Failed — For 5 Years", sz=16, bold=True, color=RED)
 
     trad_lines = [
         "Used legitimate network protocols and tools — no malware signatures",
@@ -703,22 +704,22 @@ def slide_11_salt_typhoon(prs):
         "Blended with routine telecom operations — low-and-slow pattern",
         "No single metric exceeded any statistical threshold",
         "",
-        "Our Simulation Confirms This:",
-        "Isolation Forest:  MISSED   (anomaly score = normal)",
-        "One-Class SVM:    MISSED   (within decision boundary)",
-        "Local Outlier Factor: MISSED   (density = peer average)",
-        "Z-Score Analysis:  MISSED   (max z = 1.71, threshold = 3.0)",
+        "Our Simulation Results:",
+        "LOF:  3/4 detected at 3.3% FP — flags Salt Typhoon, no direction",
+        "Z-Score:  4/4 detected at 4.9% FP — flags it, but no direction",
+        "Isolation Forest:  3/4 detected at 7.3% FP — flags it, no direction",
+        "OCSVM:  4/4 detected at 29.7% FP — flags it, buried in noise",
     ]
     for i, line in enumerate(trad_lines):
         if not line:
             continue
         is_header = line.startswith("Our Simulation")
-        is_missed = "MISSED" in line
-        clr = RED if is_missed else (NAVY if is_header else DARK_GRAY)
+        is_result = "detected at" in line
+        clr = ORANGE if is_result else (NAVY if is_header else DARK_GRAY)
         bld = is_header
         sz = 13 if is_header else 12
         tbox(slide, Inches(0.9), Inches(2.7) + Inches(i * 0.28), Inches(5.2), Inches(0.28),
-             f"{'▸' if not is_missed and not is_header else '  '} {line}", sz=sz, color=clr, bold=bld)
+             f"{'▸' if not is_result and not is_header else '  '} {line}", sz=sz, color=clr, bold=bld)
 
     # Right: Why V-Intelligence UEBA catches it
     card(slide, Inches(6.9), Inches(2.1), Inches(5.8), Inches(3.5), border_top_color=GREEN)
@@ -747,11 +748,10 @@ def slide_11_salt_typhoon(prs):
     tbox(slide, Inches(0.9), Inches(6.0), Inches(11.5), Inches(0.35),
          "The Critical Insight", sz=16, bold=True, color=GOLD)
     tbox(slide, Inches(0.9), Inches(6.35), Inches(11.5), Inches(0.8),
-         "Salt Typhoon evaded detection for 5 years because US telecom providers relied on the same kind of "
-         "threshold-based detection our traditional methods represent. Every individual metric looked normal. "
-         "V-Intelligence UEBA's behavioral analysis ranks this identical attack pattern as the #1 anomaly in a population of 250 — "
-         "not because any single number is abnormal, but because the overall behavioral pattern has fundamentally shifted "
-         "in a sustained, multi-dimensional way that no individual metric captures.",
+         "Salt Typhoon evaded meaningful detection for 5 years because traditional tools flagged anomalies "
+         "without directional intelligence — analysts saw \"anomalous\" but not WHICH zone shifted or TOWARD WHAT threat. "
+         "V-Intelligence UEBA ranks this pattern as #1 out of 250 AND tells the analyst exactly which behavioral zones "
+         "drifted, in what direction, and toward what known threat pattern — turning a vague flag into actionable response.",
          sz=13, color=WHITE)
 
     footer(slide)
@@ -771,28 +771,29 @@ def slide_12_false_positives(prs):
 
     # Method comparison cards
     methods = [
-        ("Isolation Forest", "0 of 4", "5.3%", "Misses all attacks, some false alarms", RED, False),
-        ("One-Class SVM", "0 of 4", "14.6%", "Misses all attacks, many false alarms", RED, False),
-        ("Local Outlier Factor", "0 of 4", "4.5%", "Misses all attacks, few false alarms", RED, False),
-        ("Z-Score (|z|>3)", "1 of 4", "9.8%", "Only catches Volt Typhoon. Misses\nInsider, APT, and Salt Typhoon.", ORANGE, False),
-        ("V-Intelligence UEBA + Composite", "4 of 4", "8.5%", "Catches ALL attackers, manageable FP", GREEN, True),
+        ("Local Outlier Factor", "3 of 4", "3.3%", "Flags 3 as anomalous, misses slow\nAPT. No directional intelligence.", ORANGE, False),
+        ("Z-Score (|z|>3)", "4 of 4", "4.9%", "Flags all 4 as anomalous but gives\nno direction on threat pattern.", ORANGE, False),
+        ("Isolation Forest", "3 of 4", "7.3%", "Flags 3 as anomalous, misses slow\nAPT. No directional intelligence.", ORANGE, False),
+        ("One-Class SVM", "4 of 4", "29.7%", "Flags all 4 but buries them in\nmassive false positive volume.", RED, False),
+        ("V-Intelligence UEBA + Composite", "4 of 4", "8.1%", "Detects all 4 WITH directional\nintelligence on threat patterns.", GREEN, True),
+        ("Multi-Front Threat-Profile", "4 of 4", "0%", "Primary detector: all 4 matched to\nnamed known-bad fingerprints.", GREEN, True),
     ]
     for i, (name, detected, fp, desc, clr, highlight) in enumerate(methods):
-        x = Inches(0.4) + Inches(i * 2.55)
+        x = Inches(0.4) + Inches(i * 2.18)
         bg = LIGHT_GREEN if highlight else WHITE
         bdr = GREEN if highlight else MID_GRAY
-        card(slide, x, Inches(2.5), Inches(2.35), Inches(3.2), fill=bg, border=bdr,
+        card(slide, x, Inches(2.5), Inches(2.0), Inches(3.2), fill=bg, border=bdr,
              border_top_color=clr)
-        tbox(slide, x + Inches(0.1), Inches(2.7), Inches(2.15), Inches(0.4),
-             name, sz=13, bold=True, color=clr, align=PP_ALIGN.CENTER)
-        tbox(slide, x + Inches(0.1), Inches(3.2), Inches(2.15), Inches(0.5),
-             detected, sz=28, bold=True, color=clr, align=PP_ALIGN.CENTER)
-        tbox(slide, x + Inches(0.1), Inches(3.7), Inches(2.15), Inches(0.3),
+        tbox(slide, x + Inches(0.1), Inches(2.7), Inches(1.8), Inches(0.4),
+             name, sz=12, bold=True, color=clr, align=PP_ALIGN.CENTER)
+        tbox(slide, x + Inches(0.1), Inches(3.2), Inches(1.8), Inches(0.5),
+             detected, sz=26, bold=True, color=clr, align=PP_ALIGN.CENTER)
+        tbox(slide, x + Inches(0.1), Inches(3.7), Inches(1.8), Inches(0.3),
              "detected", sz=12, color=MID_GRAY, align=PP_ALIGN.CENTER)
-        tbox(slide, x + Inches(0.1), Inches(4.15), Inches(2.15), Inches(0.4),
-             f"FP Rate: {fp}", sz=16, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
-        tbox(slide, x + Inches(0.1), Inches(4.6), Inches(2.15), Inches(0.8),
-             desc, sz=11, color=DARK_GRAY, align=PP_ALIGN.CENTER)
+        tbox(slide, x + Inches(0.1), Inches(4.15), Inches(1.8), Inches(0.4),
+             f"FP Rate: {fp}", sz=15, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
+        tbox(slide, x + Inches(0.1), Inches(4.6), Inches(1.8), Inches(0.8),
+             desc, sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     # What FP means in practice
     box = rect(slide, Inches(0.6), Inches(6.0), Inches(12.1), Inches(1.0), fill=LIGHT_BLUE, radius=True)
@@ -800,12 +801,12 @@ def slide_12_false_positives(prs):
     box.line.color.rgb = BLUE
     box.line.width = Pt(2)
     tbox(slide, Inches(0.9), Inches(6.05), Inches(11.5), Inches(0.35),
-         "What does 8.5% FP rate mean in practice?", sz=15, bold=True, color=BLUE)
+         "What does 8.1% FP rate mean in practice?", sz=15, bold=True, color=BLUE)
     tbox(slide, Inches(0.9), Inches(6.4), Inches(11.5), Inches(0.5),
-         "In an organization with 10,000 users, 8.5% FP = ~850 users flagged for review. "
-         "With composite scoring's ranked list, analysts start at #1 (highest risk) and work down — "
-         "all 4 real attackers appear in the top 10%. Compare this to Z-Score which catches 1 attacker "
-         "buried among 980 false alarms with no ranking.",
+         "In an organization with 10,000 users, 8.1% FP = ~810 users flagged for review. "
+         "With composite scoring's ranked list AND directional intelligence, analysts start at #1 and know exactly "
+         "WHICH behavioral zone shifted and TOWARD WHAT threat pattern. Compare Z-Score: 4/4 detected at 4.9% FP, "
+         "but no ranking and no direction — the analyst only knows \"anomalous,\" not what to investigate.",
          sz=13, color=DARK_GRAY)
 
     footer(slide)
@@ -818,14 +819,14 @@ def slide_13_business_impact(prs):
     title_bar(slide, "Business Impact: What This Means for Your Organization")
 
     impacts = [
-        ("Detect the Undetectable", GREEN,
-         "Catch insider threats, nation-state APTs, and living-off-the-land attackers that "
-         "evade every traditional SIEM rule and anomaly detection algorithm.",
-         "4 of 4 attack types detected in testing"),
+        ("Actionable Directional Intelligence", GREEN,
+         "Traditional methods flag anomalies but cannot tell analysts WHICH behavioral zone "
+         "shifted or TOWARD WHAT threat pattern. V-Intelligence provides the direction to act.",
+         "4 of 4 with directional intelligence"),
         ("Reduce Alert Fatigue", TEAL,
          "One ranked list replaces hundreds of uncorrelated alerts. Your SOC analysts "
          "investigate the highest-risk entities first, not the loudest alarms.",
-         "8.5% false positive rate with ranked prioritization"),
+         "8.1% false positive rate with ranked prioritization"),
         ("Faster Time-to-Detect", BLUE,
          "Behavioral drift detection identifies threats within weeks of campaign start — "
          "not months after data exfiltration.",
@@ -873,7 +874,7 @@ def slide_14_closing(prs):
 
     results = [
         ("4 / 4", "attack types detected"),
-        ("8.5%", "false positive rate"),
+        ("8.1%", "false positive rate"),
         ("Ranked", "single prioritized list"),
         ("Zero", "threshold tuning required"),
     ]

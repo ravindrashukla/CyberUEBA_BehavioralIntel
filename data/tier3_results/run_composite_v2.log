@@ -1,0 +1,189 @@
+  Preloaded 325926 embeddings from consolidated cache (1910 MB)
+Using REAL OpenAI embeddings (text-embedding-3-small)
+
+Phase 1: Feature engineering (250 users)...
+Engineering features (incremental, one week at a time)...
+  Week 5/70 processed
+  Week 10/70 processed
+  Week 15/70 processed
+  Week 20/70 processed
+  Week 25/70 processed
+  Week 30/70 processed
+  Week 35/70 processed
+  Week 40/70 processed
+  Week 45/70 processed
+  Week 50/70 processed
+  Week 55/70 processed
+  Week 60/70 processed
+  Week 65/70 processed
+  Week 70/70 processed
+  70 weeks x 250 users = 17500 feature vectors
+  17500 total feature rows, 70 weeks
+
+Phase 1b: Annotating qualitative features with novelty flags...
+  Annotated 17500 feature rows with novelty flags
+
+Phase 2: Building entity zoo (250 users)...
+
+  Building Digital Entity Zoo...
+  Population stats computed across 17500 feature vectors
+  Serialized 175000 zone texts across 250 users
+  Batch embedding 175000 texts...
+  Embedding done: 0 API calls, 175016 cache hits
+  Assembling 250 entities...
+    50/250 entities assembled
+    100/250 entities assembled
+    150/250 entities assembled
+    200/250 entities assembled
+    250/250 entities assembled
+  Entity zoo built: 250 entities
+
+Phase 3: Saving embeddings to PostgreSQL...
+  Saved 17,500 embedding snapshots to behavioral_snapshots table
+
+Phase 4: Extracting trajectories...
+  17500 trajectory rows saved to data\tier3_results\all250_trajectories.csv
+
+Phase 5: Composite detection...
+  Computing novelty persistence metrics...
+
+==========================================================================================
+ATTACK USER COMPOSITE SCORES (250 users, novelty-annotated embeddings)
+==========================================================================================
+
+  USR-042 (Volt Typhoon) — Rank #24/250, Group: security
+    Composite:           13.70
+    Signal Strength:      6.40
+    Breadth (z>1.5):        11
+    Sustained Signal:     3.80
+    Novelty Score:        0.00
+
+  USR-118 (Salt Typhoon) — Rank #1/250, Group: developer
+    Composite:           51.27
+    Signal Strength:     29.89
+    Breadth (z>1.5):        18
+    Sustained Signal:     9.58
+    Novelty Score:        2.80
+
+  USR-156 (Insider) — Rank #2/250, Group: business
+    Composite:           46.24
+    Signal Strength:     30.02
+    Breadth (z>1.5):        19
+    Sustained Signal:     8.37
+    Novelty Score:        0.00
+
+  USR-234 (Slow APT) — Rank #7/250, Group: developer
+    Composite:           19.44
+    Signal Strength:      4.47
+    Breadth (z>1.5):         1
+    Sustained Signal:     1.57
+    Novelty Score:       13.00
+
+================================================================================
+TOP 40 BY COMPOSITE SCORE
+================================================================================
+    1. USR-118    developer    comp=  51.27 (str=29.9 br=18 sus=9.6 nov=2.8) <-- Salt Typhoon
+    2. USR-156    business     comp=  46.24 (str=30.0 br=19 sus=8.4 nov=0.0) <-- Insider
+    3. USR-081    business     comp=  21.52 (str=9.4 br=20 sus=5.3 nov=0.0)
+    4. USR-075    developer    comp=  21.03 (str=9.9 br=15 sus=5.7 nov=0.0)
+    5. USR-220    developer    comp=  20.83 (str=8.9 br=19 sus=3.8 nov=0.0)
+    6. USR-021    developer    comp=  20.50 (str=9.7 br=9 sus=4.1 nov=3.4)
+    7. USR-234    developer    comp=  19.44 (str=4.5 br=1 sus=1.6 nov=13.0) <-- Slow APT
+    8. USR-048    security     comp=  19.30 (str=11.7 br=10 sus=4.7 nov=0.0)
+    9. USR-161    admin        comp=  19.28 (str=11.0 br=12 sus=5.4 nov=0.0)
+   10. USR-044    developer    comp=  18.48 (str=7.7 br=17 sus=3.8 nov=0.0)
+   11. USR-154    executive    comp=  18.35 (str=5.9 br=5 sus=1.8 nov=8.2)
+   12. USR-012    business     comp=  17.67 (str=10.1 br=7 sus=4.8 nov=0.0)
+   13. USR-219    executive    comp=  17.10 (str=8.7 br=13 sus=4.6 nov=0.0)
+   14. USR-078    executive    comp=  15.45 (str=6.7 br=7 sus=3.1 nov=3.0)
+   15. USR-182    business     comp=  15.37 (str=7.6 br=12 sus=3.8 nov=0.0)
+   16. USR-115    developer    comp=  15.34 (str=10.4 br=7 sus=4.6 nov=0.0)
+   17. USR-139    developer    comp=  15.09 (str=9.8 br=7 sus=2.8 nov=0.0)
+   18. USR-217    executive    comp=  15.02 (str=7.1 br=11 sus=3.1 nov=0.0)
+   19. USR-079    developer    comp=  14.53 (str=7.4 br=9 sus=4.4 nov=0.0)
+   20. USR-110    admin        comp=  14.22 (str=8.3 br=6 sus=4.0 nov=0.0)
+   21. USR-077    business     comp=  14.06 (str=6.6 br=9 sus=4.1 nov=0.0)
+   22. USR-179    admin        comp=  13.91 (str=6.5 br=12 sus=2.7 nov=0.0)
+   23. USR-191    business     comp=  13.78 (str=7.9 br=9 sus=3.0 nov=0.0)
+   24. USR-042    security     comp=  13.70 (str=6.4 br=11 sus=3.8 nov=0.0) <-- Volt Typhoon
+   25. USR-063    business     comp=  13.65 (str=7.5 br=7 sus=3.8 nov=0.0)
+   26. USR-038    business     comp=  13.47 (str=9.5 br=5 sus=4.0 nov=0.0)
+   27. USR-103    executive    comp=  13.47 (str=8.6 br=7 sus=4.4 nov=0.0)
+   28. USR-172    business     comp=  13.20 (str=9.4 br=7 sus=1.1 nov=0.0)
+   29. USR-188    business     comp=  13.03 (str=7.1 br=8 sus=3.5 nov=0.0)
+   30. USR-192    admin        comp=  12.80 (str=6.7 br=8 sus=3.9 nov=0.0)
+   31. USR-189    security     comp=  12.66 (str=8.0 br=8 sus=2.1 nov=0.0)
+   32. USR-126    security     comp=  12.57 (str=6.9 br=4 sus=2.1 nov=2.2)
+   33. USR-065    admin        comp=  12.55 (str=7.9 br=6 sus=2.9 nov=0.0)
+   34. USR-155    security     comp=  12.53 (str=5.4 br=11 sus=3.0 nov=0.0)
+   35. USR-045    security     comp=  12.52 (str=9.6 br=5 sus=1.3 nov=0.0)
+   36. USR-036    executive    comp=  12.03 (str=7.1 br=7 sus=4.3 nov=0.0)
+   37. USR-127    business     comp=  11.44 (str=6.2 br=8 sus=3.0 nov=0.0)
+   38. USR-218    admin        comp=  11.31 (str=6.3 br=6 sus=2.8 nov=0.0)
+   39. USR-125    business     comp=  11.20 (str=5.5 br=9 sus=2.0 nov=0.0)
+   40. USR-061    developer    comp=  11.09 (str=6.4 br=7 sus=2.9 nov=0.0)
+
+================================================================================
+COMPOSITE THRESHOLD SWEEP (composite)
+================================================================================
+   Threshold  Pctile  TP/4   FP    FP%   Prec  Recall
+  -------------------------------------------------------
+        5.53     50%   4/4  121  49.2%   3.2%  100.0% <-- ALL
+        8.85     75%   4/4   59  24.0%   6.3%  100.0% <-- ALL
+        9.94     80%   4/4   46  18.7%   8.0%  100.0% <-- ALL
+       11.27     85%   4/4   34  13.8%  10.5%  100.0% <-- ALL
+       13.49     90%   4/4   21   8.5%  16.0%  100.0% <-- ALL
+       14.08     92%   3/4   17   6.9%  15.0%   75.0%
+       16.36     95%   3/4   10   4.1%  23.1%   75.0%
+       18.35     96%   3/4    7   2.8%  30.0%   75.0%
+       19.29     97%   3/4    5   2.0%  37.5%   75.0%
+       20.50     98%   2/4    3   1.2%  40.0%   50.0%
+       21.28     99%   2/4    1   0.4%  66.7%   50.0%
+
+================================================================================
+ATTACKER Z-SCORE PROFILES
+================================================================================
+
+  USR-042 (Volt Typhoon, security):
+    z_ctx_insider_investigation              z=+2.18
+    z_composite_sustained                    z=+2.11
+    z_ctx_normal_ops                         z=+2.11
+    z_access_pattern_sustained               z=+1.99
+    z_data_behavior_sustained                z=+1.81
+    z_zdiv_sustained                         z=+1.77
+    z_data_behavior_late_q4                  z=+1.77
+    z_access_pattern_late_q4                 z=+1.73
+
+  USR-118 (Salt Typhoon, developer):
+    z_data_behavior_trend                    z=+13.22
+    z_ctx_spread                             z=+8.65
+    z_data_behavior_late_q4                  z=+8.02
+    z_ctx_max                                z=+7.94
+    z_data_behavior_sustained                z=+7.23
+    z_ctx_insider_investigation              z=+6.80
+    z_rel_sustained                          z=+5.88
+    z_zdiv_sustained                         z=+4.59
+
+  USR-156 (Insider, business):
+    z_data_behavior_trend                    z=+14.43
+    z_data_behavior_late_q4                  z=+8.79
+    z_ctx_max                                z=+6.80
+    z_ctx_insider_investigation              z=+6.04
+    z_data_behavior_sustained                z=+5.69
+    z_rel_sustained                          z=+4.82
+    z_composite_sustained                    z=+4.75
+    z_ctx_normal_ops                         z=+4.75
+
+  USR-234 (Slow APT, developer):
+    z_network_footprint_sustained            z=+1.70
+    z_ctx_spread                             z=+1.48
+    z_access_pattern_peak                    z=-1.31
+    z_network_footprint_late_q4              z=+1.29
+    z_ctx_apt_hunt                           z=+1.22
+    z_access_pattern_volatility              z=-1.10
+    z_data_behavior_sustained                z=-1.10
+    z_data_behavior_late_q4                  z=-0.93
+
+Total time: 956.3s
+Embedding stats: 0 API calls, 175016 cache hits
+DB: 17,500 snapshots stored in PostgreSQL

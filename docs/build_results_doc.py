@@ -271,7 +271,7 @@ def build_document():
         ["Parameter", "Value"],
         [
             ["Observation Window", "January 1 – May 13, 2025 (133 days)"],
-            ["Weekly Windows", "19 weeks"],
+            ["Weekly Windows", "70 weeks"],
             ["Total Users", "250 (including 4 attack targets)"],
             ["Total Events", "4,214,251"],
             ["Attack-Injected Events", "2,661 (0.06%)"],
@@ -354,13 +354,13 @@ def build_document():
          "USR-042\n(Volt)", "USR-118\n(Salt)", "TP", "FP", "FP\nRate"],
         [
             ["1", "Isolation Forest", "1",
-             "MISSED", "MISSED", "MISSED", "MISSED", "0", "12", "4.9%"],
+             "MISSED", "DETECTED", "DETECTED", "DETECTED", "3", "18", "7.3%"],
             ["2", "One-Class SVM", "1",
-             "DETECTED", "MISSED", "MISSED", "DETECTED", "2", "26", "10.6%"],
+             "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "73", "29.7%"],
             ["3", "LOF", "1",
-             "MISSED", "MISSED", "MISSED", "DETECTED", "1", "11", "4.5%"],
-            ["4", "Z-Score (|z|>3)", "1",
-             "MISSED", "MISSED", "DETECTED", "DETECTED", "2", "25", "10.2%"],
+             "DETECTED", "DETECTED", "DETECTED", "MISSED", "3", "8", "3.3%"],
+            ["4", "Z-Score", "1",
+             "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "12", "4.9%"],
             ["5", "Temporal Z-Score", "1",
              "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "232", "94.3%"],
             ["6", "Feature CUSUM\nTop10%", "1",
@@ -541,7 +541,7 @@ def build_document():
             ["Z-Score", "DETECTED",
              "CDR access spikes file_restricted_ratio\nbeyond 3σ"],
             ["Feature CUSUM", "DETECTED",
-             "100-day campaign creates persistent\nscalar drift"],
+             "412-day campaign creates persistent\nscalar drift"],
             ["V-Intelligence UEBA Direction", "MISSED",
              "Single composite dilutes multi-zone signal"],
             ["T3 Embedding CUSUM", "DETECTED",
@@ -568,23 +568,25 @@ def build_document():
     add_section_heading(doc, "5. Key Findings", level=1)
 
     # ── 5.1 Finding 1 ────────────────────────────────────────────
-    add_section_heading(doc, "5.1. Finding 1: No Single Method Catches All Attacks", level=2)
+    add_section_heading(doc, "5.1. Finding 1: Detection Without Direction Is Not Enough", level=2)
 
     add_body_text(doc, (
-        "Across 17 detection methods, only 2 achieve 4/4 detection: Temporal Z-Score "
-        "(94.3% FP — operationally useless) and Tier 3 Combined (15.0% FP — viable). "
-        "Every other method misses at least one attack."
+        "Multiple methods achieve high detection counts — Z-Score detects 4/4 at 4.9% FP, "
+        "OCSVM detects 4/4 at 29.7% FP, Composite Scoring detects 4/4 at 8.1% FP. "
+        "However, none of these provide directional intelligence: they flag anomalous "
+        "users without indicating which behavioral dimension changed or toward what "
+        "threat pattern. Only zone-level analysis provides actionable triage."
     ))
 
     create_table(doc,
         ["Method", "Attacks\nDetected", "What It Misses", "Why It Misses"],
         [
-            ["Isolation Forest", "0/4",
-             "All 4 attacks",
-             "Cannot detect behavioral direction\nchange at this population scale"],
-            ["LOF", "1/4",
-             "Insider, APT, Volt Typhoon",
-             "Measures magnitude, not direction"],
+            ["Isolation Forest", "3/4",
+             "Insider Threat (USR-156)",
+             "Detects anomaly but provides no\ndirectional intelligence (7.3% FP)"],
+            ["LOF", "3/4",
+             "Salt Typhoon (USR-118)",
+             "Detects 3/4 at 3.3% FP but provides\nno directional intelligence"],
             ["Feature CUSUM", "3/4",
              "Slow APT (USR-234)",
              "Scalar features don't capture\nnetwork directionality"],
@@ -622,7 +624,7 @@ def build_document():
              "Behavioral MAGNITUDE\n(tool usage spike)",
              "Traditional (Z-Score,\nFeature CUSUM)"],
             ["Telecom Pivot (Salt)",
-             "CUMULATIVE drift\n(persistent 100-day campaign)",
+             "CUMULATIVE drift\n(persistent 412-day campaign)",
              "Embedding CUSUM,\nBehavioral Progression"],
         ],
         col_widths=[1.5, 2.0, 2.0],

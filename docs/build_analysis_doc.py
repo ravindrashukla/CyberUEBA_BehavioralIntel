@@ -353,9 +353,9 @@ def build_document():
         "distinct detection approaches across three tiers—traditional ML, V-Intelligence UEBA behavioral "
         "analysis, and Digital Entity zone-based analysis—against "
         "a synthetic dataset spanning 130 days of telemetry "
-        "from 50 users, including four carefully designed attack scenarios: an 8-month insider "
-        "threat, a 180-day slow APT, a 115-day Volt Typhoon living-off-the-land campaign, "
-        "and a 100-day Salt Typhoon telecom interception operation."
+        "from 50 users, including four carefully designed attack scenarios: a 14-month insider "
+        "threat, a 417-day slow APT, a 412-day Volt Typhoon living-off-the-land campaign, "
+        "and a 412-day Salt Typhoon telecom interception operation."
     ))
 
     add_body_text(doc, (
@@ -416,7 +416,7 @@ def build_document():
     add_body_text(doc, (
         "Consider an insider threat actor who increases their access to restricted files by "
         "2% per month. On any individual day, their behavior is indistinguishable from their "
-        "peers. No threshold is violated. No signature matches. Yet over eight months, they "
+        "peers. No threshold is violated. No signature matches. Yet over fourteen months, they "
         "have systematically escalated from routine document access to staging and exfiltrating "
         "classified material. This is the detection problem that motivated our analysis."
     ))
@@ -530,7 +530,7 @@ def build_document():
 
     add_section_heading(doc, "ATK-004: Insider Threat (USR-156)", level=3)
     add_body_text(doc, (
-        "An 8-month slow escalation campaign comprising four distinct phases: initial mood "
+        "A 14-month slow escalation campaign comprising four distinct phases: initial mood "
         "shift and dissatisfaction indicators, exploratory access to restricted resources, "
         "systematic data staging, and final exfiltration. The behavioral changes are stealthy "
         "and individually unremarkable: off-hours logins at 15% (not sudden spikes), scope "
@@ -548,7 +548,7 @@ def build_document():
 
     add_section_heading(doc, "ATK-003: Slow APT with C2 Beaconing (USR-234)", level=3)
     add_body_text(doc, (
-        "A 180-day advanced persistent threat campaign featuring approximately 4 Command and "
+        "A 417-day advanced persistent threat campaign featuring approximately 4 Command and "
         "Control (C2) beacons per day at 6-hour intervals with 90-minute jitter, occasional "
         "Domain Generation Algorithm (DGA) DNS queries (40% chance of 1 per day, mostly "
         "resolving), and progressive data staging before exfiltration. The C2 traffic is "
@@ -566,7 +566,7 @@ def build_document():
 
     add_section_heading(doc, "ATK-007: Volt Typhoon Living-off-the-Land (USR-042)", level=3)
     add_body_text(doc, (
-        "A 115-day nation-state infrastructure pre-positioning campaign beginning January 15, "
+        "A 412-day nation-state infrastructure pre-positioning campaign beginning January 15, "
         "2025. This attack uses exclusively legitimate administrative tools—RDP, WMI, PsExec—"
         "for lateral movement and credential harvesting, making it extremely difficult to "
         "distinguish from normal system administration. The attack progresses through "
@@ -583,7 +583,7 @@ def build_document():
 
     add_section_heading(doc, "ATK-008: Salt Typhoon Telecom Interception (USR-118)", level=3)
     add_body_text(doc, (
-        "A 100-day telecom infrastructure interception campaign beginning January 20, 2025. "
+        "A 412-day telecom infrastructure interception campaign beginning January 20, 2025. "
         "This attack uses DNS tunneling for covert C2 communication, targets call detail "
         "records (CDR) and lawful intercept data, and employs staged exfiltration that mimics "
         "normal telecom operations. The DNS tunneling creates subtle but detectable patterns "
@@ -1113,7 +1113,7 @@ def build_document():
     add_body_paragraph_with_runs(doc, [
         ("1. Mean aggregation destroys temporal signal. ", True),
         ("When a user's 19 weekly feature vectors are averaged into a single mean vector, "
-         "the gradual escalation of an 8-month insider threat is averaged with weeks of "
+         "the gradual escalation of a 14-month insider threat is averaged with weeks of "
          "normal behavior. The attack signal is diluted to the point of statistical "
          "invisibility.", False),
     ])
@@ -1334,10 +1334,10 @@ def build_document():
         ["ATK-002", "Credential Theft", "USR-087", "5 days",
          "Phishing, credential theft, lateral movement, exfiltration",
          "T1566, T1078, T1003, T1021, T1074, T1048"],
-        ["ATK-003", "Slow APT / C2", "USR-234", "180 days",
+        ["ATK-003", "Slow APT / C2", "USR-234", "417 days",
          "C2 beaconing (~4/day, 6-hour interval), occasional DGA DNS, data staging",
          "T1071, T1573, T1074, T1048"],
-        ["ATK-004", "Insider Threat", "USR-156", "8 months",
+        ["ATK-004", "Insider Threat", "USR-156", "14 months",
          "4-phase escalation: mood shift, exploration, staging, exfiltration",
          "T1078, T1083, T1005, T1039, T1052, T1048, T1567"],
         ["ATK-005", "Supply Chain", "USR-*", "30 days",
@@ -1346,11 +1346,11 @@ def build_document():
         ["ATK-006", "Privilege Escalation", "USR-*", "14 days",
          "Exploitation of misconfigured service accounts for escalation",
          "T1068, T1078, T1098"],
-        ["ATK-007", "Volt Typhoon LOTL", "USR-042", "115 days",
+        ["ATK-007", "Volt Typhoon LOTL", "USR-042", "412 days",
          "Living-off-the-land: LOLBin abuse, WMI/PowerShell lateral movement, "
          "no malware, slow data staging via legitimate admin tools",
          "T1059, T1047, T1218, T1003, T1074, T1071, T1048"],
-        ["ATK-008", "Salt Typhoon Telecom", "USR-118", "100 days",
+        ["ATK-008", "Salt Typhoon Telecom", "USR-118", "412 days",
          "Telecom infrastructure targeting: router config exfil, call metadata "
          "harvesting, DNS tunneling for C2, encrypted exfil channels",
          "T1071, T1573, T1005, T1039, T1048, T1572, T1041"],

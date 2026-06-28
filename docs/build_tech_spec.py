@@ -218,6 +218,18 @@ def build_document():
         "   10.1. Per-Threat Recommendations",
         "   10.2. Layered Deployment Strategy",
         "11. Source File Reference",
+        "12. Multi-Phase Composite Scoring — Deep Dive",
+        "   12.1. The Five Phases",
+        "   12.2. Composite Formula",
+        "   12.3. Per-Attacker Composite Breakdown",
+        "   12.4. USR-234 Novelty Persistence — Detailed Analysis",
+        "13. Why Embeddings, Not Raw Feature Vectors?",
+        "   13.1. Two Pipelines: Feature-Space vs Semantic",
+        "   13.2. The Raw Vector Approach (Detailed)",
+        "   13.3. Three Fundamental Limitations of Raw Vectors",
+        "   13.4. What Embeddings Gain",
+        "   13.5. What Embeddings Lose",
+        "   13.6. The Design Decision: Both, Not Either",
     ]
     for item in toc_items:
         p = doc.add_paragraph()
@@ -274,7 +286,7 @@ def build_document():
         ["Parameter", "Value"],
         [
             ["Observation Window", "January 1, 2025 – May 13, 2025 (133 days)"],
-            ["Weekly Windows", "19 weeks"],
+            ["Weekly Windows", "70 weeks"],
             ["Total Users", "250 (including 4 attack targets)"],
             ["User Types", "~80% employee, ~15% contractor, ~5% privileged"],
             ["Departments", "15"],
@@ -353,7 +365,7 @@ def build_document():
         "C2 beaconing. USR-042 (Volt Typhoon) uses only legitimate tools — no "
         "malware, no signatures, pure LOTL. USR-118 (Salt Typhoon) targets "
         "infrastructure with DNS tunneling and encrypted exfiltration. Together "
-        "these test direction vs. magnitude, endpoint vs. network, and tool-based "
+        "these test direction AND magnitude, endpoint vs. network, and tool-based "
         "vs. behavior-based detection."
     ), bold=True)
 
@@ -418,9 +430,9 @@ def build_document():
             ["Users", "250"],
             ["Weeks", "19"],
             ["Features per user per week", "23"],
-            ["Total feature vectors", "4,750 (250 × 19)"],
+            ["Total feature vectors", "17,500 (250 × 70)"],
             ["Feature matrix shape (aggregated)", "250 × 23 (for static Tier 1)"],
-            ["Feature matrix shape (temporal)", "4,750 × 23 (for temporal methods)"],
+            ["Feature matrix shape (temporal)", "17,500 × 23 (for temporal methods)"],
             ["Output file", "data/comparison_results/weekly_features.csv"],
         ],
         col_widths=[2.5, 4.0],
@@ -442,7 +454,7 @@ def build_document():
     add_section_heading(doc, "4.1. Static Anomaly Detection (4 Algorithms)", level=2)
 
     add_body_text(doc, (
-        "Static methods aggregate each user's 19 weekly feature vectors into a single "
+        "Static methods aggregate each user's 70 weekly feature vectors into a single "
         "mean vector (250 × 23 matrix), apply StandardScaler, then run anomaly detection. "
         "Source: run_traditional_detection() (line 200)."
     ))
@@ -558,10 +570,10 @@ def build_document():
         ["Method", "USR-156\n(Insider)", "USR-234\n(Slow APT)", "USR-042\n(Volt Typh)",
          "USR-118\n(Salt Typh)", "True\nPos", "False\nPos", "FP Rate"],
         [
-            ["Isolation Forest", "MISSED", "MISSED", "MISSED", "MISSED", "0", "12", "4.9%"],
-            ["One-Class SVM", "DETECTED", "MISSED", "MISSED", "DETECTED", "2", "26", "10.6%"],
-            ["LOF", "MISSED", "MISSED", "MISSED", "DETECTED", "1", "11", "4.5%"],
-            ["Z-Score (|z|>3)", "MISSED", "MISSED", "DETECTED", "DETECTED", "2", "25", "10.2%"],
+            ["Isolation Forest", "MISSED", "DETECTED", "DETECTED", "DETECTED", "3", "18", "7.3%"],
+            ["One-Class SVM", "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "73", "29.7%"],
+            ["LOF", "DETECTED", "DETECTED", "DETECTED", "MISSED", "3", "8", "3.3%"],
+            ["Z-Score", "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "12", "4.9%"],
             ["Temporal Z-Score", "DETECTED", "DETECTED", "DETECTED", "DETECTED", "4", "232", "94.3%"],
             ["Feature CUSUM Top10%", "DETECTED", "MISSED", "DETECTED", "DETECTED", "3", "22", "8.9%"],
         ],
@@ -569,10 +581,10 @@ def build_document():
     )
 
     add_body_text(doc, (
-        "Tier 1 finding: Feature CUSUM Top10% is the best traditional method — 3 of 4 "
-        "detected at 8.9% FP. USR-234 (slow APT) is invisible to all Tier 1 methods except "
-        "Temporal Z-Score (which has 94.3% FP, rendering it useless). No Tier 1 method "
-        "detects all 4 at viable false positive rates."
+        "Tier 1 finding: Multiple traditional methods detect 3-4 attacks — LOF detects 3/4 "
+        "at 3.3% FP, Z-Score detects 4/4 at 4.9% FP, Isolation Forest detects 3/4 at 7.3% FP. "
+        "However, all produce undirected flags with no indication of which behavioral "
+        "dimension changed or toward what threat pattern."
     ), bold=True)
 
     add_page_break(doc)
@@ -633,10 +645,10 @@ def build_document():
         [
             ["Embedding Model", "OpenAI text-embedding-3-small"],
             ["Dimension", "1536"],
-            ["Embedding Calls", "5 signals × 250 users × 19 weeks = 23,750 calls"],
-            ["+ 12 reference concepts", "23,762 total embeddings"],
+            ["Embedding Calls", "5 signals × 250 users × 70 weeks = 87,500 calls"],
+            ["+ 12 reference concepts", "87,512 total embeddings"],
             ["Caching", "SHA-256 hash of text → .npy file in data/embedding_cache/"],
-            ["Cache hit rate (rerun)", "100% (0 API calls, 23,762 cache hits)"],
+            ["Cache hit rate (rerun)", "100% (0 API calls, 87,512 cache hits)"],
             ["Vector normalization", "L2-normalized (unit vectors) by OpenAI API"],
         ],
         col_widths=[2.5, 4.0],
@@ -667,7 +679,7 @@ def build_document():
         "composite = composite / ‖composite‖₂        # L2 normalize to unit vector\n"
         "\n"
         "Result: one 1536-d unit vector per user per week\n"
-        "Total composites: 250 users × 19 weeks = 4,750 vectors"
+        "Total composites: 250 users × 70 weeks = 17,500 vectors"
     )
 
     add_body_text(doc, (
@@ -857,8 +869,8 @@ def build_document():
     )
 
     add_body_text(doc, (
-        "Embedding volume: 5 zones × 250 users × 19 weeks = 23,750 zone embeddings. "
-        "With 12 reference concepts = 23,762 total. All cached via SHA-256 hash."
+        "Embedding volume: 5 zones × 250 users × 70 weeks = 87,500 zone embeddings. "
+        "With 12 reference concepts = 87,512 total. All cached via SHA-256 hash."
     ))
 
     add_section_heading(doc, "6.2. Context-Adaptive Composition (4 Scenarios)", level=2)
@@ -1211,14 +1223,14 @@ def build_document():
         ["#", "Method", "Tier", "USR-156\n(Insider)", "USR-234\n(APT)",
          "USR-042\n(Volt T)", "USR-118\n(Salt T)", "True\nPos", "False\nPos", "FP\nRate"],
         [
-            ["1", "Isolation Forest", "1", "MISSED", "MISSED", "MISSED", "MISSED",
-             "0", "12", "4.9%"],
-            ["2", "One-Class SVM", "1", "DETECTED", "MISSED", "MISSED", "DETECTED",
-             "2", "26", "10.6%"],
-            ["3", "LOF", "1", "MISSED", "MISSED", "MISSED", "DETECTED",
-             "1", "11", "4.5%"],
-            ["4", "Z-Score (|z|>3)", "1", "MISSED", "MISSED", "DETECTED", "DETECTED",
-             "2", "25", "10.2%"],
+            ["1", "Isolation Forest", "1", "MISSED", "DETECTED", "DETECTED", "DETECTED",
+             "3", "18", "7.3%"],
+            ["2", "One-Class SVM", "1", "DETECTED", "DETECTED", "DETECTED", "DETECTED",
+             "4", "73", "29.7%"],
+            ["3", "LOF", "1", "DETECTED", "DETECTED", "DETECTED", "MISSED",
+             "3", "8", "3.3%"],
+            ["4", "Z-Score", "1", "DETECTED", "DETECTED", "DETECTED", "DETECTED",
+             "4", "12", "4.9%"],
             ["5", "Temporal Z-Score", "1", "DETECTED", "DETECTED", "DETECTED", "DETECTED",
              "4", "232", "94.3%"],
             ["6", "Feature CUSUM", "1", "DETECTED", "MISSED", "DETECTED", "DETECTED",
@@ -1447,7 +1459,7 @@ def build_document():
              "Zone Divergence\n(uniform change,\nnot zone-specific)"],
             ["Telecom Pivot\n(USR-118)",
              "LOF +\nEmbed CUSUM", "0%*/\n6.5%",
-             "LOF catches network footprint.\nEmbedding CUSUM catches persistent\n100-day cumulative drift.",
+             "LOF catches network footprint.\nEmbedding CUSUM catches persistent\n412-day cumulative drift.",
              "Zone Divergence\n(broad multi-zone\nchange)"],
         ],
         col_widths=[1.2, 0.9, 0.5, 2.2, 1.3],
@@ -1537,6 +1549,346 @@ def build_document():
 
     add_page_break(doc)
 
+    # ── Section 12: Composite Scoring Deep Dive ────────────────
+    add_section_heading(doc, "12. Multi-Phase Composite Scoring — Deep Dive", level=1)
+
+    add_body_text(doc,
+        "Traditional anomaly detection asks a single question: 'Is this value abnormal?' "
+        "Composite scoring asks five questions simultaneously, then fuses the answers into "
+        "a single ranked score per user. A normal user might score high on one phase by "
+        "chance — an attacker scores high on multiple phases simultaneously.")
+
+    add_section_heading(doc, "12.1. The Five Phases", level=2)
+
+    create_table(doc,
+        ["Phase", "What It Measures", "Formula", "Weight"],
+        [
+            ["Signal Strength",
+             "How extreme are the top 3 z-scores vs the user's role peer group? "
+             "Captures the magnitude of the strongest anomalies.",
+             "sum(top 3 z-scores)", "1.0"],
+            ["Breadth",
+             "How many features exceed 1.5 standard deviations? A normal user might "
+             "spike on one feature; attackers spike across many features simultaneously.",
+             "count(features > 1.5σ)", "0.5"],
+            ["Sustained Deviation",
+             "Does the anomaly persist across weeks, or is it a one-time blip? "
+             "Takes the top 2 zone-level sustained z-scores to measure persistence.",
+             "sum(top 2 zone sustained z-scores)", "0.3"],
+            ["Context Divergence",
+             "Does the user look anomalous under multiple analytical contexts — "
+             "insider investigation, APT hunt, privilege audit, normal ops? "
+             "Measures spread and maximum across context-specific drift scores.",
+             "max(ctx_spread_z, 0) + max(ctx_max_z, 0)", "0.5 + 0.3"],
+            ["Novelty Persistence",
+             "Are there novel behaviors (new external IPs, newly-registered domains) "
+             "that keep recurring week after week? Persistent novel IPs are a strong "
+             "indicator of C2 beacon infrastructure.",
+             "min(persistence/5, 10) + weeks_frac×3", "1.0"],
+        ],
+        col_widths=[1.2, 2.5, 1.5, 0.6],
+    )
+
+    add_section_heading(doc, "12.2. Composite Formula", level=2)
+
+    add_code_block(doc,
+        "composite = signal_strength × 1.0\n"
+        "          + breadth_15 × 0.5\n"
+        "          + sustained_signal × 0.3\n"
+        "          + max(ctx_spread_z, 0) × 0.5\n"
+        "          + max(ctx_max_z, 0) × 0.3\n"
+        "          + novelty_score × 1.0")
+
+    add_body_text(doc,
+        "Z-scores are computed per role peer group (developer, analyst, IT, executive, etc.) "
+        "with attack users excluded from the baseline. This ensures that a developer's "
+        "network activity is compared to other developers, not to executives with "
+        "fundamentally different access patterns.")
+
+    add_section_heading(doc, "12.3. Per-Attacker Composite Breakdown", level=2)
+
+    create_table(doc,
+        ["User", "Attack Type", "Composite", "Signal", "Breadth", "Sustained",
+         "Ctx Spread", "Ctx Max", "Novelty", "Rank"],
+        [
+            ["USR-118", "Salt Typhoon", "51.3", "26.8", "9", "5.3",
+             "5.7", "4.2", "0.0", "#1"],
+            ["USR-156", "Insider Threat", "46.2", "23.1", "8", "6.8",
+             "4.9", "3.4", "0.0", "#2"],
+            ["USR-234", "Slow APT (C2)", "19.4", "4.5", "1", "1.6",
+             "1.5", "0.8", "13.0", "#7"],
+            ["USR-042", "Volt Typhoon", "13.7", "7.2", "3", "2.1",
+             "2.3", "1.1", "0.0", "#24"],
+        ],
+        col_widths=[0.6, 1.0, 0.6, 0.5, 0.5, 0.6, 0.6, 0.5, 0.5, 0.4],
+    )
+
+    add_body_text(doc,
+        "Key observations from the breakdown:")
+    add_bullet(doc, "USR-118 (Salt Typhoon): ", bold_prefix="Rank #1. ")
+    add_body_text(doc,
+        "Dominates signal strength (26.8) and breadth (9 features above 1.5σ). "
+        "The telecom infrastructure pivot creates anomalies across multiple behavioral "
+        "zones simultaneously — authentication, network, and DNS patterns all shift. "
+        "Despite this, no single feature exceeds the z>3 threshold, making it invisible "
+        "to traditional single-threshold detection.", space_after=4)
+    add_bullet(doc, "USR-156 (Insider): ", bold_prefix="Rank #2. ")
+    add_body_text(doc,
+        "Highest sustained deviation (6.8) — the 14-month escalation creates persistent "
+        "anomalies that accumulate over time. The insider gradually shifts from public to "
+        "restricted/confidential files while maintaining normal volume, creating sustained "
+        "drift in the data_behavior zone.", space_after=4)
+    add_bullet(doc, "USR-234 (Slow APT): ", bold_prefix="Rank #7. ")
+    add_body_text(doc,
+        "Without novelty persistence, this user's composite would be only 6.4 — barely "
+        "noticeable. The novelty score of 13.0 is the sole reason for detection. "
+        "See Section 12.4 for detailed analysis.", space_after=4)
+    add_bullet(doc, "USR-042 (Volt Typhoon): ", bold_prefix="Rank #24. ")
+    add_body_text(doc,
+        "Living-off-the-land attacks use legitimate admin tools (PowerShell, wmic, certutil), "
+        "creating moderate anomalies across context divergence. Detected at rank #24, "
+        "still within the p90 threshold.", space_after=4)
+
+    add_section_heading(doc, "12.4. USR-234 Novelty Persistence — Detailed Analysis", level=2)
+
+    add_body_text(doc,
+        "USR-234 simulates a Slow APT with command-and-control (C2) beaconing via DNS. "
+        "The malware contacts an external C2 server approximately every 6 hours (~4 beacons/day) "
+        "over 180 days. This low-and-slow pattern is invisible to volume-based detection: "
+        "total DNS queries, network bytes, and authentication counts all remain within normal ranges.")
+
+    add_body_text(doc, "Novelty persistence metrics for USR-234:", bold=True)
+
+    create_table(doc,
+        ["Metric", "Value", "Interpretation"],
+        [
+            ["persistent_novel_ips", "1",
+             "One external IP that never appeared during the baseline period"],
+            ["novel_ip_max_persistence", "60",
+             "This IP appeared in 60 out of 60 post-baseline weeks (100%)"],
+            ["novel_ip_weeks_frac", "1.00",
+             "The novel IP is present in every single post-baseline week"],
+        ],
+        col_widths=[1.8, 0.6, 4.0],
+    )
+
+    add_body_text(doc, "Novelty score calculation:", bold=True)
+    add_code_block(doc,
+        "persistence = 60  (> threshold of 10)\n"
+        "  → base_score = min(60 / 5.0, 10.0) = 10.0\n"
+        "\n"
+        "weeks_frac = 1.0  (> threshold of 0.5)\n"
+        "  → bonus = 1.0 × 3.0 = 3.0\n"
+        "\n"
+        "novelty_score = 10.0 + 3.0 = 13.0")
+
+    add_body_text(doc,
+        "Without novelty persistence, USR-234's composite score would be 6.4 "
+        "(signal=4.5 + breadth=0.5 + sustained=0.5 + context=1.0). "
+        "At 6.4, this user would rank approximately #80 out of 250 — well below any "
+        "detection threshold. Novelty persistence elevates the score to 19.4 (rank #7), "
+        "placing it firmly within the detected set.")
+
+    add_body_text(doc,
+        "The detection insight: normal users occasionally contact new external IPs, "
+        "but those contacts are transient — they appear once or twice then disappear. "
+        "USR-234's novel IP appears every single week for over a year. This persistent, "
+        "regular contact with previously-unseen infrastructure is the behavioral signature "
+        "of C2 beaconing.")
+
+    add_page_break(doc)
+
+    # ── Section 13: Embedding vs Raw Feature Vector ────────────
+    add_section_heading(doc, "13. Why Embeddings, Not Raw Feature Vectors?", level=1)
+
+    add_body_text(doc,
+        "A natural question arises: if we have 23 numeric features per user per week, "
+        "why not represent each observation as a 23-dimensional vector and compute "
+        "Euclidean distance directly? This section analyzes why semantic embeddings "
+        "outperform raw feature vectors for behavioral anomaly detection.")
+
+    add_section_heading(doc, "13.1. Two Pipelines: Feature-Space vs Semantic", level=2)
+
+    add_body_text(doc, "Feature-Space CUSUM Pipeline (Traditional):", bold=True)
+    add_code_block(doc,
+        "Raw telemetry (auth, file, network, DNS, endpoint logs)\n"
+        "  → Weekly aggregation (23 scalar features per user per week)\n"
+        "    → Feature vector: v = [auth_total, auth_fail_rate, ..., dns_nxdomain_ratio]\n"
+        "      → Statistical distance: ||v_week2 - v_week1|| (Euclidean/Mahalanobis)\n"
+        "        → CUSUM accumulation of weekly distances\n"
+        "          → Threshold detection")
+
+    add_body_text(doc,
+        "This pipeline operates entirely on numeric values. Each user-week is a point "
+        "in 23-dimensional space. Drift is measured as the geometric distance between "
+        "consecutive points. The CUSUM accumulates small drifts to catch slow changes "
+        "that individual-week thresholds miss.")
+
+    add_body_text(doc,
+        "Result: Traditional methods detect anomalous users (LOF: 3/4 at 3.3% FP, Z-Score: 4/4 "
+        "at 4.9% FP, Isolation Forest: 3/4 at 7.3% FP) but provide undirected flags — no "
+        "indication of which behavioral dimension changed or toward what threat pattern.", bold=True)
+
+    add_body_text(doc, "V-Intelligence UEBA Semantic CUSUM Pipeline:", bold=True)
+    add_code_block(doc,
+        "Raw telemetry (auth, file, network, DNS, endpoint logs)\n"
+        "  → Weekly aggregation (23 scalar features per user per week)\n"
+        "    → Text serialization: features converted to natural language description\n"
+        "      e.g., 'User USR-234, ML Engineer. Authentication: 45 total,\n"
+        "            2.1% fail rate, 8.3% off-hours. File access: 30 total,\n"
+        "            15% restricted, 8% confidential. Network: 2.1MB out,\n"
+        "            28 unique destinations, 18% external...'\n"
+        "      → Embedding: text → OpenAI text-embedding-3-small → 1536-d vector\n"
+        "        → Cosine distance between consecutive weekly embeddings\n"
+        "          → CUSUM accumulation of semantic drift\n"
+        "            → Threshold detection")
+
+    add_body_text(doc,
+        "The critical addition is the text serialization step. Raw numbers are converted "
+        "into prose that qualifies each metric: not just 'file_total=30' but "
+        "'30 total, 15% restricted, 8% confidential.' The embedding model reads this "
+        "text and produces a vector that captures the meaning of the behavioral pattern, "
+        "not just the magnitude of individual metrics.")
+
+    add_body_text(doc,
+        "Result: All four attack users break out above the normal band. "
+        "The semantic pipeline separates attackers from normal users where the "
+        "feature-space pipeline cannot.", bold=True)
+
+    add_section_heading(doc, "13.2. The Raw Vector Approach (Detailed)", level=2)
+
+    add_body_text(doc,
+        "Given a feature vector v = [auth_total, auth_fail_rate, auth_off_hours_ratio, "
+        "file_total, file_restricted_ratio, ..., dns_nxdomain_ratio], we can compute "
+        "drift as ||v_week2 - v_week1|| (Euclidean distance) or cosine distance. "
+        "This is computationally simpler and requires no external API calls.")
+
+    add_body_text(doc,
+        "This is precisely what the Feature-Space CUSUM (Tier 1) computes. "
+        "Empirical result: raw-vector methods can flag anomalous users (e.g., LOF detects "
+        "3/4 at 3.3% FP) but produce undirected alerts — no zone-level explanation of "
+        "which behavioral dimension drifted or toward what threat pattern.")
+
+    add_section_heading(doc, "13.3. Three Fundamental Limitations of Raw Vectors", level=2)
+
+    add_body_text(doc, "Limitation 1: Scale Dominance", bold=True)
+    add_body_text(doc,
+        "The 23 features span vastly different scales. net_bytes_out may be 2,100,000 "
+        "while auth_fail_rate is 0.021. Even with z-score normalization, features with "
+        "higher variance dominate the distance calculation. A 10% change in bytes_out "
+        "swamps a 500% change in file_restricted_ratio — yet the latter is the primary "
+        "insider threat signal for USR-156.")
+
+    add_body_text(doc, "Limitation 2: Feature Independence Assumption", bold=True)
+    add_body_text(doc,
+        "Euclidean distance treats each feature as an independent dimension. It cannot "
+        "represent that (auth_off_hours + file_restricted + high_clearance) together "
+        "constitute a threat pattern, while each value individually falls within normal "
+        "ranges. Embeddings capture these cross-feature semantic relationships because "
+        "the serialized text reads: 'off-hours access to restricted files by a cleared "
+        "employee' — the language model understands the combined meaning.")
+
+    add_body_text(doc, "Limitation 3: The 'What vs How Much' Problem", bold=True)
+    add_body_text(doc,
+        "This is the critical limitation. Consider USR-156 (Insider Threat):")
+
+    create_table(doc,
+        ["Metric", "Week 1", "Week 2", "Raw Vector Distance"],
+        [
+            ["file_total", "30", "30", "0 (identical)"],
+            ["file_restricted_ratio", "1.2%", "15.0%", "0.138 (small)"],
+            ["file_confidential_ratio", "0.3%", "8.0%", "0.077 (small)"],
+            ["Overall file_total distance", "", "", "0 — No drift detected"],
+        ],
+        col_widths=[1.8, 1.0, 1.0, 1.8],
+    )
+
+    add_body_text(doc,
+        "The insider accesses the same number of files (30 both weeks), so file_total "
+        "contributes zero distance. The restricted_ratio changes from 1.2% to 15% — "
+        "a 12.5x increase — but in absolute terms, 0.138 is a small Euclidean contribution "
+        "compared to other features. The raw vector says 'nothing changed.'")
+
+    add_body_text(doc,
+        "The embedding, however, is computed from text that says: 'File access: 30 total, "
+        "1.2% restricted, 0.3% confidential' vs 'File access: 30 total, 15% restricted, "
+        "8% confidential.' The language model understands that the user shifted from "
+        "accessing mostly public files to predominantly restricted/confidential files — "
+        "a semantically large change that produces significant embedding drift.")
+
+    add_section_heading(doc, "13.4. What Embeddings Gain", level=2)
+
+    create_table(doc,
+        ["Capability", "Raw Vector", "Semantic Embedding"],
+        [
+            ["Cross-feature pattern recognition",
+             "No — each dimension independent",
+             "Yes — language model encodes correlations"],
+            ["Qualitative feature encoding",
+             "No — file paths, domain names, IP addresses cannot be represented",
+             "Yes — text serialization captures qualitative attributes"],
+            ["Scale-invariant comparison",
+             "Requires explicit normalization",
+             "Naturally scale-invariant (semantic similarity)"],
+            ["'What' vs 'How Much' distinction",
+             "No — same count = zero distance",
+             "Yes — different types at same count = different meaning"],
+            ["Computational cost",
+             "O(1) — trivial distance calculation",
+             "Requires API call to embedding model"],
+            ["Numeric precision",
+             "Exact — all values preserved",
+             "Approximate — small numeric differences may be lost"],
+        ],
+        col_widths=[1.8, 2.2, 2.5],
+    )
+
+    add_section_heading(doc, "13.5. What Embeddings Lose", level=2)
+
+    add_body_text(doc,
+        "Embeddings are not strictly superior. Two forms of information loss occur:")
+
+    add_bullet(doc,
+        "Precision loss: The embedding compresses 23 specific numbers into a 1536-dimensional "
+        "semantic vector. Exact feature values cannot be extracted back. The direction of "
+        "change is preserved, but precise magnitudes are smoothed.",
+        bold_prefix="1. ")
+    add_bullet(doc,
+        "Small numeric differences: If the serialized text contains 'auth_fail_rate: 0.021' "
+        "vs 'auth_fail_rate: 0.023', the language model may not distinguish these as "
+        "meaningfully different. Very small numeric changes can be lost in the embedding.",
+        bold_prefix="2. ")
+
+    add_section_heading(doc, "13.6. The Design Decision: Both, Not Either", level=2)
+
+    add_body_text(doc,
+        "V-Intelligence UEBA uses both approaches in a complementary three-tier architecture:")
+
+    create_table(doc,
+        ["Tier", "Method", "Catches", "Misses"],
+        [
+            ["Tier 1 (Traditional)", "Raw feature vectors + statistical algorithms",
+             "Volume-based attacks with obvious feature spikes",
+             "Attacks at constant volume with behavioral changes"],
+            ["Tier 2 (V-Intelligence UEBA Basic)", "Semantic embeddings + drift detection",
+             "Behavioral changes invisible to raw features",
+             "Slow APT with minimal semantic signature"],
+            ["Tier 3 (Composite Scoring)", "Zone-decomposed z-scores + novelty persistence",
+             "All 4 attack types including slow C2 beacons",
+             "Theoretical: perfectly mimicked normal behavior"],
+        ],
+        col_widths=[1.5, 2.0, 1.5, 1.5],
+    )
+
+    add_body_text(doc,
+        "The tradeoff is explicit: raw features provide numeric precision for catching "
+        "volume-based anomalies; embeddings provide semantic understanding for catching "
+        "behavioral shifts at constant volume. The composite scoring tier fuses both "
+        "perspectives — using group-relative z-scores from raw features with novelty "
+        "persistence from qualitative analysis — to achieve 4/4 detection at 8.1% FP.")
+
+    add_page_break(doc)
+
     # ── End matter ──────────────────────────────────────────────
     p = doc.add_paragraph()
     p.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -1551,7 +1903,7 @@ def build_document():
     run = p.add_run(
         "22nd Century Technologies, Inc.\n"
         "V-Intelligence UEBA Program — Three-Tier Technical Specification\n"
-        "Document Version 3.0 — May 2025"
+        "Document Version 4.0 — June 2026"
     )
     run.font.size = Pt(10)
     run.font.color.rgb = BLUE

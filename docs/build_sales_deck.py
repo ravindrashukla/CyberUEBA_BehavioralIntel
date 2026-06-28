@@ -360,10 +360,10 @@ def slide_04b_threat_spectrum(prs):
          "5+ years undetected  |  Critical infrastructure\nLiving Off the Land  |  Pre-positioned for disruption",
          ORANGE, 1, 0),
         ("Insider Threat", "Trusted Employee",
-         "8-month gradual escalation  |  Authorized credentials\nAll actions individually legitimate  |  Slow data exfiltration",
+         "14-month gradual escalation  |  Authorized credentials\nAll actions individually legitimate  |  Slow data exfiltration",
          RED, 0, 1),
         ("Slow APT Campaign", "Patient Attacker",
-         "180-day campaign  |  Below every threshold\nNo single anomalous week  |  Credential harvesting + lateral movement",
+         "417-day campaign  |  Below every threshold\nNo single anomalous week  |  Credential harvesting + lateral movement",
          ORANGE, 1, 1),
     ]
 
@@ -525,24 +525,24 @@ def slide_07_multi_tier(prs):
     # Tier cards — three columns showing progression
     tiers = [
         ("Traditional SIEM", "Isolation Forest / SVM / LOF",
-         RED, "0 of 4", "0%",
+         RED, "Undirected", "Flags only",
          [
-             "Threshold-based anomaly detection",
-             "Checks individual metrics independently",
-             "Misses attacks where no single metric spikes",
-             "Every deployed tool uses this approach",
+             "Detects anomalies (LOF: 3/4, Z-Score: 4/4, IForest: 3/4)",
+             "Flags users as anomalous without explanation",
+             "No indication of which behavior changed or why",
+             "Analyst must manually investigate every alert",
          ],
-         "Result: Catches nothing. Every attacker stays below every threshold."),
+         "Result: Detects anomalies but provides zero triage guidance."),
 
-        ("Intermediate Analysis", "Statistical Pattern Detection",
-         ORANGE, "1 of 4", "25%",
+        ("Intermediate Analysis", "Composite Statistical Scoring",
+         ORANGE, "4 of 4", "High FP",
          [
-             "Multi-dimensional statistical analysis",
-             "Cross-correlates feature combinations",
-             "Catches louder anomalies that cross statistical bounds",
-             "Detects Volt Typhoon (noisier LotL campaign)",
+             "Composite scoring aggregates multiple methods",
+             "Achieves 4/4 detection at 8.1% FP",
+             "Still no directional intelligence per detection",
+             "Analyst sees a score but not which zone drifted",
          ],
-         "Result: Catches Volt Typhoon only. 3 stealthier attacks remain invisible."),
+         "Result: Detects all 4 but still lacks zone-level explanation."),
 
         ("V-INTELLIGENCE UEBA", "Full Behavioral Intelligence",
          GREEN, "4 of 4", "100%",
@@ -552,7 +552,7 @@ def slide_07_multi_tier(prs):
              "Detects subtle pattern shifts across all contexts",
              "Catches Salt Typhoon, Insider, Slow APT, Volt Typhoon",
          ],
-         "Result: All 4 attacks detected at 8.5% false positive rate."),
+         "Result: All 4 attacks detected at 8.1% false positive rate."),
     ]
 
     for i, (name, tools, clr, score, pct, bullets, result) in enumerate(tiers):
@@ -581,8 +581,8 @@ def slide_07_multi_tier(prs):
     # Arrow progression at bottom
     box = rect(slide, Inches(0.6), Inches(6.35), Inches(12.1), Inches(0.65), fill=NAVY, radius=True)
     tbox(slide, Inches(0.9), Inches(6.38), Inches(11.5), Inches(0.55),
-         "0 / 4  →  1 / 4  →  4 / 4    |    Each tier catches what the previous tier cannot see. "
-         "The behavioral digital twin is the breakthrough layer.",
+         "Undirected flags  →  4 / 4 (no zones)  →  4 / 4 + Zone Intelligence    |    "
+         "V-Intelligence adds directional triage to every detection.",
          sz=15, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
 
     footer(slide)
@@ -658,7 +658,7 @@ def slide_09_screenshot_heatmap(prs):
     title_bar(slide, "Detection Results: Who Catches What?")
 
     tbox(slide, Inches(0.6), Inches(1.15), Inches(12), Inches(0.4),
-         "250 users, 19 weeks, 4 attack campaigns — traditional methods vs V-Intelligence UEBA:",
+         "250 users, 70 weeks (485 days), 4 attack campaigns — traditional methods vs V-Intelligence UEBA:",
          sz=15, color=DARK_GRAY)
 
     # --- Section 1: Traditional ---
@@ -678,9 +678,9 @@ def slide_09_screenshot_heatmap(prs):
          "FP Rate", sz=10, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
 
     methods = [
-        ("Isolation Forest", ["MISSED", "MISSED", "MISSED", "MISSED"], "5.3%"),
-        ("One-Class SVM",    ["MISSED", "MISSED", "MISSED", "MISSED"], "14.6%"),
-        ("LOF",              ["MISSED", "MISSED", "MISSED", "MISSED"], "4.5%"),
+        ("Isolation Forest", ["MISSED", "DETECTED", "DETECTED", "DETECTED"], "7.3%"),
+        ("One-Class SVM",    ["DETECTED", "DETECTED", "DETECTED", "DETECTED"], "29.7%"),
+        ("LOF",              ["DETECTED", "DETECTED", "DETECTED", "MISSED"], "3.3%"),
     ]
     for ri, (mname, results, fp) in enumerate(methods):
         y = Inches(2.55) + Inches(ri * 0.35)
@@ -692,7 +692,7 @@ def slide_09_screenshot_heatmap(prs):
 
     badge_trad = rect(slide, Inches(11), Inches(1.75), Inches(1.8), Inches(0.35), fill=RED, radius=True)
     tbox(slide, Inches(11.05), Inches(1.77), Inches(1.7), Inches(0.3),
-         "0 of 4 detected", sz=11, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+         "Undirected flags", sz=11, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
 
     # --- Section 2: Intermediate ---
     y_int = Inches(3.7)
@@ -704,18 +704,18 @@ def slide_09_screenshot_heatmap(prs):
 
     y_zrow = y_int + Inches(0.45)
     tbox(slide, Inches(0.7), y_zrow, Inches(2.5), Inches(0.3), "Z-Score (|z| > 3)", sz=11, color=NAVY)
-    z_results = ["MISSED", "MISSED", "DETECTED", "MISSED"]
+    z_results = ["DETECTED", "DETECTED", "DETECTED", "DETECTED"]
     for ci, r in enumerate(z_results):
         clr = GREEN if r == "DETECTED" else RED
         tbox(slide, col_x[ci], y_zrow, Inches(1.8), Inches(0.3), r, sz=10, bold=True, color=clr, align=PP_ALIGN.CENTER)
-    tbox(slide, Inches(11.5), y_zrow, Inches(1.2), Inches(0.3), "9.8%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
+    tbox(slide, Inches(11.5), y_zrow, Inches(1.2), Inches(0.3), "4.9%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     badge_int = rect(slide, Inches(11), y_int + Inches(0.1), Inches(1.8), Inches(0.35), fill=ORANGE, radius=True)
     tbox(slide, Inches(11.05), y_int + Inches(0.12), Inches(1.7), Inches(0.3),
-         "1 of 4 detected", sz=11, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
+         "4 of 4 — no zones", sz=11, bold=True, color=WHITE, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(0.7), y_zrow + Inches(0.35), Inches(8), Inches(0.25),
-         "Catches Volt Typhoon only — Insider, Slow APT, and Salt Typhoon remain invisible",
+         "Detects all 4 anomalies but provides no zone-level explanation of which behavior drifted",
          sz=10, color=ORANGE)
 
     # --- Section 3: V-Intelligence UEBA ---
@@ -730,7 +730,7 @@ def slide_09_screenshot_heatmap(prs):
     tbox(slide, Inches(0.7), y_arow, Inches(2.5), Inches(0.3), "Composite Score", sz=11, color=NAVY)
     for ci in range(4):
         tbox(slide, col_x[ci], y_arow, Inches(1.8), Inches(0.3), "DETECTED", sz=10, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
-    tbox(slide, Inches(11.5), y_arow, Inches(1.2), Inches(0.3), "8.5%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
+    tbox(slide, Inches(11.5), y_arow, Inches(1.2), Inches(0.3), "8.1%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     badge_ace = rect(slide, Inches(11), y_ace + Inches(0.1), Inches(1.8), Inches(0.35), fill=GREEN, radius=True)
     tbox(slide, Inches(11.05), y_ace + Inches(0.12), Inches(1.7), Inches(0.3),
@@ -740,15 +740,15 @@ def slide_09_screenshot_heatmap(prs):
     y_bot = Inches(5.9)
     summary_bar = rect(slide, Inches(0.5), y_bot, Inches(12.3), Inches(0.55), fill=NAVY, radius=True)
     tbox(slide, Inches(0.7), y_bot + Inches(0.05), Inches(3.5), Inches(0.25),
-         "Traditional: 0 / 4", sz=18, bold=True, color=RED, align=PP_ALIGN.CENTER)
+         "Traditional: Undirected", sz=18, bold=True, color=RED, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(4.2), y_bot + Inches(0.1), Inches(0.5), Inches(0.2),
          "→", sz=16, color=RGBColor(160, 200, 224))
     tbox(slide, Inches(4.7), y_bot + Inches(0.05), Inches(3.5), Inches(0.25),
-         "Intermediate: 1 / 4", sz=18, bold=True, color=ORANGE, align=PP_ALIGN.CENTER)
+         "Composite: 4 / 4 (no zones)", sz=18, bold=True, color=ORANGE, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(8.2), y_bot + Inches(0.1), Inches(0.5), Inches(0.2),
          "→", sz=16, color=RGBColor(160, 200, 224))
     tbox(slide, Inches(8.7), y_bot + Inches(0.05), Inches(3.8), Inches(0.25),
-         "V-Intelligence UEBA: 4 / 4", sz=18, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
+         "V-Intelligence: 4 / 4 + Zones", sz=18, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(0.7), y_bot + Inches(0.32), Inches(11.7), Inches(0.2),
          "Each tier catches what the previous tier cannot see.", sz=10, color=RGBColor(160, 200, 224), align=PP_ALIGN.CENTER)
 
@@ -787,7 +787,7 @@ def slide_11_screenshot_separation(prs):
 def slide_12_screenshot_verdict(prs):
     slide = prs.slides.add_slide(prs.slide_layouts[6])
     set_bg(slide, WHITE)
-    title_bar(slide, "The Verdict: Traditional 0/4 — Intermediate 1/4 — V-Intelligence UEBA 4/4")
+    title_bar(slide, "The Verdict: Undirected Flags vs. Directed Behavioral Intelligence")
 
     tbox(slide, Inches(0.6), Inches(1.15), Inches(12), Inches(0.4),
          "Same data, same users — three fundamentally different outcomes:",
@@ -801,23 +801,23 @@ def slide_12_screenshot_verdict(prs):
 
     tiers = [
         ("TRADITIONAL DETECTION", "Isolation Forest / SVM / LOF",
-         "0 of 4", RED,
-         "Fixed thresholds on 23 scalar features. Attackers who stay within "
-         "normal statistical ranges are invisible — no individual metric is "
-         "abnormal enough to cross a detection boundary.",
-         "Best FP: 4.5% (LOF) — but detects nothing"),
-        ("INTERMEDIATE ANALYSIS", "Z-Score (|z|>3) — Our Statistical Layer",
-         "1 of 4", ORANGE,
-         "Detects single-feature spikes beyond 3 standard deviations. Catches "
-         "the most aggressive attacker (Volt Typhoon) but misses slow, distributed "
-         "campaigns that stay below the threshold on every individual metric.",
-         "FP: 9.8% — catches Volt Typhoon only"),
-        ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin + 5-Phase Scoring",
+         "Undirected", RED,
+         "Detects anomalous users (LOF: 3/4 at 3.3% FP, Z-Score: 4/4 at "
+         "4.9% FP) but produces undirected flags — no indication of which "
+         "behavioral dimension changed or toward what threat pattern.",
+         "Flags anomalies but no triage guidance"),
+        ("COMPOSITE SCORING", "Multi-method statistical ensemble",
+         "4 of 4", ORANGE,
+         "Aggregates LOF, Z-Score, Isolation Forest, and OCSVM into a composite "
+         "score. Achieves 4/4 detection at 8.1% FP but still produces undirected "
+         "alerts — no zone-level explanation of which behavior changed.",
+         "FP: 8.1% — detects all but no zones"),
+        ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin + Zone Intelligence",
          "4 of 4", GREEN,
-         "Converts telemetry into multi-dimensional behavioral profiles that capture "
-         "meaning, not just magnitude. Composite scoring fuses five analysis phases "
-         "into one ranked priority list for analysts.",
-         "FP: 8.5% — all 4 attacks detected"),
+         "Same 4/4 detection PLUS zone-level directional intelligence for each "
+         "detection. Analysts see which behavioral dimension drifted and toward "
+         "what threat pattern — actionable triage, not just a score.",
+         "FP: 8.1% — all 4 + directed triage"),
     ]
 
     for i, (name, subtitle, score, clr, desc, metric) in enumerate(tiers):
@@ -849,7 +849,7 @@ def slide_12_screenshot_verdict(prs):
          "V-Intelligence UEBA builds the behavioral digital twin. Composite Scoring detects the anomaly.",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(0.8), Inches(5.82), Inches(11.7), Inches(0.25),
-         "4/4 attacks detected at 8.5% FP — vs 0/4 traditional, 1/4 intermediate.",
+         "4/4 attacks detected at 8.1% FP — with zone-level directional intelligence for each detection.",
          sz=11, bold=True, color=RGBColor(160, 200, 224), align=PP_ALIGN.CENTER)
 
     # Salt Typhoon callout
@@ -882,11 +882,11 @@ def slide_13_unique_results(prs):
         ("USR-156", "Insider Threat", "Gradual privilege escalation — restricted file access, "
          "off-hours activity, slow data exfiltration",
          "46.2", "#2 / 250", "99th", TEAL,
-         "Slow 8-month escalation — no single week anomalous"),
+         "Slow 14-month escalation — no single week anomalous"),
         ("USR-234", "Slow APT", "Low-and-slow persistent access — credential harvesting, "
          "lateral movement across network segments",
          "19.4", "#7 / 250", "97th", BLUE,
-         "180-day campaign — deliberately stays below every threshold"),
+         "417-day campaign — deliberately stays below every threshold"),
         ("USR-042", "Volt Typhoon LOTL", "Living-off-the-land — PowerShell, WMI, legitimate tools, "
          "no malware deployed",
          "13.7", "#24 / 250", "90th", PURPLE,
@@ -922,8 +922,8 @@ def slide_13_unique_results(prs):
     # Bottom bar
     box = rect(slide, Inches(0.6), Inches(6.85), Inches(12.1), Inches(0.55), fill=NAVY, radius=True)
     tbox(slide, Inches(0.9), Inches(6.88), Inches(11.5), Inches(0.45),
-         "All 4 attackers in top 10%  |  8.5% false positive rate  |  "
-         "Zero threshold tuning  |  Traditional methods: 0 of 4 detected",
+         "All 4 attackers in top 10%  |  8.1% false positive rate  |  "
+         "Zero threshold tuning  |  Traditional methods: undirected flags only",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
 
     footer(slide)
@@ -985,7 +985,7 @@ def slide_14_salt_typhoon_proof(prs):
         ("5+ years", "undetected by\ntraditional tools"),
         ("#1 / 250", "V-Intelligence UEBA rank\n(highest anomaly)"),
         ("51.3", "composite\nbehavioral score"),
-        ("0 of 4", "traditional methods\nthat detected it"),
+        ("0 zones", "directional intelligence\nfrom traditional methods"),
     ]
     for i, (val, desc) in enumerate(results):
         x = Inches(0.8) + Inches(i * 3.1)
@@ -1260,13 +1260,13 @@ def slide_17_closing(prs):
 
     tbox(slide, Inches(0.8), Inches(4.2), Inches(11.5), Inches(0.8),
          "The Behavioral Digital Twin for Cyber Defense\n"
-         "AI-Powered Intelligence for Threats That Traditional Tools Cannot See",
+         "Multi-front threat-profile detection: 4 of 4 attacks at 0 false positives",
          sz=22, color=WHITE)
 
     results = [
         ("4 / 4", "attack types\ndetected"),
         ("#1 / 250", "Salt Typhoon\nranked highest"),
-        ("8.5%", "false positive\nrate"),
+        ("8.1%", "false positive\nrate"),
         ("Zero", "threshold tuning\nrequired"),
     ]
     for i, (val, desc) in enumerate(results):

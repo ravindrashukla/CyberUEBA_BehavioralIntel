@@ -1,0 +1,197 @@
+Cyber Behavioral Intelligence: Technical Deep-Dive Briefing Book
+Preparation for the Brandon Pugh Technical Session (Pentagon / R Street)
+Internal preparation document. Slide-by-slide. Grounded in the actual implementation.
+Ravindra Shukla  |  V-Intelligence
+INTERNAL USE ONLY. Contains build-vs-roadmap distinctions and proprietary detail. Not the leave-behind.
+## Section 0. How to Use This Book and Run the Meeting
+# Slide 0.1  |  Meeting Context and Objectives
+[FRAME]
+Audience: Brandon Pugh, cybersecurity lead at R Street and advisor to Pentagon / critical-infrastructure cyber. Technical enough to go deep; his lens is policy and national defense. He rewards candor and discounts anything that looks tuned or overclaimed.
+Format: 2 to 3 hour technical deep dive. He has the layered cybersecurity whitepaper from the Presentation folder.
+Our objectives: (1) Establish that behavioral, meaning-based detection closes the Volt/Salt living-off-the-land gap; (2) prove it with a live, honest demo; (3) secure a bounded validation pilot and a policy/thought-leadership relationship.
+Golden rule: Lead with the national problem, then the innovation, then proof. Show what runs. Label what is designed-next as roadmap, explicitly. Candor is the advantage.
+# Slide 0.2  |  Run-of-Show (target 2.5 hours + buffer)
+[FRAME]
+  | Block || Time || Content || Driver
+  | 0. Open || 5 min || His goals, confirm time, set the arc || You
+  | 1. Problem + Innovation || 25 min || Threat inflection (Volt/Salt, LoTL, T1078); meaning vs magnitude; architecture || You
+  | 2. Data + Digital Twin || 35 min || Synthetic dataset; build one entity into a behavioral twin live; the 4 campaigns || Demo driver
+  | 3. Detection deep dive || 50 min || Drift, direction/projection, composite scoring; walk Salt #1 and Volt #25; 4/4 vs 0-1/4 || Both
+  | 4. Operationalize + Federal fit || 25 min || Deploy (IL5/6, JWICS, air-gap, no PII), SIEM fit, roadmap, honest validation path || You
+  | 5. Policy + next steps || 15 min || Preemptive shift, the national gap, pilot, thought leadership || You
+  | Buffer || 15 min || His tangents and questions || -
+# Slide 0.3  |  The Honesty Boundary (most important internal page)
+[FRAME]
+Keep these three columns straight at all times. If asked about a roadmap item, say plainly: "That is designed into the architecture and is the next build phase; what you are seeing today is the detection core."
+  | Show live (BUILT) || Show with precision (PARTIAL) || Designed next / separate (DO NOT claim built)
+  | 4 attack simulators || Digital twin: 5 signals + zones built; identity fusion NOT built || Identity fusion across 10+ systems (ROADMAP)
+  | Behavioral embedding (text to 1536-d) || FP economics: 8.1% composite real; known-bad 0-FP detector NOT built || HMAC tamper-evident forensics (ROADMAP)
+  | Drift / CUSUM || Cross-domain DLA: same architecture ported, no live data link || ABAC proportional response, MFA/lockout (ROADMAP)
+  | Direction / MITRE projection ||  || Layer 1 Rigor (preemptive), Layer 3 API, Layer 5 Mythos (SEPARATE products)
+  | 5-phase composite scoring ||  || 
+  | The 4 case-study ranks ||  || 
+  | Head-to-head baselines (IF/SVM/LOF/z) ||  || 
+  | Deployment (Docker, Mock, API/UI) ||  || 
+# Slide 0.4  |  Numbers to Keep Straight (he will check)
+[FRAME]
+Dataset: 250 synthetic entities, 485 days (70 weeks), 2025-01-01 to 2026-04-30, ~14 million events across 5 log sources.
+Embedding: 1536 dimensions (OpenAI text-embedding-3-small, or the deterministic MockEmbedder for air-gapped runs).
+False-positive rate: 8.1 percent at the composite operating point (about 19 false positives out of 246 normal users), catching all four campaigns. Use 8.1, not 8.5. The deck's 8.5 is wrong and must be corrected.
+Ranks (from composite_scores.csv): Salt USR-118 #1 (composite 51.27); Insider USR-156 #2 (46.24); Slow APT USR-234 #7 (19.44); Volt USR-042 #25 (13.70). Use Volt #25, not #24.
+Baselines: Isolation Forest 0/4 (5.3% FP); One-Class SVM 0/4 (14.6% FP); Local Outlier Factor 0/4 (4.5% FP); z-score 1/4 (9.8% FP). So traditional methods catch 0 to 1 of 4.
+Discrimination margin: normal users average composite 6.6 (max 21.5); attackers lowest 13.7, average 32.7. Clean separation no single method achieves.
+Operating-point candor: the composite threshold was selected with knowledge of ground truth in the proof of concept. Present it as a reporting benchmark to be re-validated on real data, not a deployable threshold.
+## Section 1. Problem and Innovation (the first 25 minutes)
+# Slide 1  |  The Threat Inflection: Volt and Salt Typhoon
+[BUILT]
+Message: Apex adversaries are already inside, using valid accounts and living-off-the-land, crossing no threshold for years. This is the gap we close.
+Technical detail: 
+Volt Typhoon (CISA AA24-038A): pre-positioning in U.S. critical infrastructure, only legitimate Windows tooling (wmic, ntdsutil, netsh, rundll32), no malware, no signatures, five-plus years dwell, edge-device entry.
+Salt Typhoon (CISA AA25-239A): telecom espionage at carrier scale into lawful-intercept systems, slow and sub-threshold, multi-year, valid-account access.
+The common technique: valid accounts (MITRE T1078), the most-used initial-access technique; stolen credentials are the top initial vector; credential-borne breaches dwell the longest of any category.
+Talking track: "Every event these campaigns generate looks legitimate in isolation. That is the point. A threshold never fires, a signature never matches, and one attacker is split across many identity systems. The detection problem is not magnitude, it is meaning and direction over time."
+Likely questions: 
+Q: Are these the real campaigns or your simulation?  A: Our simulators reproduce the published TTPs of these campaigns in a controlled population so we can score detection blind. We are not claiming to have caught the real intrusions.
+# Slide 2  |  The Core Insight: Meaning vs Magnitude
+[BUILT]
+Message: Traditional tools count; they do not comprehend. The same number can mean two completely different things.
+Technical detail: 
+The example: two users each touch 47 files this week. One reads their own team's documents; the other scans 12 departments at 2 a.m. A scalar feature sees the same number, 47, and the attacker is invisible.
+Why every traditional method has a blind spot: Isolation Forest misses slow drift within normal ranges; One-Class SVM gives high false positives in high dimensions; Local Outlier Factor is scale-sensitive; z-score only catches single-feature spikes.
+Our move: represent behavior as meaning. Raw metrics become prose, prose becomes a 1536-dimensional vector that captures behavioral semantics, and we then read the trajectory and direction of that vector over time.
+Talking track: "We do not add another anomaly score. We change what is being measured, from how much an entity did to what it is becoming."
+## Section 2. The Engine, Deep (the built core you can demo)
+# Slide 3  |  Card 1: Attack Simulators and Synthetic Data
+[BUILT]
+Message: Four distinct nation-state-grade campaigns embedded in a 250-entity population with full ground truth, so detection is a blind, scorable test.
+Technical detail (simulator/attacks/): 
+insider_threat.py (USR-156, 8 months): four phases, mood shift, curiosity, reconnaissance, exfiltration.
+apt_slow.py (USR-234, 180 days): low-magnitude C2 beacon plus domain-generation-algorithm DNS plus gradual data staging.
+volt_typhoon.py (USR-042, 120 days): living-off-the-land, four phases (initial access, credential harvesting, lateral movement, pre-positioning), legitimate admin tools (PowerShell, WMI, netsh, certutil).
+salt_typhoon.py (USR-118, 100 days): telecom infrastructure, four phases (edge compromise, infrastructure mapping, call-detail/comms collection, staged exfiltration via DNS tunneling).
+Each simulator injects realistic multi-signal events (auth, network, DNS, file, endpoint) with MITRE ATT&CK technique tags.
+Show / demo: Open one simulator file; show the phase structure and MITRE tags. Then show the generated event stream for that user in data/generated/.
+Talking track: "We control ground truth, so this is a blind test we can grade: 4 known attackers hidden among 246 normal users."
+# Slide 4  |  Card 2: Behavioral Embedding (text to 1536-d)
+[BUILT]
+Message: Raw metrics are serialized into prose and embedded into a unified 1536-dimensional semantic space, so meaning, not just counts, becomes measurable.
+Technical detail: 
+embeddings/embedder.py: Embedder uses OpenAI text-embedding-3-small (1536-d) with disk and memory caching; MockEmbedder produces deterministic, SHA256-seeded 1536-d vectors with no API key, for air-gapped and reproducible runs.
+embeddings/snapshot_builder.py: serializes the five behavioral signals per entity per period into a text description, embeds each, and composes them into one monthly vector via weighted average.
+Example serialization: "USR-042 ran administrative tooling across 9 hosts it had not touched before, 71 percent outside normal hours, with no new file writes." That sentence is what gets embedded.
+Show / demo: Show a serialized behavior sentence and note that the vector captures its semantics. Mention the Mock path for air-gapped enclaves.
+Likely questions: 
+Q: You used a commercial embedding model. Data sovereignty?  A: The MockEmbedder runs fully offline today, and a local open model can replace the commercial embedder in an enclave. No personally identifiable information is placed in the embedding; we embed aggregated behavior descriptions, not raw events.
+# Slide 5  |  Card 3: Digital Twin (5 signals + behavioral zones)
+[PARTIAL]
+Message: Each entity is rebuilt as a behavioral twin: five signals, five behavioral zones, and a trajectory of snapshots over time.
+Technical detail: 
+models/cyber_entity.py: CyberEntity holds zone embeddings (5 zones), phase state (velocity, acceleration, regime shifts), relationships, and risk scores.
+models/hierarchical_zones.py: five zones for a user, identity, access pattern, data behavior, network footprint, risk posture.
+Five signals: authentication, process, network, file, identity.
+data/tier3_results/weekly_zone_trajectories.csv: actual weekly zone trajectories across 250 users over 70 weeks (a real 5.8 MB artifact you can open).
+PARTIAL boundary: The twin, zones, and trajectory are built. Identity fusion across 10+ systems is NOT built; today each user_id is treated as atomic. Say "identity fusion is the designed next phase."
+Show / demo: Open an entity in the UI and show its zone trajectory over the weeks.
+# Slide 6  |  Card 4: Drift Detection and CUSUM
+[BUILT]
+Message: Sequential change-point detection on the embedding trajectory accumulates sub-threshold drift, so a slow campaign that no monthly check would flag becomes visible.
+Technical detail (detection/cusum.py): 
+cusum_detect() accumulates drift magnitudes and alarms on sustained change even when each step is below the individual threshold.
+cusum_scan_entity() applies CUSUM to an entity's snapshot sequence; threshold 0.05, baseline allowance 0.02, minimum run length 2.
+Why it matters: drift of 0.02 per month for six months is invisible to any single monthly check but accumulates to an alarm. Sequential detection of this kind is minimax-optimal, so years of dwell collapse to days of lead time.
+First-pass behavior: CUSUM is the broad net (it flags most entities that move at all); the composite scorer then ranks who actually matters. Explain this so the broad first-pass count is not mistaken for the final result.
+Show / demo: Show a healthy entity's flat drift versus an attacker's accumulating drift curve.
+# Slide 7  |  Card 5: Direction and MITRE ATT&CK Projection
+[BUILT]
+Message: We do not say "87 percent anomalous." We project the drift direction onto named threat concepts and report "drifting toward lateral movement," with a MITRE technique ID.
+Technical detail: 
+detection/drift_direction.py: compute_drift_vector() builds the normalized direction; concept_alignment() projects it onto reference concepts by cosine similarity; analyze_entity_drift() returns the top-aligned concepts, confidence, and threat classification.
+detection/reference_concepts.py: 14 threat concepts (for example compromised_endpoint, data_exfiltration, insider_threat_slow, living_off_the_land, telecom_infrastructure_pivot) and 2 benign concepts (normal_role_change, seasonal_variation). Each is a natural-language description embedded to 1536-d; threat concepts carry MITRE techniques (T1078, T1083, T1005, and others).
+Example output: "USR-156 drifting toward insider_threat_slow, alignment 0.68, confidence high."
+Talking track: "This is what makes an alert actionable and auditable for a SOC analyst and an auditor at once: not a score, a named direction mapped to a technique."
+# Slide 8  |  Card 7: Multi-Phase Composite Scoring
+[BUILT]
+Message: Five independent behavioral fronts are fused into one ranked score. Each attacker is exposed on a different front; no single front catches all four.
+Technical detail (detection/composite_scorer.py): 
+Phase 1, signal strength: sum of the top-3 z-scores.
+Phase 2, breadth: count of elevated features (z over 1.5 and over 2.0).
+Phase 3, sustained deviation: zone-specific late-stage sustained z-scores.
+Phase 4, context divergence: spread of context-specific scores.
+Phase 5, novelty persistence: recurrence of genuinely new behavior such as a C2 beacon.
+Fusion: composite = signal_strength + 0.5*breadth + 0.3*sustained + (0.5 + 0.3)*context + novelty. Results for all 250 users are in data/tier3_results/composite_scores.csv.
+Talking track: "A normal user can be extreme on one front by chance. An attacker is extreme on several at once. That multi-front extremity is the fingerprint a single threshold cannot see."
+# Slide 9  |  Card 8: The Four Case Studies (the proof)
+[BUILT]
+Message: Four campaigns, four different tells. Composite scoring catches each on the phase that exposes it, blind, over 250 entities.
+  | Entity || Campaign || Rank || Composite || The tell
+  | USR-118 || Salt Typhoon (telecom) || #1 || 51.27 || Sustained deviation + context divergence; max z-score 1.71, invisible to thresholds
+  | USR-156 || Insider (8-month) || #2 || 46.24 || Signal strength + breadth; strong, broad, sustained escalation
+  | USR-234 || Slow APT (180-day) || #7 || 19.44 || Novelty persistence; low magnitude, but a C2 beacon recurs week after week
+  | USR-042 || Volt Typhoon (LoTL) || #25 || 13.70 || Breadth; living-off-the-land creates breadth, not magnitude
+Honesty note: Volt ranks #25, not the deck's #24, and it is the hardest case because living-off-the-land blends with normal IT admin behavior. Say that openly; it is a credibility win, and it motivates identity fusion and richer signals as the roadmap.
+# Slide 10  |  Card 9: False-Positive Economics
+[PARTIAL]
+Message: All four caught at 8.1 percent false positive, where traditional tools caught zero to one. This is a risk-ranked list, not a flood of threshold alerts.
+Technical detail: 
+Composite: 4 of 4 at about 8.1 percent FP (roughly 19 false positives among 246 normal users).
+Baselines at comparable thresholds: Isolation Forest 5.3 percent FP (0/4), Local Outlier Factor 4.5 percent FP (0/4), One-Class SVM 14.6 percent FP (0/4), z-score 9.8 percent FP (1/4).
+Operational framing: analysts triage the top of a ranked list, not thousands of alarms; the value is recall on the threats that matter with explainable ranking.
+PARTIAL boundary: The deck's "known-bad profiles, 4 of 4 at 0 false positives" is NOT implemented in code. Do not present a 0-FP detector as built. If raised, say a known-bad signature detector is part of the roadmap.
+Likely questions: 
+Q: 8 percent FP at DoD scale is a lot.  A: It is a ranked list, not threshold alerts; analysts work top-down. The operating point is a PoC reporting benchmark to be tuned and re-validated on real data.
+# Slide 11  |  Card 10: Head-to-Head Baselines
+[BUILT]
+Message: We ran the tools agencies actually deploy against the same data. They miss what we catch, on the record.
+Technical detail (comparison/run_comparison.py): 
+Implemented: Isolation Forest, One-Class SVM, Local Outlier Factor, and z-score, all from scikit-learn, run on the identical synthetic dataset with threshold sweeps.
+Result: traditional point-anomaly methods catch 0 of 4; z-score catches 1 of 4 while alarming on nearly everyone. The same four attackers sit inside the normal band in feature space and separate from the population only in the semantic embedding space.
+Show / demo: Run or show the comparison output side by side with the composite ranking.
+# Slide 12  |  Card 12: Deployment and Sovereignty
+[BUILT]
+Message: Containerized, runs on the logs you already collect, deployable in an enclave, privacy-preserving by design.
+Technical detail: 
+docker-compose.yml: PostgreSQL with pgvector, a FastAPI service (port 8001), and a background worker.
+api/main.py and demo/ui/: REST API (entities, trajectories, detection, tier3 routes) and a static UI (entity detail, alerts, tier3 views).
+Air-gap: MockEmbedder runs with no external calls; a local open embedding model can replace the commercial one in an enclave.
+Privacy: metrics are aggregated; raw events are stored but not embedded, so no personally identifiable information enters the vector.
+Federal fit: Deployable across IL5, IL6, and JWICS; local-model option for air-gapped enclaves; every verdict is explainable and MITRE-mapped.
+## Section 3. Context and Roadmap (be precise here)
+# Slide 13  |  Card 13: Cross-Domain Foundation (DLA)
+[PARTIAL]
+Message: The same behavioral architecture is fielded in a different domain, supply-chain decision intelligence at DLA, which is independent evidence the method generalizes.
+Technical detail: 
+models/cyber_entity.py and hierarchical_zones.py were ported from the DLA Entity Digital Model; the zone-embedding architecture and velocity/acceleration/regime-shift detection come from that work.
+PARTIAL boundary: It is the same architecture and algorithms, retargeted with cyber signals. It is NOT one running engine spanning both, and there is no live data link. Say "same framework, separate deployments."
+# Slide 14  |  Card 6: Identity Fusion across 10+ Systems
+[ROADMAP]
+Message (roadmap): Designed to unify AD, Entra, Okta, AWS, Kubernetes, EDR, VPN, PKI, and more into one behavioral entity, so an attacker stops looking like ten users.
+Honest status: NOT built. The code treats each user_id as atomic; there is no cross-system resolver. This is the next build phase and a natural pilot deliverable.
+How to handle if raised: "Today the engine scores per identity. Fusing fragmented identities into one entity is designed and is the next phase; it is one of the highest-value items for a DoD environment with many identity systems."
+# Slide 15  |  Card 11: Forensics and Proportional Response
+[ROADMAP]
+Message (roadmap): Designed for tamper-evident, court-admissible behavioral evidence and proportional, attribute-based response (step-up authentication through lockout).
+Honest status: NOT built. There is no HMAC-chained evidence log and no response automation (no MFA trigger, no lockout) in the code today.
+How to handle if raised: "The detection core is what runs now. Tamper-evident evidence and proportional response are designed into the architecture and are roadmap; we kept the prototype focused on proving detection first."
+# Slide 16  |  Card 14: The Full Stack (Rigor, API, Mythos)
+[SEPARATE]
+Message: The layered architecture (preemptive, behavioral, application/API, data, code) is the strategic picture. This app is the behavioral layer.
+Honest status: Layer 1 preemptive (Rigor), Layer 3 application/API, and Layer 5 code (Mythos) are separate products and are not in this codebase. Present the full stack as the architecture and partner landscape, with this UEBA engine as the working, demonstrated layer.
+How to handle if raised: "What you are seeing live today is the behavioral layer. The other layers are part of the architecture; some are partner or separate capabilities. I will not present them as running in this demo."
+## Section 4. Running the Discussion
+# Slide 17  |  Consolidated Tough Questions
+[FRAME]
+Q: It is synthetic. How do you know it works on real DoD telemetry?  A: It is a controlled blind test to prove the mechanism; the next step is a bounded pilot on real data. It is not operational proof, and we say so.
+Q: Did you select the operating point knowing ground truth?  A: Yes, in the PoC; it is a reporting benchmark to be re-validated, not a deployable threshold.
+Q: How is this different from Exabeam, Securonix, Splunk UBA?  A: Meaning versus counts, direction versus magnitude, and the measured 0/4 versus 4/4 on the same data.
+Q: 8 percent FP is a lot at scale.  A: Ranked list, not threshold alerts; analysts work top-down; tune on real data.
+Q: Scale, 250 entities versus millions?  A: The architecture, cohorts, and snapshot model are designed to scale; be straight about what is proven (250) versus engineered for scale (roadmap).
+Q: Can an adversary who knows about behavioral detection evade it?  A: Multi-front design; being normal on every front at once is far harder than beating one threshold. Hardening the detector itself (adversarial ML, MITRE ATLAS) is on the roadmap.
+Q: Data sovereignty / commercial model?  A: MockEmbedder offline today; local open model in an enclave; no PII in embeddings.
+Q: Identity fusion, forensics, response, the other layers, are they built?  A: Detection core is built and demoed; those are designed-next or separate. We are explicit about the line.
+# Slide 18  |  Next Steps and the Ask
+[FRAME]
+Bounded validation pilot on representative DoD or critical-infrastructure telemetry, scoped to detection and explainability.
+Roadmap co-design: identity fusion first (highest DoD value), then tamper-evident forensics and proportional response.
+Policy and thought leadership: R Street perspective on the preemptive plus behavioral framing and the national living-off-the-land / valid-account gap.
+Follow-on engineering session with his team if this one lands.
+Closing line: "What you saw run today is the behavioral detection core, on the logs you already collect, catching four nation-state-grade campaigns that the tools agencies deploy today score as normal. Identity fusion, forensics, and response are designed and next. The honest ask is a bounded pilot on real data."

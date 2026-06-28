@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>V-Intelligence Five-Layer Cyber Whitepaper - Figures and Callouts</title>
+<style>
+  :root{
+    --navy:#1f3864; --blue:#2e75b6; --slate:#55606b; --ink:#222; --line:#cbd5e1;
+    --l1:#0b5394; --l2:#1f7a33; --l3:#7a4ea6; --l4:#b5570a; --l5:#a61b1b;
+    --bg:#f7f9fc; --card:#ffffff; --gold:#b8860b;
+  }
+  *{box-sizing:border-box}
+  body{font-family:"Segoe UI",Calibri,Arial,sans-serif;color:var(--ink);background:var(--bg);margin:0;padding:32px;}
+  h1{color:var(--navy);font-size:24px;margin:0 0 4px}
+  .sub{color:var(--slate);font-size:13px;margin:0 0 28px}
+  figure{background:var(--card);border:1px solid var(--line);border-radius:10px;padding:22px 24px;margin:0 0 30px;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+  figcaption{font-weight:700;color:var(--navy);font-size:15px;margin-bottom:16px;border-left:4px solid var(--blue);padding-left:10px}
+  .note{color:var(--slate);font-size:12px;margin-top:12px;font-style:italic}
+  /* FIG 1 layered stack */
+  .stack{display:flex;flex-direction:column;gap:8px}
+  .layer{display:grid;grid-template-columns:150px 1fr 230px;align-items:center;border-radius:8px;color:#fff;padding:12px 16px;gap:14px}
+  .layer .ln{font-weight:800;font-size:14px}
+  .layer .what{font-size:13px;opacity:.97}
+  .layer .obj{font-size:12px;background:rgba(255,255,255,.18);padding:6px 10px;border-radius:6px}
+  .spine{margin-top:10px;text-align:center;font-size:12px;color:var(--navy);background:#eef3fb;border:1px dashed var(--blue);border-radius:6px;padding:8px}
+  /* flow */
+  .flow{display:flex;align-items:stretch;gap:0;flex-wrap:wrap}
+  .step{flex:1;min-width:120px;background:#eef3fb;border:1px solid var(--blue);border-radius:8px;padding:12px;text-align:center;font-size:12.5px}
+  .step b{display:block;color:var(--navy);font-size:13px;margin-bottom:4px}
+  .arrow{display:flex;align-items:center;justify-content:center;color:var(--blue);font-size:22px;padding:0 6px;font-weight:700}
+  /* callouts */
+  .callrow{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+  .callout{border-radius:10px;padding:16px;color:#fff;text-align:center}
+  .callout .big{font-size:30px;font-weight:800;line-height:1}
+  .callout .lbl{font-size:12px;margin-top:6px;opacity:.95}
+  .c1{background:var(--l1)} .c2{background:var(--l2)} .c4{background:var(--l4)} .c5{background:var(--navy)}
+  .quote{background:#fbf7e9;border-left:5px solid var(--gold);padding:14px 18px;border-radius:6px;color:#5a4a12;font-size:14px;margin:0 0 30px}
+  .quote b{color:var(--navy)}
+  /* typhoon path */
+  .kc{display:flex;gap:10px;flex-wrap:wrap;align-items:stretch}
+  .kcstep{flex:1;min-width:150px;border-radius:8px;color:#fff;padding:12px;font-size:12.5px}
+  .kcstep b{display:block;font-size:13px;margin-bottom:4px}
+</style>
+</head>
+<body>
+<h1>V-Intelligence Five-Layer Cybersecurity Architecture</h1>
+<p class="sub">Figures and callout boxes &middot; Prepared for U.S. Army and Pentagon Cyber Mission Defenders</p>
+
+<!-- ===== CALLOUT BOXES ===== -->
+<figure>
+<figcaption>Callout boxes: the numbers that carry the room</figcaption>
+<div class="callrow">
+  <div class="callout c2"><div class="big">4 / 4</div><div class="lbl">nation-state attackers caught at an 8.1% false-positive point (classical methods: 0 of 4)</div></div>
+  <div class="callout c1"><div class="big">&lt;15 days</div><div class="lbl">to first actionable preemptive findings, agentless and configuration-only</div></div>
+  <div class="callout c4"><div class="big">99%</div><div class="lbl">of firewall breaches are misconfiguration, not product flaws</div></div>
+  <div class="callout c5"><div class="big">2^8000</div><div class="lbl">configuration state space: too large to sample, provable only by formal methods</div></div>
+</div>
+<div class="quote" style="margin-top:18px"><b>Honest boundary:</b> the behavioral 4-of-4 result is a controlled, synthetic-data proof of concept on 250 entities, indicative rather than a guarantee of field performance. Layers shown as architecture or roadmap are labeled as such.</div>
+</figure>
+
+<!-- ===== FIGURE 1: 5-LAYER STACK ===== -->
+<figure>
+<figcaption>Figure 1. The Five-Layer Defense-in-Depth Architecture</figcaption>
+<div class="stack">
+  <div class="layer" style="background:var(--l1)"><div class="ln">Layer 1<br>Network / Preemptive</div><div class="what">Formal, model-checked proof that every known attack path is closed before traffic flows.</div><div class="obj">Mission: close the door before traffic flows</div></div>
+  <div class="layer" style="background:var(--l2)"><div class="ln">Layer 2<br>Behavioral / UEBA</div><div class="what">Behavioral digital twins detect valid-account, living-off-the-land abuse that crosses no threshold.</div><div class="obj">Mission: watch the room for what slips through</div></div>
+  <div class="layer" style="background:var(--l3)"><div class="ln">Layer 3<br>Application / API</div><div class="what">Runtime discovery and protection of every API; stops valid-but-malicious business-logic abuse.</div><div class="obj">Mission: guard the applications and APIs</div></div>
+  <div class="layer" style="background:var(--l4)"><div class="ln">Layer 4<br>Data / Agentic AI</div><div class="what">Governs sensitive data and the AI agents that reach it; real-time redaction and agent control.</div><div class="obj">Mission: protect data, govern the agents</div></div>
+  <div class="layer" style="background:var(--l5)"><div class="ln">Layer 5<br>Code / Supply Chain</div><div class="what">Finds novel zero-days before deploy; assures code and dependencies in the CI/CD pipeline.</div><div class="obj">Mission: secure the code that builds the mission</div></div>
+</div>
+<div class="spine">One shared vocabulary across all five layers: <b>MITRE ATT&amp;CK + ATLAS</b> &middot; one platform, human-in-the-loop</div>
+<p class="note">Each layer catches what the others structurally cannot. Covering all five is completeness, not redundancy.</p>
+</figure>
+
+<!-- ===== FIGURE 2: LAYER 1 PREEMPTIVE FLOW ===== -->
+<figure>
+<figcaption>Figure 2. Layer 1 - Preemptive Network Assurance (formal verification flow)</figcaption>
+<div class="flow">
+  <div class="step"><b>Inputs</b>Firewall / edge configurations + live threat intelligence</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Model</b>Exhaustive symbolic model of the control estate + MITRE-enriched attack graphs</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Query</b>Formal query: where is a control gap against this attack?</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Remediate</b>Guardrailed reasoner prescribes precise, risk-ranked fixes</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Human</b>Analyst reviews and applies; drift caught within the hour</div>
+</div>
+<p class="note">No sampling, no agents, configuration-only. Uses residual capacity in the estate to block attacks; first findings in under 15 days.</p>
+</figure>
+
+<!-- ===== FIGURE 3: DIGITAL TWIN PIPELINE ===== -->
+<figure>
+<figcaption>Figure 3. Layer 2 - The Behavioral Digital Twin pipeline</figcaption>
+<div class="flow">
+  <div class="step"><b>Raw logs</b>auth, file, network, DNS, endpoint</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>5 zones</b>identity, access, data, network, risk (23 features)</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Embed</b>each zone as prose &rarr; 1536-d vector</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Compose</b>attention-weighted twin vector</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Drift + CUSUM</b>trajectory over time</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Direction</b>MITRE-mapped: toward which threat</div>
+  <div class="arrow">&rarr;</div>
+  <div class="step"><b>Verdict</b>one ranked, explainable score</div>
+</div>
+<p class="note">Meaning over magnitude. Slow APT (invisible to thresholds) caught by novelty alone; Volt caught by breadth of small signals. 4 of 4 at 8.1% FP.</p>
+</figure>
+
+<!-- ===== FIGURE 4: TYPHOON ACROSS LAYERS ===== -->
+<figure>
+<figcaption>Figure 4. One Typhoon intrusion, traced across all five layers (the integration moat)</figcaption>
+<div class="kc">
+  <div class="kcstep" style="background:var(--l5)"><b>Layer 5 - Code</b>Removes the exploitable code or dependency that grants initial access (supply-chain compromise).</div>
+  <div class="kcstep" style="background:var(--l1)"><b>Layer 1 - Edge</b>Proves the misconfigured edge path Volt enters through is closed before traffic flows.</div>
+  <div class="kcstep" style="background:var(--l2)"><b>Layer 2 - Behavior</b>Catches the valid-account, living-off-the-land movement once inside, the gap L1 cannot see.</div>
+  <div class="kcstep" style="background:var(--l3)"><b>Layer 3 - API</b>Catches the API and business-logic abuse at runtime.</div>
+  <div class="kcstep" style="background:var(--l4)"><b>Layer 4 - Data / Agents</b>Catches Salt's data collection and exfiltration, and ungoverned AI agents.</div>
+</div>
+<p class="note">No single box does this. The hand-off across layers, under one MITRE vocabulary, is what no point tool can claim.</p>
+</figure>
+
+</body>
+</html>

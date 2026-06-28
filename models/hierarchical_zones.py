@@ -36,7 +36,8 @@ CYBER_ZONES = {
         },
         "risk_posture": {
             "fields": ["endpoint_suspicious_ratio", "endpoint_max_risk",
-                       "endpoint_mean_risk", "endpoint_unique_processes", "endpoint_total"],
+                       "endpoint_mean_risk", "endpoint_unique_processes",
+                       "endpoint_total"],
         },
     },
     "device": {
@@ -190,7 +191,7 @@ def _serialize_user_zone(zone_name: str, uid: str,
             f"methods={features.get('auth_methods_used', 0):.0f}"
         )
     elif zone_name == "data_behavior":
-        return (
+        base = (
             f"User {uid} data: file_accesses={features.get('file_total', 0):.0f}, "
             f"restricted_ratio={features.get('file_restricted_ratio', 0):.4f}, "
             f"confidential_ratio={features.get('file_confidential_ratio', 0):.4f}, "
@@ -198,14 +199,25 @@ def _serialize_user_zone(zone_name: str, uid: str,
             f"unique_paths={features.get('file_unique_paths', 0):.0f}, "
             f"bytes={features.get('file_total_bytes', 0):.0f}"
         )
+        dirs = features.get("qual_file_dirs", "")
+        if dirs:
+            base += f". Directories accessed: {dirs}"
+        return base
     elif zone_name == "network_footprint":
-        return (
+        base = (
             f"User {uid} network: bytes_out={features.get('net_bytes_out', 0):.0f}, "
             f"unique_dsts={features.get('net_unique_dsts', 0):.0f}, "
             f"external_ratio={features.get('net_external_ratio', 0):.4f}, "
             f"dns_domains={features.get('dns_unique_domains', 0):.0f}, "
             f"nxdomain_ratio={features.get('dns_nxdomain_ratio', 0):.4f}"
         )
+        ext_ips = features.get("qual_net_ext_ips", "")
+        if ext_ips:
+            base += f". External destinations: {ext_ips}"
+        dns_doms = features.get("qual_dns_domains", "")
+        if dns_doms:
+            base += f". DNS domains queried: {dns_doms}"
+        return base
     elif zone_name == "risk_posture":
         return (
             f"User {uid} risk: endpoint_events={features.get('endpoint_total', 0):.0f}, "
@@ -368,14 +380,21 @@ def _serialize_data_interpretive(uid, role, dept, features, ctx):
                 f"to removable media, or preparation for exfiltration."
             )
         parts.append(f"Total volume: {total_bytes:.0f} bytes across {features.get('file_unique_paths', 0):.0f} paths.")
+        dirs = features.get("qual_file_dirs", "")
+        if dirs:
+            parts.append(f"Directories accessed: {dirs}.")
         return " ".join(parts)
 
     if peak_z < 1.5:
-        return (
+        base = (
             f"{role} {uid} in {dept}: data access activity within normal parameters. "
             f"File operations {file_total:.0f}, restricted ratio {restricted:.4f}, "
             f"confidential ratio {confidential:.4f}, all unremarkable."
         )
+        dirs = features.get("qual_file_dirs", "")
+        if dirs:
+            base += f" Directories: {dirs}."
+        return base
 
     parts = [f"{role} {uid} in {dept} data access behavior:"]
     if restr_z > 1.0:
@@ -385,6 +404,9 @@ def _serialize_data_interpretive(uid, role, dept, features, ctx):
     if write_z > 1.0:
         parts.append(f"Write ratio {_percentile_label(write_z)} at {write_ratio:.4f}.")
     parts.append(f"Volume: {total_bytes:.0f} bytes across {features.get('file_unique_paths', 0):.0f} paths.")
+    dirs = features.get("qual_file_dirs", "")
+    if dirs:
+        parts.append(f"Directories accessed: {dirs}.")
     return " ".join(parts)
 
 
@@ -426,14 +448,27 @@ def _serialize_network_interpretive(uid, role, dept, features, ctx):
                 f"High rate of failed DNS lookups strongly indicates domain generation algorithm (DGA) "
                 f"activity, characteristic of advanced malware C2 communication."
             )
+        ext_ips = features.get("qual_net_ext_ips", "")
+        if ext_ips:
+            parts.append(f"External destinations: {ext_ips}.")
+        dns_doms = features.get("qual_dns_domains", "")
+        if dns_doms:
+            parts.append(f"DNS domains queried: {dns_doms}.")
         return " ".join(parts)
 
     if peak_z < 1.5:
-        return (
+        base = (
             f"{role} {uid} in {dept}: network activity within normal parameters. "
             f"Outbound {bytes_out:.0f} bytes, external ratio {ext_ratio:.4f}, "
             f"{dns_domains:.0f} DNS domains, all unremarkable."
         )
+        ext_ips = features.get("qual_net_ext_ips", "")
+        if ext_ips:
+            base += f" External destinations: {ext_ips}."
+        dns_doms = features.get("qual_dns_domains", "")
+        if dns_doms:
+            base += f" DNS: {dns_doms}."
+        return base
 
     parts = [f"{role} {uid} in {dept} network behavior:"]
     if ext_z > 1.0:
@@ -443,6 +478,12 @@ def _serialize_network_interpretive(uid, role, dept, features, ctx):
     if nxd_z > 1.0:
         parts.append(f"NXDOMAIN ratio {_percentile_label(nxd_z)} at {nxdomain:.4f}.")
     parts.append(f"Connecting to {unique_dsts:.0f} destinations, {dns_domains:.0f} DNS domains.")
+    ext_ips = features.get("qual_net_ext_ips", "")
+    if ext_ips:
+        parts.append(f"External destinations: {ext_ips}.")
+    dns_doms = features.get("qual_dns_domains", "")
+    if dns_doms:
+        parts.append(f"DNS: {dns_doms}.")
     return " ".join(parts)
 
 
@@ -531,47 +572,65 @@ def build_zone_embeddings(entity_type: str, entity_id: str,
 
 def softmax_attention(zone_vecs: dict[str, np.ndarray],
                       context_weights: dict[str, float]) -> dict[str, float]:
-    """Compute softmax attention weights biased by context.
+    """Compute linear-normalized attention weights biased by context.
 
-    logit_i = ||zone_i|| * context_weight[zone_i]
-    alpha_i = softmax(logits)
+    Uses direct linear normalization instead of softmax to preserve
+    the intended weight differentiation across investigation contexts.
+    Softmax compresses weights (e.g., intended 0.40 → ~0.23); linear
+    normalization preserves them (0.40 stays ~0.40).
+
+    alpha_i = (||zone_i|| * context_weight[zone_i]) / sum(...)
     """
     if not zone_vecs:
         return {}
 
-    logits = {}
+    raw = {}
     for name, vec in zone_vecs.items():
         energy = float(np.linalg.norm(vec))
         bias = context_weights.get(name, 0.2)
-        logits[name] = energy * bias
+        raw[name] = energy * bias
 
-    max_logit = max(logits.values()) if logits else 0.0
-    exp_logits = {k: math.exp(v - max_logit) for k, v in logits.items()}
-    total = sum(exp_logits.values())
+    total = sum(raw.values())
 
     if total == 0:
         uniform = 1.0 / len(zone_vecs)
         return {k: uniform for k in zone_vecs}
 
-    return {k: v / total for k, v in exp_logits.items()}
+    return {k: v / total for k, v in raw.items()}
 
 
 def compose_zones(zone_embeddings: dict[str, np.ndarray],
                   context: str = "normal_ops",
-                  entity_type: str = "user") -> np.ndarray:
+                  entity_type: str = "user",
+                  exclude_static: bool = True) -> np.ndarray:
     """Attention-weighted composition of zone embeddings into composite.
 
     Uses context-adaptive weights to bias attention toward zones relevant
     to the investigation scenario (APT hunt, insider investigation, etc.).
+
+    Static zones (identity) are excluded from composition by default
+    because they never drift and dilute the behavioral signal.
+    Identity zone is still used separately as a stability reference
+    in zone divergence detection.
     """
+    STATIC_ZONES = {"identity"}
+    if exclude_static:
+        active_zones = {k: v for k, v in zone_embeddings.items()
+                        if k not in STATIC_ZONES}
+    else:
+        active_zones = zone_embeddings
+
+    if not active_zones:
+        active_zones = zone_embeddings
+
     ctx_weights = CONTEXT_WEIGHTS.get(entity_type, CONTEXT_WEIGHTS["user"]).get(
         context, CONTEXT_WEIGHTS["user"]["normal_ops"]
     )
 
-    alphas = softmax_attention(zone_embeddings, ctx_weights)
+    alphas = softmax_attention(active_zones, ctx_weights)
 
     composite = np.zeros(EMBED_DIM, dtype=np.float64)
-    for name, vec in zone_embeddings.items():
+    for name, vec in active_zones.items():
         alpha = alphas.get(name, 0.0)
         composite += alpha * vec.astype(np.float64)
 

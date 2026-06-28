@@ -262,7 +262,7 @@ def slide_02_exec_summary(prs):
     findings = [
         (TEAL,  "Finding 1 — Traditional Methods Miss Insider Threats",
                 "LOF detects 3/4 attacks at 0% FP — best single traditional method. But no "
-                "traditional algorithm detects USR-156 (8-month insider threat) at viable FP rates."),
+                "traditional algorithm detects USR-156 (14-month insider threat) at viable FP rates."),
         (ORANGE, "Finding 2 — Temporal Methods Over-Alert",
                 "Temporal Z-Score detects all 4 attacks but at 100% FP — every user flagged. "
                 "Feature Trajectory achieves 6.5% FP but only detects 2 of 4 attacks."),
@@ -474,25 +474,25 @@ def slide_06_attack_scenarios(prs):
 
     PURPLE = RGBColor(142, 68, 173)
     attacks = [
-        ("USR-156 — Insider Threat", "8-Month Escalation  |  Mar 2025",
+        ("USR-156 — Insider Threat", "14-Month Escalation  |  Mar 2025",
          [("Phase 1", "Subtle mood shift, off-hours increase"),
           ("Phase 2", "Curiosity browsing outside scope"),
           ("Phase 3", "Restricted file access"),
           ("Phase 4", "Trickle exfiltration")],
          "Volumes stay in normal ranges", RED),
-        ("USR-234 — Slow APT", "180-Day Campaign  |  Apr 2025",
-         [("C2 Pattern", "~4 beacons/day at 6hr intervals"),
+        ("USR-234 — Slow APT", "417-Day Campaign  |  Apr 2025",
+         [("C2 Pattern", "~2-3 beacons/day at 12hr intervals"),
           ("DNS", "DGA queries blend with normal"),
           ("Staging", "Progressive data accumulation"),
           ("Exfil", "Encrypted channel exfiltration")],
          "Subtle network footprint", GOLD),
-        ("USR-042 — Volt Typhoon", "115-Day LOTL  |  Jan 2025",
+        ("USR-042 — Volt Typhoon", "412-Day LOTL  |  Jan 2025",
          [("Tools", "RDP, WMI, PsExec (legitimate)"),
           ("Creds", "Credential harvesting via admin"),
           ("Lateral", "Movement mimics admin activity"),
           ("Infra", "Pre-positioning for future ops")],
          "Blends with normal admin behavior", PURPLE),
-        ("USR-118 — Salt Typhoon", "100-Day Telecom  |  Jan 2025",
+        ("USR-118 — Salt Typhoon", "412-Day Telecom  |  Jan 2025",
          [("C2", "DNS tunneling for covert channel"),
           ("Access", "CDR/lawful intercept data"),
           ("Exfil", "Staged exfiltration over weeks"),
@@ -663,7 +663,7 @@ def slide_08_traditional_methods(prs):
     pts = [
         "LOF detects 3/4 attacks at 0% FP by comparing local density — USR-234 C2 beacons, "
         "USR-042 lateral movement, and USR-118 DNS tunneling all create detectable density changes.",
-        "But USR-156's feature values remain within normal ranges throughout the entire 8-month "
+        "But USR-156's feature values remain within normal ranges throughout the entire 14-month "
         "insider campaign — no traditional method reliably catches this.",
         "Only behavioral analysis (Tier 3 Zone Divergence) can detect USR-156 by identifying "
         "which behavioral dimensions are drifting, not just overall magnitude.",
@@ -1135,7 +1135,7 @@ def slide_14_acecard_direction_results(prs):
         "Tier 2 averages all behavioral zones into one composite vector",
         "Zone-specific drift signals are diluted — data_behavior drift "
         "is averaged with stable identity, access, and risk zones",
-        "Result: V-Intelligence UEBA Direction detects 0 of 4 attacks at threshold",
+        "Result: single-composite embedding dilutes zone-specific signals — detects anomaly but provides no directional triage guidance",
     ]
     y = Inches(4.5)
     for pt in pts_r:
@@ -1617,7 +1617,7 @@ def slide_22_detection_playbook(prs):
          "LOF: endpoint anomaly\nRegime Shift: phase break",
          "Zone Divergence\n(uniform, not zone-specific)"],
         ["Telecom\n(USR-118)", "LOF +\nEmbed CUSUM", "0%* /\n6.5%",
-         "LOF: network footprint\nCUSUM: persistent 100-day drift",
+         "LOF: network footprint\nCUSUM: persistent 412-day drift",
          "Zone Divergence\n(broad multi-zone change)"],
     ]
 

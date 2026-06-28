@@ -1,0 +1,55 @@
+Data range: 2025-01-01 to 2026-04-30 (485 days)
+Analyzing 250 users (including 4 attack targets)
+
+============================================================
+PHASE 1: FEATURE ENGINEERING
+============================================================
+Engineering features (incremental, one week at a time)...
+  Week 5/70 processed
+  Week 10/70 processed
+  Week 15/70 processed
+  Week 20/70 processed
+  Week 25/70 processed
+  Week 30/70 processed
+  Week 35/70 processed
+  Week 40/70 processed
+  Week 45/70 processed
+  Week 50/70 processed
+  Week 55/70 processed
+  Week 60/70 processed
+  Week 65/70 processed
+  Week 70/70 processed
+  70 weeks x 250 users = 17500 feature vectors
+
+============================================================
+RUNNING TRADITIONAL ANOMALY DETECTION
+============================================================
+  Temporal split: baseline weeks 0-34, test weeks 35-69
+
+1. Isolation Forest...
+   Flagged: 13/250 users (5.2%)
+2. One-Class SVM...
+   Flagged: 36/250 users (14.4%)
+3. Local Outlier Factor...
+   Flagged: 11/250 users (4.4%)
+4. Z-score threshold (|z| > 3)...
+   Flagged: 25/250 users (10.0%)
+
+============================================================
+TEMPORAL TRADITIONAL DETECTION (Train/Test Split)
+============================================================
+Training on weeks 0-34, testing on weeks 35-69
+
+============================================================
+FEATURE TRAJECTORY CUSUM (ACECARD Concept Proof)
+============================================================
+  Processed 250 users
+  CUSUM detections: 247/250
+  Top 10% by CUSUM value (>=22.45): 25 users
+
+============================================================
+ACECARD BEHAVIORAL DRIFT DETECTION
+============================================================
+  Using REAL OpenAI embeddings (text-embedding-3-small)
+  Embedding 12 reference concepts...
+  16 concept vectors ready (14 threat, 2 benign)

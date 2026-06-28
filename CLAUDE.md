@@ -10,7 +10,7 @@
 ## Development
 
 ```bash
-# Generate synthetic data (16 months, ~300K events/day)
+# Generate synthetic data (16 months, ~30K events/day)
 python -m simulator.generate --days 7  # quick test
 python -m simulator.generate            # full 486 days
 

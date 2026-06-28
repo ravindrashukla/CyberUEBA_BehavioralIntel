@@ -9,3 +9,24 @@ data/concept_embeddings.npz
 *.parquet
 .venv/
 .pytest_cache/
+
+# scratch / temp / regenerable media
+check_*.py
+diag_*.py
+diagnose_*.py
+debug_*.py
+deep_dive_*.py
+__pycache__/
+*.pyc
+*.mp4
+docs/narration_audio*/
+docs/demo_frames*/
+docs/screenshots/
+.claude/worktrees/
+_*.log
+docs/_*.png
+data/tier3_results/all250_trajectories.csv
+data/tier3_results/test50_trajectories.csv
+data/tier3_results/*_backup*.csv
+data/tier3_results/*_pre234*.csv
+data/comparison_results/

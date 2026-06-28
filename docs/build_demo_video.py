@@ -296,9 +296,9 @@ def create_detection_results_frame():
     draw.text((380, 140), "Isolation Forest  /  One-Class SVM  /  LOF", fill=LIGHT, font=get_font(16))
 
     methods = [
-        ("Isolation Forest", ["MISSED", "MISSED", "MISSED", "MISSED"], "5.3%"),
-        ("One-Class SVM",    ["MISSED", "MISSED", "MISSED", "MISSED"], "14.6%"),
-        ("LOF",              ["MISSED", "MISSED", "MISSED", "MISSED"], "4.5%"),
+        ("Isolation Forest", ["MISSED", "DETECTED", "DETECTED", "DETECTED"], "7.3%"),
+        ("One-Class SVM",    ["DETECTED", "DETECTED", "DETECTED", "DETECTED"], "29.7%"),
+        ("LOF",              ["DETECTED", "DETECTED", "DETECTED", "MISSED"], "3.3%"),
     ]
     # Column headers
     cols = ["USR-156 Insider", "USR-234 APT", "USR-042 Volt Typhoon", "USR-118 Salt Typhoon"]
@@ -318,26 +318,26 @@ def create_detection_results_frame():
 
     # Result badge
     draw.rectangle([(1120, 140), (1360, 178)], fill=RED)
-    draw.text((1140, 146), "0 of 4 detected", fill=WHITE, font=get_font(18, bold=True))
+    draw.text((1140, 146), "Undirected flags", fill=WHITE, font=get_font(18, bold=True))
 
     # --- Intermediate section ---
     y_int = 340
     draw.rectangle([(60, y_int), (920, y_int + 8)], fill=GOLD)
-    draw.text((60, y_int + 18), "OUR INTERMEDIATE ANALYSIS", fill=GOLD, font=get_font(22, bold=True))
-    draw.text((470, y_int + 20), "Statistical Pattern Detection (Z-Score)", fill=LIGHT, font=get_font(16))
+    draw.text((60, y_int + 18), "COMPOSITE SCORING", fill=GOLD, font=get_font(22, bold=True))
+    draw.text((470, y_int + 20), "Multi-Method Statistical Ensemble", fill=LIGHT, font=get_font(16))
 
     y_row = y_int + 60
-    draw.text((70, y_row), "Z-Score (|z| > 3)", fill=WHITE, font=get_font(16))
-    for ci, r in enumerate(["MISSED", "MISSED", "DETECTED", "MISSED"]):
+    draw.text((70, y_row), "Composite Score", fill=WHITE, font=get_font(16))
+    for ci, r in enumerate(["DETECTED", "DETECTED", "DETECTED", "DETECTED"]):
         clr = GREEN if r == "DETECTED" else RED
         draw.text((300 + ci * 175, y_row), r, fill=clr, font=get_font(14, bold=True))
-    draw.text((1000, y_row), "9.8%", fill=LIGHT, font=get_font(14))
+    draw.text((1000, y_row), "8.5%", fill=LIGHT, font=get_font(14))
 
     draw.rectangle([(1120, y_int + 18), (1360, y_int + 56)], fill=GOLD)
-    draw.text((1140, y_int + 24), "1 of 4 detected", fill=(13, 27, 42), font=get_font(18, bold=True))
+    draw.text((1140, y_int + 24), "4 of 4 — no zones", fill=(13, 27, 42), font=get_font(18, bold=True))
 
     # Annotation
-    draw.text((70, y_row + 40), "Catches Volt Typhoon only — Insider, Slow APT, and Salt Typhoon remain invisible",
+    draw.text((70, y_row + 40), "Detects all 4 anomalies but provides no zone-level explanation of what drifted",
               fill=(200, 160, 60), font=get_font(14))
 
     # --- V-Intelligence UEBA section ---
@@ -358,31 +358,30 @@ def create_detection_results_frame():
     # Bottom summary
     y_bottom = 680
     draw.rectangle([(60, y_bottom), (WIDTH - 60, y_bottom + 80)], fill=DARK_BG)
-    draw.text((100, y_bottom + 10), "Traditional: 0 / 4", fill=RED, font=get_font(28, bold=True))
+    draw.text((100, y_bottom + 10), "Traditional: Undirected", fill=RED, font=get_font(28, bold=True))
     draw.text((530, y_bottom + 10), "→", fill=LIGHT, font=get_font(28))
-    draw.text((590, y_bottom + 10), "Intermediate: 1 / 4", fill=GOLD, font=get_font(28, bold=True))
+    draw.text((590, y_bottom + 10), "Composite: 4 / 4 (no zones)", fill=GOLD, font=get_font(28, bold=True))
     draw.text((1020, y_bottom + 10), "→", fill=LIGHT, font=get_font(28))
-    draw.text((1080, y_bottom + 10), "V-Intelligence UEBA: 4 / 4", fill=GREEN, font=get_font(28, bold=True))
-    draw.text((100, y_bottom + 50), "Each tier catches what the previous tier cannot see.",
+    draw.text((1080, y_bottom + 10), "V-Intelligence UEBA: 4 / 4 + Zones", fill=GREEN, font=get_font(28, bold=True))
+    draw.text((100, y_bottom + 50), "V-Intelligence adds zone-level directional intelligence to every detection.",
               fill=LIGHT, font=get_font(16))
 
     # Attacker labels along bottom
     y_labels = 800
     labels = [
-        ("USR-156", "Insider Threat\n8-month campaign", RED),
-        ("USR-234", "Slow APT\n180-day campaign", RED),
-        ("USR-042", "Volt Typhoon LOTL\n115-day campaign", GOLD),
-        ("USR-118", "Salt Typhoon Telecom\n100-day campaign", RED),
+        ("USR-156", "Insider Threat\n14-month campaign", RED),
+        ("USR-234", "Slow APT\n417-day campaign", RED),
+        ("USR-042", "Volt Typhoon LOTL\n412-day campaign", GOLD),
+        ("USR-118", "Salt Typhoon Telecom\n412-day campaign", RED),
     ]
     for i, (uid, desc, clr) in enumerate(labels):
         x = 80 + i * 450
         draw.text((x, y_labels), uid, fill=clr, font=get_font(18, bold=True))
         for j, line in enumerate(desc.split("\n")):
             draw.text((x, y_labels + 28 + j * 22), line, fill=LIGHT, font=get_font(13))
-        trad = "0/3 trad" if uid != "USR-042" else "0/3 trad"
-        interm = "MISSED" if uid != "USR-042" else "Z-Score"
-        ace = "DETECTED"
-        draw.text((x, y_labels + 78), f"Trad: MISSED  |  Int: {interm}  |  V-Intelligence UEBA: {ace}",
+        trad_label = "LOF+IForest" if uid in ("USR-234", "USR-042") else ("OCSVM only" if uid == "USR-156" else "LOF+OCSVM")
+        ace = "DETECTED + ZONES"
+        draw.text((x, y_labels + 78), f"Trad: {trad_label}  |  V-Intelligence UEBA: {ace}",
                   fill=(140, 170, 190), font=get_font(11))
 
     # Footer
@@ -392,7 +391,7 @@ def create_detection_results_frame():
 
 
 def create_verdict_frame():
-    """Custom three-tier verdict frame — Traditional 0/4, Intermediate 1/4, V-Intelligence UEBA 4/4."""
+    """Custom three-tier verdict frame — Traditional undirected, Composite 4/4, V-Intelligence UEBA 4/4 + zones."""
     img = Image.new("RGB", (WIDTH, HEIGHT), BG_COLOR)
     draw = ImageDraw.Draw(img)
 
@@ -407,21 +406,21 @@ def create_verdict_frame():
     start_x = (WIDTH - 3 * card_w - 2 * gap) // 2
 
     tiers = [
-        ("TRADITIONAL", "Isolation Forest / SVM / LOF", "0 of 4", RED,
-         "Fixed thresholds on individual metrics.\n"
-         "Attackers who stay within normal ranges\n"
-         "are invisible — no alerts generated.",
-         "Best FP: 4.5% (LOF)\nbut detects nothing"),
-        ("INTERMEDIATE", "Z-Score Statistical Analysis", "1 of 4", GOLD,
-         "Cross-feature statistical deviation.\n"
-         "Catches Volt Typhoon (noisier campaign)\n"
-         "but misses 3 stealthier attack types.",
-         "FP Rate: 9.8%\ncatches Volt Typhoon only"),
-        ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin\n+ 5-Phase Composite Scoring", "4 of 4", GREEN,
-         "Multi-dimensional behavioral profiling.\n"
-         "Detects all 4 attacks including Salt Typhoon\n"
-         "which was undetected for 5+ years in reality.",
-         "FP Rate: 8.5%\nall attacks detected"),
+        ("TRADITIONAL", "Isolation Forest / SVM / LOF", "Undirected", RED,
+         "Detects anomalous users but produces\n"
+         "undirected flags — no zone-level\n"
+         "explanation of what changed.",
+         "LOF: 3/4 at 3.3% FP\nbut no triage guidance"),
+        ("COMPOSITE", "Multi-Method Statistical Ensemble", "4 of 4", GOLD,
+         "Aggregates LOF, Z-Score, IForest, OCSVM.\n"
+         "Achieves 4/4 detection at 8.5% FP\n"
+         "but no zone-level triage guidance.",
+         "FP Rate: 8.5%\n4/4 but undirected"),
+        ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin\n+ Zone Intelligence", "4 of 4", GREEN,
+         "Same 4/4 detection PLUS zone-level\n"
+         "directional intelligence for each alert.\n"
+         "Analysts see which behavior drifted.",
+         "FP Rate: 8.5%\nall 4 + directed zones"),
     ]
 
     for i, (name, subtitle, score, clr, desc, metric) in enumerate(tiers):
@@ -465,7 +464,7 @@ def create_verdict_frame():
     # Bottom summary bar
     y_bot = 790
     draw.rectangle([(60, y_bot), (WIDTH - 60, y_bot + 70)], fill=DARK_BG)
-    summary = "0 / 4  →  1 / 4  →  4 / 4   |   The behavioral digital twin detects what thresholds cannot."
+    summary = "Undirected  →  4 / 4 (no zones)  →  4 / 4 + Zones   |   V-Intelligence adds directional intelligence."
     draw.text((100, y_bot + 20), summary, fill=GOLD, font=get_font(22, bold=True))
 
     # Salt Typhoon callout
@@ -698,7 +697,7 @@ def build_video():
         "Insider Threat Deep Dive: USR-156",
         [
             "**Campaign Profile**",
-            "  8-month gradual data access escalation",
+            "  14-month gradual data access escalation",
             "  Every individual action within authorized parameters",
             "  No single metric triggered any traditional alert",
             "",
@@ -722,7 +721,7 @@ def build_video():
             ("5+ yrs", "undetected by\ntraditional tools", RED),
             ("#1", "V-Intelligence UEBA rank\nout of 250 users", GREEN),
             ("51.3", "composite\nbehavioral score", GREEN),
-            ("0 / 4", "traditional methods\nthat detected it", RED),
+            ("0 zones", "directional intelligence\nfrom traditional methods", RED),
         ],
         title="Salt Typhoon: Real-World Validation",
     ), 12)
