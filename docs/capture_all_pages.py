@@ -13,7 +13,7 @@ OUT = "docs/page_audit"
 PW_CHROME = os.path.expanduser("~/AppData/Local/ms-playwright/chromium-1223/chrome-win/chrome.exe")
 
 GROUPS = {
-    "Start Here": ["Story Mode", "Guided Demo"],
+    "Data": ["Raw Data", "Guided Demo"],
     "The Detection Story": ["Detection Pipeline", "Traditional vs V-Intelligence UEBA",
                             "Three-Tier Detection", "Detection Comparison"],
     "Operations": ["Dashboard", "Alerts", "Threat Profiles", "Kill Chains"],

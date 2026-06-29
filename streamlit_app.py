@@ -149,7 +149,7 @@ with st.sidebar:
     # into 5 logical groups (was a flat 16-item list). Page names are unchanged, so
     # the downstream `if/elif page == ...` blocks are untouched.
     NAV_GROUPS = {
-        "Start Here": ["Story Mode", "Guided Demo"],
+        "Data": ["Raw Data", "Guided Demo"],
         "The Detection Story": ["Detection Pipeline", "Traditional vs V-Intelligence UEBA",
                                 "Three-Tier Detection", "Detection Comparison"],
         "Operations": ["Dashboard", "Alerts", "Threat Profiles", "Kill Chains"],
@@ -193,7 +193,7 @@ def _threat_profile_banner():
 
 
 # ── PAGE: STORY MODE ──
-if page == "Story Mode":
+if page == "Raw Data":
 
     STORY_ATTACK_USERS = {
         "USR-156": {"label": "Insider Threat", "campaign": "8-month escalation", "color": RED},
