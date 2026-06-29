@@ -241,6 +241,28 @@ def main():
     zscored_path = RESULTS_DIR / "zscored_features.csv"
     zscored.to_csv(zscored_path, index=False)
 
+    # ── Single source of truth: push gold/serving results straight into the DB ──
+    # The scoring run owns BOTH the CSV byproducts and the DB tables, written in the
+    # same step, so they cannot drift apart. No separate manual populate step.
+    print("\nSyncing gold results into PostgreSQL (composite / novelty / zscored / trajectories)...")
+    try:
+        from pipeline.populate_dashboard_tables import (
+            populate_composite_scores, populate_novelty_metrics,
+            populate_zscored_features, populate_weekly_trajectories,
+        )
+        from pipeline.db_connect import get_connection
+        _conn = get_connection()
+        try:
+            populate_composite_scores(_conn)
+            populate_novelty_metrics(_conn)
+            populate_zscored_features(_conn)
+            populate_weekly_trajectories(_conn)
+            print("  DB dashboard tables synced — DB is current.")
+        finally:
+            _conn.close()
+    except Exception as _e:
+        print(f"  WARNING: DB sync failed ({_e}); run `python -m pipeline.populate_dashboard_tables`.")
+
     # Threshold sweep
     threshold_sweep(scores, attack_set=ATTACKS)
 
