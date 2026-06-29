@@ -2562,8 +2562,9 @@ elif page == "Three-Tier Detection":
             hovertemplate="<b>%{x}</b><br>Composite: %{y:.1f}<br>Group: %{customdata[0]}<br>%{customdata[1]}<extra></extra>",
             customdata=list(zip(top25["grp"], top25["Attack"])),
         ))
-        fig_rank.add_hline(y=threshold_90, line_dash="dash", line_color=RED,
-                          annotation_text=f"90th percentile ({threshold_90:.1f})")
+        _thr_all4 = comp_scores[comp_scores["is_attack"]]["composite"].min() if "is_attack" in comp_scores.columns else comp_scores["composite"].quantile(0.90)
+        fig_rank.add_hline(y=_thr_all4, line_dash="dash", line_color=RED,
+                          annotation_text=f"catch-all-4 threshold ({_thr_all4:.1f})")
         fig_rank.update_layout(
             height=400, yaxis_title="Composite Score",
             xaxis_title="", xaxis_tickangle=-45,
