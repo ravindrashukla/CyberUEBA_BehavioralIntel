@@ -410,7 +410,11 @@ if page == "Story Mode":
     st.subheader("Same Data — Now With Attackers Highlighted")
 
     if _story_feat_df is not None and not _story_feat_df.empty:
-        user_means = _story_feat_df.copy()
+        # This reveal compares per-USER aggregates — each entity (incl. each attacker) is
+        # ONE point, so attackers hide inside the cloud. (The earlier chart is per-week.)
+        _rv_cols = [c for c in ["auth_total", "file_total", "net_bytes_out", "dns_unique_domains"]
+                    if c in _story_feat_df.columns]
+        user_means = _story_feat_df.groupby("user_id", as_index=False)[_rv_cols].mean()
         user_means["is_attack"] = user_means["user_id"].isin(STORY_ATTACK_USERS.keys())
 
         fig_reveal = make_subplots(rows=1, cols=2,
@@ -421,35 +425,41 @@ if page == "Story Mode":
 
         fig_reveal.add_trace(go.Scatter(
             x=normal.get("auth_total", []), y=normal.get("file_total", []),
-            mode="markers", marker=dict(size=8, color=BLUE, opacity=0.4),
+            mode="markers", marker=dict(size=7, color=BLUE, opacity=0.45),
             name="Normal Users", showlegend=True,
         ), row=1, col=1)
 
-        for _, row in attacks.iterrows():
-            uid = row["user_id"]
-            info = STORY_ATTACK_USERS[uid]
+        # ONE trace per attacker (all its weekly points), not one per point — the data is
+        # now per-user-week, so a per-row loop would add hundreds of legend entries.
+        for uid, info in STORY_ATTACK_USERS.items():
+            a = attacks[attacks["user_id"] == uid]
+            if a.empty:
+                continue
             fig_reveal.add_trace(go.Scatter(
-                x=[row.get("auth_total", 0)], y=[row.get("file_total", 0)],
-                mode="markers+text", marker=dict(size=16, color=info["color"], symbol="diamond"),
-                text=[uid], textposition="top center",
+                x=a.get("auth_total", []), y=a.get("file_total", []),
+                mode="markers+text", text=[uid], textposition="top center",
+                marker=dict(size=16, color=info["color"], symbol="diamond",
+                            line=dict(width=1, color="white")),
                 name=f"{uid} ({info['label']})", showlegend=True,
             ), row=1, col=1)
 
         if "net_bytes_out" in user_means.columns and "dns_unique_domains" in user_means.columns:
             fig_reveal.add_trace(go.Scatter(
                 x=normal["net_bytes_out"], y=normal["dns_unique_domains"],
-                mode="markers", marker=dict(size=8, color=BLUE, opacity=0.4),
+                mode="markers", marker=dict(size=7, color=BLUE, opacity=0.45),
                 name="Normal Users", showlegend=False,
             ), row=1, col=2)
 
-            for _, row in attacks.iterrows():
-                uid = row["user_id"]
-                info = STORY_ATTACK_USERS[uid]
+            for uid, info in STORY_ATTACK_USERS.items():
+                a = attacks[attacks["user_id"] == uid]
+                if a.empty:
+                    continue
                 fig_reveal.add_trace(go.Scatter(
-                    x=[row["net_bytes_out"]], y=[row["dns_unique_domains"]],
-                    mode="markers+text", marker=dict(size=16, color=info["color"], symbol="diamond"),
-                    text=[uid], textposition="top center",
-                    showlegend=False,
+                    x=a["net_bytes_out"], y=a["dns_unique_domains"],
+                    mode="markers+text", text=[uid], textposition="top center",
+                    marker=dict(size=16, color=info["color"], symbol="diamond",
+                                line=dict(width=1, color="white")),
+                    name=f"{uid} ({info['label']})", showlegend=False,
                 ), row=1, col=2)
 
         fig_reveal.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20),
@@ -458,8 +468,8 @@ if page == "Story Mode":
 
         st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {GOLD}; font-size:0.78rem; color:#555;">
-    <strong>Attack Users (Red)</strong> — Simulated APT, insider, and nation-state campaigns embedded in otherwise normal traffic.<br>
-    <strong>Normal Users (Blue)</strong> — Baseline population generating legitimate enterprise telemetry patterns.
+    <strong>Attack Users (colored diamonds)</strong> — Simulated APT, insider, and nation-state campaigns embedded in otherwise normal traffic (one color per campaign).<br>
+    <strong>Normal Users (grey)</strong> — Baseline population generating legitimate enterprise telemetry patterns.
 </div>
 """, unsafe_allow_html=True)
 
@@ -714,6 +724,7 @@ elif page == "Proof of Realism":
                  "file_confidential_ratio", "net_bytes_out", "net_unique_dsts",
                  "net_external_ratio", "dns_unique_domains", "dns_nxdomain_ratio"]
         if not _wf.empty:
+            from models.hierarchical_zones import _human_bytes
             _uA = _wf[_wf["user_id"] == uidA]
             _uB = _wf[_wf["user_id"] == uidB]
             _twin_avail = [c for c in _twin if c in _wf.columns]
@@ -731,8 +742,10 @@ elif page == "Proof of Realism":
                               else f"elevated, not extreme — {_pct:.0f}th pct")
                 else:
                     closer = "—"
-                _rows.append({"Feature": f, f"{uidA}": f"{va:,.4f}",
-                              f"{uidB}": f"{vb:,.4f}", f"{uidA} vs normals": closer})
+                _fa = _human_bytes(va) if ("bytes" in f and pd.notna(va)) else (f"{va:,.4f}" if pd.notna(va) else "—")
+                _fb = _human_bytes(vb) if ("bytes" in f and pd.notna(vb)) else (f"{vb:,.4f}" if pd.notna(vb) else "—")
+                _rows.append({"Feature": f, f"{uidA}": _fa,
+                              f"{uidB}": _fb, f"{uidA} vs normals": closer})
             st.dataframe(pd.DataFrame(_rows), hide_index=True, use_container_width=True)
             st.info("The attacker sits in the upper range on some volume features but is **never the extreme outlier** — "
                     "there are always normal users above it — and it is even **lower** than normal on others "
