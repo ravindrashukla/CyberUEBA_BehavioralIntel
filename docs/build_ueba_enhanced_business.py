@@ -342,9 +342,12 @@ def fig_separation():
         cu = np.cumsum(np.maximum(wd[1:] - 0.5, 0)); feat[u] = np.insert(cu, 0, 0.0)
     # ---- RIGHT: semantic embedding CUSUM, real trajectories ----
     sem_raw = {}
-    with open(os.path.join(_DATA, 'tier3_results', 'all250_trajectories.csv')) as f:
-        for r in _csv.DictReader(f):
-            sem_raw.setdefault(r['user_id'], []).append((int(r['week_idx']), float(r['composite_drift'])))
+    _tr = _ueba_db_rows("SELECT user_id, week_idx, composite_drift FROM weekly_trajectories")
+    if _tr is None:
+        with open(os.path.join(_DATA, 'tier3_results', 'all250_trajectories.csv')) as f:
+            _tr = list(_csv.DictReader(f))
+    for r in _tr:
+        sem_raw.setdefault(r['user_id'], []).append((int(r['week_idx']), float(r['composite_drift'])))
     sem = {u: np.cumsum([d for _, d in sorted(v)]) for u, v in sem_raw.items()}
 
     fig, axes = plt.subplots(1, 2, figsize=(7.4, 3.4))
@@ -377,10 +380,31 @@ def fig_separation():
     return p
 
 
+def _ueba_db_rows(query):
+    """Operational DB first (single source of truth); returns list of dict rows or None."""
+    try:
+        import psycopg2
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+        url = os.getenv('DATABASE_URL_HOST') or os.getenv('DATABASE_URL')
+        if not url:
+            return None
+        conn = psycopg2.connect(url, connect_timeout=3)
+        cur = conn.cursor(); cur.execute(query)
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+        return rows or None
+    except Exception:
+        return None
+
+
 def fig_radar():
     """5-Phase Percentile (real data, app min-max scaling): each attacker breaks
     out on a different combination; normal users stay a small central shape."""
-    rows = list(_csv.DictReader(open(os.path.join(_DATA, 'tier3_results', 'composite_scores.csv'))))
+    rows = _ueba_db_rows("SELECT uid, is_attack, grp, role, signal_strength, breadth_15, sustained_signal, ctx_max_z, novelty_score FROM composite_scores")
+    if rows is None:
+        rows = list(_csv.DictReader(open(os.path.join(_DATA, 'tier3_results', 'composite_scores.csv'))))
     cols = ['signal_strength', 'breadth_15', 'sustained_signal', 'ctx_max_z', 'novelty_score']
     labels = ['Signal\nStrength', 'Breadth', 'Sustained\nDeviation', 'Context\nDivergence', 'Novelty\nPersistence']
     mn = {c: min(float(r[c]) for r in rows) for c in cols}
