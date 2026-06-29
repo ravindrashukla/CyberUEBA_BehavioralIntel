@@ -245,6 +245,10 @@ CREATE TABLE trajectory_snapshots (
     UNIQUE (entity_type, entity_id, cutoff_date)
 );
 
+-- NOTE: This definition is SUPERSEDED. db/migrations/003_behavioral_trajectory.sql
+-- DROPs and recreates behavioral_snapshots with zone-named columns
+-- (zone_identity, zone_access_pattern, ... composite, composite_*context, zone_texts).
+-- The live runtime schema is migration 003; the columns below are legacy/stale.
 CREATE TABLE behavioral_snapshots (
     snapshot_id     BIGSERIAL PRIMARY KEY,
     entity_type     TEXT NOT NULL,

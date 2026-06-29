@@ -10,7 +10,7 @@ N_USERS = 250
 N_DEVICES = 400
 N_SEGMENTS = 25
 N_APPLICATIONS = 60
-N_ROLES = 30
+N_ROLES = 31  # matches len(ROLES); was 30 (dead/unused constant)
 
 USER_TYPE_DIST = {"employee": 0.80, "contractor": 0.15, "service_account": 0.05}
 DEVICE_TYPE_DIST = {"endpoint": 0.80, "server": 0.12, "network_appliance": 0.05, "iot": 0.03}
