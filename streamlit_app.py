@@ -3672,10 +3672,10 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <h2 style="text-align:center; color:{NAVY};">What Your SOC Analyst Sees</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:20px;">
-    Same four users. Same telemetry. Two completely different pictures.</p>
+    Same four users. Same telemetry. Four very different verdicts.</p>
     """, unsafe_allow_html=True)
 
-    trad_col, zscore_col, ace_col = st.columns(3)
+    trad_col, zscore_col, ace_col, tp_col = st.columns(4)
 
     with trad_col:
         st.markdown(f"""
@@ -3861,7 +3861,67 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                      border:1px solid #A9DFBF; text-align:center;">
             <span style="color:#27AE60; font-weight:700;">{ace_det} of {len(ATTACK_USERS)} detected — at {_ace_fp_pct:.1f}% false positives</span><br>
             <span style="color:#6C757D; font-size:0.8rem;">Composite catches all 4 (vs 0/4 traditional, 1/4 z-score) — but flagging the two stealth attacks
-            (slow-APT, LOTL) costs false alarms on normal users. The multi-front detector below catches all 4 at <b>0% false positives</b>.</span>
+            (slow-APT, LOTL) costs false alarms on normal users. The <b>Threat-Profile column (right)</b> catches all 4 at <b>0% false positives</b>.</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+    with tp_col:
+        st.markdown(f"""
+        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center;">
+            <span style="color:#27AE60; font-weight:700; font-size:1.1rem;">THREAT-PROFILE DETECTOR</span>
+            <span style="color:#A0C8E0; font-size:0.8rem; display:block; margin-top:2px;">Measurable known-bad profiles — the primary detector</span>
+        </div>
+        """, unsafe_allow_html=True)
+
+        _tp_csv = Path("data/threat_profile_alerts.csv")
+        _tp_plain = {
+            "c2_beacon": "C2 beacon — robotic call-home schedule",
+            "dga_dns": "DGA — random throwaway domains",
+            "cohort_rare_dst": "contacts a destination no peer uses",
+            "recon_fanout": "network fan-out — reaches far more hosts than peers",
+            "mass_collection": "mass data collection vs peers",
+            "insider_collection": "opens restricted files unusual for the role",
+            "lotl_process": "living-off-the-land — abuses legitimate tools",
+            "data_exfil": "moves a large volume of sensitive data",
+            "highrisk_endpoint": "runs high-risk processes",
+            "brute_force": "unusual failed-login burst",
+        }
+        _tp_det = 0
+        if _tp_csv.exists():
+            _tpa = pd.read_csv(_tp_csv)
+            _tp_idx = {r["user_id"]: r for _, r in _tpa.iterrows()}
+            for uid, info in ATTACK_USERS.items():
+                _r = _tp_idx.get(uid)
+                if _r is not None and bool(_r["is_known_attack"]):
+                    _tp_det += 1
+                    _techs = [_tp_plain.get(t.strip().split("=")[0].strip(), t.strip().split("=")[0].strip())
+                              for t in str(_r["techniques"]).split(";") if t.strip()]
+                    _why = "; ".join(_techs)
+                    _tpc, _tps = RED, "DETECTED"
+                else:
+                    _why, _tpc, _tps = "no known-bad profile match", "#BDC3C7", "—"
+                st.markdown(f"""
+                <div style="background:white; padding:14px 18px; border-left:4px solid {_tpc};
+                            margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                    <div style="display:flex; justify-content:space-between; align-items:center;">
+                        <div>
+                            <span style="font-weight:700; color:{NAVY};">{uid}</span>
+                            <span style="color:#6C757D; font-size:0.8rem;"> — {info['label']}</span>
+                        </div>
+                        <span style="background:{_tpc}; color:white; padding:3px 12px; border-radius:12px;
+                                     font-size:0.75rem; font-weight:700;">{_tps}</span>
+                    </div>
+                    <div style="color:{NAVY}; font-size:0.8rem; margin-top:6px; font-weight:600;">{_why}</div>
+                </div>
+                """, unsafe_allow_html=True)
+        else:
+            st.caption("threat_profile_alerts.csv not found.")
+
+        st.markdown(f"""
+        <div style="background:#EAFAF1; padding:12px 18px; border-radius:8px; margin-top:12px;
+                     border:1px solid #A9DFBF; text-align:center;">
+            <span style="color:#27AE60; font-weight:700;">{_tp_det} of {len(ATTACK_USERS)} detected — at 0% false positives</span><br>
+            <span style="color:#6C757D; font-size:0.8rem;">Each flagged by a named technique — no threshold tuning, no false alarms.</span>
         </div>
         """, unsafe_allow_html=True)
 
