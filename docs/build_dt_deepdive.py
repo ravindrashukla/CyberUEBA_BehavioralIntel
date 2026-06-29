@@ -301,7 +301,7 @@ P("How these numbers come: each week the entity's composite, and each zone, is a
 P("Read it honestly: the access_pattern zone ramps about 10x in the final two weeks, but Volt's COMPOSITE drift only "
   "creeps (0.013 to 0.033) and its CUSUM reaches just 0.020, below the 0.05 fire line. Volt does not separate by "
   "dramatic drift; CUSUM is the broad net, and Volt is ultimately caught by BREADTH in the composite score (Part 6, "
-  "rank #24). That low drift is exactly why it is the stealthiest of the four.",italic=True)
+  "rank #30). That low drift is exactly why it is the stealthiest of the four.",italic=True)
 
 # ===== PART 5 =====
 H1("Part 5. Drift direction and MITRE projection (meaning, not magnitude)")
@@ -399,37 +399,37 @@ table(["Attacker","UID","persistent_novel_ips","max_persistence (weeks)","weeks_
   ["Slow APT","USR-234","1","60","1.00","13.0"]],widths=[0.9,0.9,1.4,1.4,0.9,1.0],fs=8.5)
 P("Slow APT: a novel IP every week for 60 weeks. max_persistence 60 > 10 gives min(60/5,10)=10; weeks_frac 1.00 > 0.5 "
   "adds 1.00 x 3 = 3; total 13.0. Volt is 0 (LOTL uses internal admin tooling, no external beacon); Salt 2.8 (one novel "
-  "IP for 14 weeks); Insider 0 (a novel IP once, below the 10-week gate). For Slow APT, signal_strength is only 4.47 and "
-  "breadth is 1, so this persistent novel IP is the ONLY signal that lifts it to rank #7; without it, Slow APT is missed entirely.",italic=True)
+  "IP for 14 weeks); Insider 0 (a novel IP once, below the 10-week gate). For Slow APT, signal_strength is only 4.50 and "
+  "breadth is 2, so this persistent novel IP is the ONLY signal that lifts it to rank #7; without it, Slow APT is missed entirely.",italic=True)
 
 # ===== PART 8: THE FOUR ATTACKERS =====
 H1("Part 8. The four attackers: why each landed where it did")
 P("All numbers exact from composite_scores.csv. Every composite re-derives from the Part 6 formula.")
 table(["Attacker","UID / role","Rank","signal_str","breadth z>1.5 (z>2.0)","sustained","ctx_spread","ctx_max","novelty","COMPOSITE"],
- [["Salt","USR-118 / QA Eng (Legal)","#1","29.89","18 (16)","9.58","8.65","7.94","2.8","51.27"],
+ [["Salt","USR-118 / QA Eng (Engineering)","#1","30.60","17 (16)","9.58","9.00","8.10","2.8","51.71"],
   ["Insider","USR-156 / Analyst","#2","30.02","19 (17)","8.37","4.34","6.80","0.0","46.24"],
-  ["Slow APT","USR-234 / ML Eng","#7","4.47","1 (0)","1.57","1.48","0.85","13.0","19.44"],
-  ["Volt","USR-042 / SOC Op","#24","6.40","11 (3)","3.80","0.47","1.43","0.0","13.70"]],
+  ["Slow APT","USR-234 / ML Eng (Data Science)","#7","4.50","2 (0)","1.57","1.48","0.85","13.0","20.00"],
+  ["Volt","USR-042 / SOC Op (Security)","#30","6.20","10 (3)","3.70","0.40","1.40","0.0","12.90"]],
  widths=[0.7,1.55,0.45,0.75,0.95,0.7,0.75,0.65,0.65,0.85],fs=7.5,hdr_fs=7.5)
 
-H2("Salt Typhoon - USR-118 - Rank #1 (51.27)")
-B("Caught by: ","breadth and context. QA Engineer whose department is Legal (cross-domain). 18 features elevated, the "
-  "highest context spread of anyone (8.65).")
-code("51.27 = 29.89 + 18x0.5 + 9.58x0.3 + 8.65x0.5 + 7.94x0.3 + 2.8\n"
-     "      = 29.89 + 9.00 + 2.87 + 4.32 + 2.38 + 2.80")
+H2("Salt Typhoon - USR-118 - Rank #1 (51.71)")
+B("Caught by: ","breadth and context. QA Engineer whose department is Engineering. 17 features elevated, the "
+  "highest context spread of anyone (9.00).")
+code("51.71 = 30.60 + 17x0.5 + 9.58x0.3 + 9.00x0.5 + 8.10x0.3 + 2.8\n"
+     "      = 30.60 + 8.50 + 2.87 + 4.50 + 2.43 + 2.80")
 H2("Insider - USR-156 - Rank #2 (46.24)")
 B("Caught by: ","raw breadth and strength. The highest signal_strength of anyone (30.02), 19 features elevated. A classic broad insider.")
 code("46.24 = 30.02 + 9.50 + 2.51 + 2.17 + 2.04 + 0.00")
-H2("Slow APT - USR-234 - Rank #7 (19.44) - the 'invisible to thresholds' case")
-B("Caught by: ","novelty ALONE. signal_strength 4.47, breadth(z>1.5) = 1, breadth(z>2.0) = 0. On every magnitude or "
+H2("Slow APT - USR-234 - Rank #7 (20.00) - the 'invisible to thresholds' case")
+B("Caught by: ","novelty ALONE. signal_strength 4.50, breadth(z>1.5) = 2, breadth(z>2.0) = 0. On every magnitude or "
   "threshold method this user is invisible. The novelty score of 13.0 (a novel C2 IP every week for 60 weeks) is what "
   "lifts it to rank 7. This is the proof that the system catches what thresholds structurally cannot.")
-code("19.44 = 4.47 + 0.50 + 0.47 + 0.74 + 0.25 + 13.00")
-H2("Volt Typhoon - USR-042 - Rank #24 (13.70) - the hardest, living-off-the-land")
-B("Caught by: ","breadth of small elevations. signal_strength 6.40, breadth(z>1.5)=11 but breadth(z>2.0)=only 3, "
+code("20.00 = 4.50 + 1.00 + 0.47 + 0.74 + 0.25 + 13.00")
+H2("Volt Typhoon - USR-042 - Rank #30 (12.90) - the hardest, living-off-the-land")
+B("Caught by: ","breadth of small elevations. signal_strength 6.20, breadth(z>1.5)=10 but breadth(z>2.0)=only 3, "
   "novelty 0. Translation: many small elevations, no single dramatic one. That is the signature of legitimate admin "
   "tooling used maliciously.")
-code("13.70 = 6.40 + 5.50 + 1.14 + 0.23 + 0.43 + 0.00")
+code("12.90 = 6.20 + 5.00 + 1.11 + 0.20 + 0.42 + 0.00")
 P("Raw behavioral features, week 69 (entity_structures.json), showing how ordinary each attacker looks per metric:",bold=True)
 table(["Metric","Volt USR-042","Salt USR-118","Slow APT USR-234"],
  [["auth_off_hours_ratio","0.39","0.60","0.24"],
@@ -444,21 +444,21 @@ table(["Metric","Volt USR-042","Salt USR-118","Slow APT USR-234"],
 P("No single feature screams attack. That is the whole point: the twin separates them by trajectory, direction, "
   "breadth, and novelty, not by any one number.",italic=True)
 
-# ===== PART 9: THE 8.1% =====
-H1("Part 9. The live 8.1% derivation")
-B("","Sort all 250 entities by composite. Volt (13.70) is the stealthiest scorer, so the operating line must reach down "
-  "to 13.70 to catch all four. 20 of 246 normal users score above that line, so 20/246 = 8.1% false positive, 4/4 caught.")
+# ===== PART 9: THE 10.6% =====
+H1("Part 9. The live 10.6% derivation")
+B("","Sort all 250 entities by composite. Volt (12.90) is the stealthiest scorer, so the operating line must reach down "
+  "to 12.95 to catch all four. 26 of 246 normal users score above that line, so 26/246 = 10.6% false positive, 4/4 caught.")
 B("Baselines on the same data: ","Isolation Forest, One-Class SVM, and Local Outlier Factor each catch 0 of 4; a "
   "z-score method catches 1 of 4.")
 B("Separation is by RANK, not a clean gap: ","the top normal user (USR-081, HR Manager, 21.52) outscores Slow APT "
-  "(19.44) and Volt (13.70). About 20 normals outscore Volt. This is why we deliver a ranked list, not a threshold; the "
+  "(20.00) and Volt (12.90). About 26 normals outscore Volt. This is why we deliver a ranked list, not a threshold; the "
   "honest claim is recall at the top of the ranking.")
 table(["Rank","UID","Type","Composite"],
- [["1","USR-118","Salt Typhoon","51.27"],["2","USR-156","Insider","46.24"],
+ [["1","USR-118","Salt Typhoon","51.71"],["2","USR-156","Insider","46.24"],
   ["3","USR-081","normal (HR Manager)","21.52"],["4","USR-075","normal (Data Scientist)","21.03"],
   ["5","USR-220","normal (Senior Engineer)","20.83"],["6","USR-021","normal (ML Engineer)","20.50"],
-  ["7","USR-234","Slow APT","19.44"],["...","...","~17 more normals","13.70 to 19.4"],
-  ["24","USR-042","Volt Typhoon","13.70"]],widths=[0.7,1.2,2.4,1.2],fs=8.5)
+  ["7","USR-234","Slow APT","20.00"],["...","...","~23 more normals","12.90 to 20.0"],
+  ["30","USR-042","Volt Typhoon","12.90"]],widths=[0.7,1.2,2.4,1.2],fs=8.5)
 
 # ===== PART 10: BUILD/ROADMAP =====
 H1("Part 10. What is built versus roadmap (honest split)")

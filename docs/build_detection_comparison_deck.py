@@ -543,7 +543,7 @@ def slide_08_results(prs):
          "attacks detected", sz=18, color=NAVY, align=PP_ALIGN.CENTER)
 
     tbox(slide, Inches(7.2), Inches(4.7), Inches(5.2), Inches(0.4),
-         "8.1% FP rate + directional intelligence", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
+         "10.6% FP rate + directional intelligence", sz=14, bold=True, color=NAVY, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(7.2), Inches(5.3), Inches(5.2), Inches(0.8),
          "All 4 detected with actionable direction: tells the analyst WHICH behavioral "
          "zone changed and TOWARD WHAT threat pattern. Ranked list, no threshold tuning.",
@@ -569,7 +569,7 @@ def slide_09_per_attacker(prs):
          sz=16, color=DARK_GRAY)
 
     attackers = [
-        ("USR-118", "Salt Typhoon", "412-Day Telecom Intrusion", "#1 / 250", "51.3",
+        ("USR-118", "Salt Typhoon", "412-Day Telecom Intrusion", "#1 / 250", "51.7",
          GREEN, RGBColor(41, 128, 185),
          "Signal Strength + Sustained Deviation",
          "Flagged by Z-Score and OCSVM but buried in false positives with no directional context. "
@@ -579,12 +579,12 @@ def slide_09_per_attacker(prs):
          "Signal Strength + Breadth",
          "Flagged as anomalous by LOF/Z-Score/OCSVM but with no direction. Composite provides actionable "
          "intelligence: gradual scope creep across departments, off-hours access, data staging — broad and persistent."),
-        ("USR-042", "Volt Typhoon", "412-Day LOTL Campaign", "#24 / 250", "13.7",
+        ("USR-042", "Volt Typhoon", "412-Day LOTL Campaign", "#30 / 250", "12.9",
          GREEN, RGBColor(142, 68, 173),
          "Breadth + Sustained Deviation",
          "Traditional methods flag it but cannot explain WHY. Composite reveals the anomaly is in the breadth "
          "of unusual behavior across zones — uses legitimate tools, so direction matters more than detection."),
-        ("USR-234", "Slow APT", "417-Day Campaign", "#7 / 250", "19.4",
+        ("USR-234", "Slow APT", "417-Day Campaign", "#7 / 250", "20.0",
          GREEN, ORANGE,
          "Novelty Persistence",
          "The only attacker missed by LOF and Isolation Forest. Z-Score and OCSVM flag it but without direction. "
@@ -740,7 +740,7 @@ def slide_11_salt_typhoon(prs):
         tbox(slide, Inches(9.6), y, Inches(3.0), Inches(0.32), desc, sz=12, color=DARK_GRAY)
 
     tbox(slide, Inches(7.2), Inches(5.2), Inches(5.2), Inches(0.35),
-         "Composite Score: 51.3 — Rank #1 out of 250 users",
+         "Composite Score: 51.7 — Rank #1 out of 250 users",
          sz=15, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
 
     # Bottom: Key insight
@@ -775,7 +775,7 @@ def slide_12_false_positives(prs):
         ("Z-Score (|z|>3)", "4 of 4", "4.9%", "Flags all 4 as anomalous but gives\nno direction on threat pattern.", ORANGE, False),
         ("Isolation Forest", "3 of 4", "7.3%", "Flags 3 as anomalous, misses slow\nAPT. No directional intelligence.", ORANGE, False),
         ("One-Class SVM", "4 of 4", "29.7%", "Flags all 4 but buries them in\nmassive false positive volume.", RED, False),
-        ("V-Intelligence UEBA + Composite", "4 of 4", "8.1%", "Detects all 4 WITH directional\nintelligence on threat patterns.", GREEN, True),
+        ("V-Intelligence UEBA + Composite", "4 of 4", "10.6%", "Detects all 4 WITH directional\nintelligence on threat patterns.", GREEN, True),
         ("Multi-Front Threat-Profile", "4 of 4", "0%", "Primary detector: all 4 matched to\nnamed known-bad fingerprints.", GREEN, True),
     ]
     for i, (name, detected, fp, desc, clr, highlight) in enumerate(methods):
@@ -801,9 +801,9 @@ def slide_12_false_positives(prs):
     box.line.color.rgb = BLUE
     box.line.width = Pt(2)
     tbox(slide, Inches(0.9), Inches(6.05), Inches(11.5), Inches(0.35),
-         "What does 8.1% FP rate mean in practice?", sz=15, bold=True, color=BLUE)
+         "What does 10.6% FP rate mean in practice?", sz=15, bold=True, color=BLUE)
     tbox(slide, Inches(0.9), Inches(6.4), Inches(11.5), Inches(0.5),
-         "In an organization with 10,000 users, 8.1% FP = ~810 users flagged for review. "
+         "In an organization with 10,000 users, 10.6% FP = ~1,060 users flagged for review. "
          "With composite scoring's ranked list AND directional intelligence, analysts start at #1 and know exactly "
          "WHICH behavioral zone shifted and TOWARD WHAT threat pattern. Compare Z-Score: 4/4 detected at 4.9% FP, "
          "but no ranking and no direction — the analyst only knows \"anomalous,\" not what to investigate.",
@@ -826,7 +826,7 @@ def slide_13_business_impact(prs):
         ("Reduce Alert Fatigue", TEAL,
          "One ranked list replaces hundreds of uncorrelated alerts. Your SOC analysts "
          "investigate the highest-risk entities first, not the loudest alarms.",
-         "8.1% false positive rate with ranked prioritization"),
+         "10.6% false positive rate with ranked prioritization"),
         ("Faster Time-to-Detect", BLUE,
          "Behavioral drift detection identifies threats within weeks of campaign start — "
          "not months after data exfiltration.",
@@ -874,7 +874,7 @@ def slide_14_closing(prs):
 
     results = [
         ("4 / 4", "attack types detected"),
-        ("8.1%", "false positive rate"),
+        ("10.6%", "false positive rate"),
         ("Ranked", "single prioritized list"),
         ("Zero", "threshold tuning required"),
     ]

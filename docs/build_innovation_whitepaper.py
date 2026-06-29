@@ -505,8 +505,8 @@ def _build_exec_summary(doc, audience_key, level, results):
         add_bullet(doc,
             f"All {results['n_attacks']} of {results['n_attacks']} embedded campaigns were "
             f"surfaced in the top tier of the ranked output, at an "
-            f"8.1% false-positive rate "
-            f"(20 of {results['normal_total']} normal entities at the recall-at-100% operating point).",
+            f"10.6% false-positive rate "
+            f"(26 of {results['normal_total']} normal entities at the recall-at-100% operating point).",
             bold_prefix="Detection: ")
         add_bullet(doc,
             f"A complementary multi-front detector matches each entity against measurable, label-free "
@@ -923,14 +923,14 @@ def _build_validation(doc, level, results):
 
     add_callout(doc,
         f"All {results['n_attacks']} of {results['n_attacks']} embedded campaigns surfaced in "
-        f"the ranked output at an 8.1% false-positive rate "
-        f"(20 of {results['normal_total']} normal entities at the recall-at-100% operating point). "
+        f"the ranked output at an 10.6% false-positive rate "
+        f"(26 of {results['normal_total']} normal entities at the recall-at-100% operating point). "
         f"Magnitude-based detectors can flag anomalies but provide no directional "
         f"intelligence to distinguish threat type or guide analyst triage."
     )
     add_figure(doc, "composite",
         "Composite score by rank: all four campaigns rank above the dashed line that catches all "
-        "four (8% false positives). The two stealth movers — USR-234 (#7) and USR-042 (#24) — sit "
+        "four (11% false positives). The two stealth movers — USR-234 (#7) and USR-042 (#30) — sit "
         "above the bulk of the 250-entity population that legacy point-anomaly tools score as normal.")
 
     # USR-234 spotlight — the case that proves the novelty-persistence innovation.
@@ -967,7 +967,7 @@ def _build_validation(doc, level, results):
     add_section_heading(doc, "6.2  Known-Bad Behavioral Profiles — 4 of 4 at Zero False Positives", level=2)
     add_body(doc, (
         "Composite ranking surfaces all four campaigns but, tuned to catch the hardest, carries an "
-        "8.1% false-positive cost. A complementary front raises precision to 100%. Instead of asking "
+        "10.6% false-positive cost. A complementary front raises precision to 100%. Instead of asking "
         "only 'how far has this entity drifted?', it asks 'does this entity's behavior match a "
         "measurable known-bad profile?' Each profile is a label-free fingerprint of an attack "
         "technique: a C2 beacon's robotic inter-callout timing, a DGA domain's high entropy resolving "

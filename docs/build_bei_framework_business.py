@@ -169,7 +169,7 @@ def fig2_detection():
                     fontsize=9, color='#55607B', fontweight='bold')
         elif v == 4:
             ax.text(v - 0.07, b.get_y() + b.get_height()/2,
-                    'all 4 of 4 detected  ·  8.1% false-positive rate', va='center',
+                    'all 4 of 4 detected  ·  10.6% false-positive rate', va='center',
                     ha='right', fontsize=9.5, color='white', fontweight='bold')
         else:
             ax.text(v - 0.07, b.get_y() + b.get_height()/2, f'{v} of 4', va='center',
@@ -208,8 +208,8 @@ def fig3_direction():
 def fig4_ranking():
     """Composite-score ranking: 4 attackers among 250 users (all points = system output)."""
     csv_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'tier3_results', 'composite_scores.csv')
-    attackers = {1: (51.3, 'USR-118\nSalt Typhoon'), 2: (46.2, 'USR-156\nInsider'),
-                 7: (19.4, 'USR-234\nSlow APT (C2)'), 24: (13.7, 'USR-042\nVolt Typhoon LOTL')}
+    attackers = {1: (51.7, 'USR-118\nSalt Typhoon'), 2: (46.2, 'USR-156\nInsider'),
+                 7: (20.0, 'USR-234\nSlow APT (C2)'), 30: (12.9, 'USR-042\nVolt Typhoon LOTL')}
     curve_label = 'All 250 users ranked by composite score (system output)'
     try:
         import csv as _csv
@@ -227,7 +227,7 @@ def fig4_ranking():
     ranks = np.arange(1, len(scores) + 1)
     fig, ax = plt.subplots(figsize=(7.0, 3.1))
     ax.plot(ranks, scores, color=C_LEG, lw=1.6, label=curve_label)
-    offsets = {1: (18, 51.0), 2: (30, 43.5), 7: (55, 25.0), 24: (88, 16.5)}
+    offsets = {1: (18, 51.0), 2: (30, 43.5), 7: (55, 25.0), 30: (94, 16.5)}
     for rk, (sc, lab) in attackers.items():
         ax.plot(rk, sc, 'o', ms=8, color=C_LEGD, mec='white', mew=1.2, zorder=5)
         ox, oy = offsets[rk]
@@ -291,7 +291,7 @@ para('Behavioral Entity Intelligence (BEI) is an analytical framework organized 
 para('Stated concisely: where traditional analytics measure the magnitude of change, Behavioral Entity Intelligence '
      'measures its direction and assigns it a name.', bold=True)
 bullet('In a cybersecurity proof of concept (250 simulated users, 485 days, 4 embedded multi-month attack '
-       'campaigns), BEI detected 4 of 4 attacks at an 8.1% false-positive rate. The strongest traditional method '
+       'campaigns), BEI detected 4 of 4 attacks at a 10.6% false-positive rate. The strongest traditional method '
        'caught 1 of 4, and three standard machine-learning detectors caught none.', lead='Validated detection. ')
 bullet('BEI also reports which behavioral dimension changed and toward what threat pattern, which allows an analyst '
        'to distinguish an insider from an external campaign at triage time. None of the traditional methods tested '
@@ -439,12 +439,12 @@ para('The framework was validated end-to-end in the V-Intelligence UEBA program 
      'standard deviations a value sits from its average), well below the conventional three-standard-deviation '
      'alarm line, and only one of the four (the Volt Typhoon actor, at 3.04) crosses that line on any feature.')
 table(['Attack user', 'Campaign', 'Duration', 'Rank (of 250)', 'Primary detection signal'],
-      [('USR-118', 'Salt Typhoon (telecom)', '412 days', '#1 (score 51.3)', 'Signal strength + breadth across multiple behavioral zones.'),
+      [('USR-118', 'Salt Typhoon (telecom)', '412 days', '#1 (score 51.7)', 'Signal strength + breadth across multiple behavioral zones.'),
        ('USR-156', 'Insider threat', '14 months', '#2 (score 46.2)', 'Sustained deviation over a 14-month escalation; data-behavior drift.'),
-       ('USR-234', 'Slow APT (C2 beacon)', '417 days', '#7 (score 19.4)', 'Novelty persistence: the same beacon destination (IP address) appears in 60 of 60 post-baseline weeks.'),
-       ('USR-042', 'Volt Typhoon (LOTL)', '412 days', '#24 (score 13.7)', 'Context divergence + signal strength from LOTL tool patterns.')],
+       ('USR-234', 'Slow APT (C2 beacon)', '417 days', '#7 (score 20.0)', 'Novelty persistence: the same beacon destination (IP address) appears in 60 of 60 post-baseline weeks.'),
+       ('USR-042', 'Volt Typhoon (LOTL)', '412 days', '#30 (score 12.9)', 'Context divergence + signal strength from LOTL tool patterns.')],
       widths=[0.95, 1.5, 0.85, 1.25, 2.25])
-para('On the same data, BEI\'s composite scoring detected 4 of 4 campaigns at an 8.1% false-positive rate. Z-Score '
+para('On the same data, BEI\'s composite scoring detected 4 of 4 campaigns at a 10.6% false-positive rate. Z-Score '
      'analysis caught 1 of 4 (only the Volt Typhoon actor) at a higher 9.8% false-positive rate. Local Outlier '
      'Factor (4.5% false positives), Isolation Forest (5.3%), and One-Class SVM (Support Vector Machine, 14.6%) '
      'each caught 0 of 4, and none offers any directional explanation for triage. BEI additionally reports which '
@@ -454,12 +454,12 @@ add_fig(FIG2, 'Figure 3 — Detection head-to-head on the same test bed: traditi
               'four campaigns; BEI\'s composite catches all four. (System output, synthetic data.)')
 add_fig(FIG4, 'Figure 4 — Where the four attackers land among all 250 users: the full ranked composite-score curve, '
               'with the four attack users marked. (System output, synthetic data.)')
-para('A candid reading of the numbers is warranted. An 8.1% false-positive rate means that 20 of the 246 normal '
+para('A candid reading of the numbers is warranted. A 10.6% false-positive rate means that 26 of the 246 normal '
      'users also rank high enough to warrant review, which is acceptable for a weekly triage workflow and is the '
-     'declared trade-off for catching slow, low-magnitude campaigns. One attacker (living off the land) ranks #24 '
+     'declared trade-off for catching slow, low-magnitude campaigns. One attacker (living off the land) ranks #30 '
      'rather than #1; it is found because composite scoring aggregates weak signals, but it would not survive a '
      '"top-10 only" review policy. Another (the slow C2 beacon) is surfaced principally by the novelty-persistence '
-     'phase, and removing that one phase lowers its score from 19.4 to 6.4 and its rank from #7 to roughly #105. '
+     'phase, and removing that one phase lowers its score from 20.0 to 6.4 and its rank from #7 to roughly #105. '
      'All figures are synthetic and must be re-validated on production telemetry.')
 
 # ================= 9. NOVELTY =================
@@ -503,9 +503,9 @@ bullet('All quantitative results are synthetic; detection and false-positive rat
        'operational telemetry.')
 bullet('Only one of the twelve domains (cybersecurity) is empirically validated; the other eleven are designed '
        'applications, not yet tested on data.')
-bullet('The 8.1% false-positive rate is workable for weekly triage but is not alert-grade precision; production '
+bullet('The 10.6% false-positive rate is workable for weekly triage but is not alert-grade precision; production '
        'tuning will be domain- and customer-specific.')
-bullet('One attack class (living off the land) ranks #24 of 250 — detected, but dependent on a review process that '
+bullet('One attack class (living off the land) ranks #30 of 250 — detected, but dependent on a review process that '
        'looks beyond a short top-N list.')
 bullet('Each new domain requires a baselining period (weeks to a year, by the domain\'s natural cadence) before '
        'detection is meaningful.')
@@ -544,7 +544,7 @@ gl = [
     ('Peer cohort', 'A group of entities expected to behave alike (users in the same role; suppliers in the same commodity class); each entity is scored against its own cohort.'),
     ('Relationship signature', 'A distinct behavioral profile for a PAIR of entities (user×device, supplier×part), able to drift even when both individuals look stable.'),
     ('Network layer', 'Analysis of the full relationship graph: multi-hop risk chains, hidden shared dependencies, coordinated (lockstep) behavior.'),
-    ('False-positive rate', 'The share of normal entities incorrectly flagged for review — 8.1% in the proof of concept.'),
+    ('False-positive rate', 'The share of normal entities incorrectly flagged for review — 10.6% in the proof of concept.'),
     ('Z-score', 'A standard statistic counting how many standard deviations a value sits from its average; a common traditional alarm convention is three standard deviations.'),
     ('SCRM / SBOM', 'Supply Chain Risk Management / Software Bill of Materials — the component composition of an assembly, tracked here as an entity relationship.'),
     ('NSN', 'National Stock Number — the unique identifier of a part in the defense supply system.'),

@@ -141,7 +141,7 @@ tbl = tbl_sh.table
 hdr = ["Approach", "Campaigns caught (of 4)", "False-positive rate", "Directional explanation"]
 data = [
     ["Traditional magnitude-based\n(LOF, IForest, OCSVM, Z-Score)", "0 – 1 of 4", "4.5% – 14.6%", "None"],
-    ["V-Intelligence composite", "4 of 4", "8.1%", "Zone + direction + MITRE"],
+    ["V-Intelligence composite", "4 of 4", "10.6%", "Zone + direction + MITRE"],
     ["V-Intelligence threat-profile detector", "4 of 4", "0%", "Named technique"],
 ]
 for j, h in enumerate(hdr):
@@ -160,7 +160,7 @@ bb = s.shapes.add_textbox(Inches(0.55), Inches(4.7), Inches(12.2), Inches(1.5))
 btf = bb.text_frame; btf.word_wrap = True
 for k, it in enumerate([
     ("Primary detection: ", "the multi-front threat-profile detector caught all four by named technique (C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) at ZERO false positives."),
-    ("Composite: ", "embedding composite also caught all four — including BOTH Volt and Salt Typhoon — at 8.1% FP, though it cleanly separates only two of the four (USR-118, USR-156); AUC ≈ 0.98."),
+    ("Composite: ", "embedding composite also caught all four — including BOTH Volt and Salt Typhoon — at 10.6% FP, though it cleanly separates only two of the four (USR-118, USR-156); AUC ≈ 0.98."),
     ("The contrast: ", "traditional detectors caught at most one and ranked the stealthy campaigns among ordinary users."),
 ]):
     p = btf.paragraphs[0] if k == 0 else btf.add_paragraph(); p.space_after = Pt(8)

@@ -773,14 +773,14 @@ def _exec_summary(doc, level, results):
             f"The digital-entity multi-phase composite ranks all {results['n_attacks']} of "
             f"{results['n_attacks']} campaigns in the top tier of "
             f"{results['total_entities']} entities — a false-positive rate of "
-            f"8.1% ({results['fp_above']} of {results['normal_total']} normal users at the recall-at-100% operating point).",
+            f"10.6% ({results['fp_above']} of {results['normal_total']} normal users at the recall-at-100% operating point).",
             bold_prefix="Tier 3 (V-Intelligence UEBA): ")
         add_callout(doc,
             "Why this matters: the two China-state campaigns modeled here are real-world "
             "nightmares — Volt Typhoon dwelled in U.S. critical infrastructure UNDETECTED for at "
             "least five years (CISA AA24-038A), and Salt Typhoon compromised U.S. "
             "telecommunications infrastructure (U.S. Government joint reporting, 2024–2025). "
-            "V-Intelligence surfaces BOTH — indeed all four embedded campaigns — at the 8.1% "
+            "V-Intelligence surfaces BOTH — indeed all four embedded campaigns — at the 10.6% "
             "operating point, where every traditional, magnitude-based detector ranks them among "
             "ordinary users. Catching threats that stayed invisible for years is the capability "
             "gap this approach closes.")
@@ -924,7 +924,7 @@ def _traditional(doc, level):
     trad_rows = [[label, f"{trad[col][0]} of {trad[col][1]}", f"{trad[col][2] * 100:.1f}%",
                   _dir.get(col, "None — says 'anomalous' only")]
                  for (label, col) in TRAD_METHODS]
-    trad_rows.append(["V-Intelligence Composite", "4 of 4", "8.1%", "Zone + direction + MITRE concept"])
+    trad_rows.append(["V-Intelligence Composite", "4 of 4", "10.6%", "Zone + direction + MITRE concept"])
     create_table(doc,
         ["Method", "Campaigns detected", "FP rate", "Directional intelligence"],
         trad_rows,
@@ -1225,7 +1225,7 @@ def _results(doc, level, results):
                    f"{trad[col][0]} of {trad[col][1]} ({trad[col][2] * 100:.1f}% FP)",
                    _dir3.get(col, "None — 'anomalous' only")]
                   for (label, col) in TRAD_METHODS]
-    _vi_fp = f"{results['fp_rate'] * 100:.1f}%" if results else "8.1%"
+    _vi_fp = f"{results['fp_rate'] * 100:.1f}%" if results else "10.6%"
     _vi_det = f"{results['n_attacks']} of {results['n_attacks']}" if results else "4 of 4"
     create_table(doc,
         ["Tier", "Representative method", "Detection", "Directional intelligence"],
@@ -1247,7 +1247,7 @@ def _results(doc, level, results):
             rows, col_widths=[1.0, 2.5, 1.2, 1.0, 1.8])
         add_callout(doc,
             f"All {results['n_attacks']} campaigns surface in the top tier at a false-positive "
-            f"rate of 8.1% "
+            f"rate of 10.6% "
             f"({results['fp_above']} of {results['normal_total']} normal users at the recall-at-100% operating point) WITH actionable "
             f"directional intelligence — which zone changed, toward what threat pattern, mapped "
             f"to MITRE ATT&CK. Traditional methods miss most of these campaigns, and even when "
@@ -1328,8 +1328,8 @@ def _results(doc, level, results):
     add_figure(doc, "dist",
                "Figure 4 — Composite-score distribution. Three campaigns (USR-118, USR-156, "
                "USR-234) sit above the bulk of normal users; the hardest, the Volt Typhoon LOTL "
-               "campaign (USR-042 at 13.7), sits within the upper normal tail — which is why "
-               "recalling all four admits ~20 normal users (the 8.1% operating point).")
+               "campaign (USR-042 at 12.9), sits within the upper normal tail — which is why "
+               "recalling all four admits ~26 normal users (the 10.6% operating point).")
 
     add_body(doc, "Stage 4 — why fusion is essential (no single phase catches everyone).",
              bold=True, space_after=2)
@@ -1368,9 +1368,7 @@ def _results(doc, level, results):
         "Every individual phase is a partial discriminator (AUC roughly 0.73–0.94); the fused "
         "composite reaches AUC ~0.98 and the best precision — the quantitative form of the radar "
         "in Figure 5. With only four positives these figures are indicative, not powered "
-        "(Section 10); for context, on the separate 50-user comparison run the best traditional "
-        "discriminator (temporal Z-Score) reached AUC ≈ 0.81 and the simple Z-Score ≈ 0.55 — "
-        "well short of the fused composite, though measured on a different, smaller run."
+        "(Section 10)."
     ))
     add_page_break(doc)
 
@@ -1531,7 +1529,7 @@ def _limitations(doc, level):
                "(USR-042), so a stricter threshold trades it off; characterizing that "
                "recall/false-positive curve on larger data is the next step.",
                bold_prefix="Hardest-class threat, surfaced anyway: ")
-    add_bullet(doc, "the 8.1% figure is measured at the alert threshold that catches all four "
+    add_bullet(doc, "the 10.6% figure is measured at the alert threshold that catches all four "
                "campaigns. On a larger dataset we will publish the full detection-vs-false-alarm "
                "curve so each operator can set the threshold to their own alert budget.",
                bold_prefix="Threshold tuning: ")
@@ -1563,7 +1561,7 @@ def _conclusion(doc, level):
         "toward what threat pattern. The analyst still faces the same manual triage. An "
         "intermediate embedding-drift approach begins to recover direction; and the "
         "V-Intelligence UEBA digital twin — zones, trajectory, relationships, peer cohorts, and "
-        "multi-phase composite scoring — finds all four embedded campaigns at 8.1% FP WITH "
+        "multi-phase composite scoring — finds all four embedded campaigns at 10.6% FP WITH "
         "actionable directional intelligence: zone localization, drift direction, and MITRE "
         "ATT&CK concept alignment that traditional methods cannot provide."
     ))

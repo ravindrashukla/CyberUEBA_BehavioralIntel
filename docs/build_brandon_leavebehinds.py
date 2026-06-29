@@ -2,7 +2,7 @@
 """Two Brandon-Pugh deliverables:
  1) V-Intelligence_UEBA_Technical_Leave-Behind.docx  (shareable, ~1 page, no secret sauce)
  2) Brandon_Pugh_Tough_Questions_Cheat_Sheet_INTERNAL.docx (internal Q&A)
-Grounded numbers: 250 entities/485 days, 4/4 at 8.1% FP, baselines 0-1/4, Volt #24.
+Grounded numbers: 250 entities/485 days, 4/4 at 10.6% FP, baselines 0-1/4, Volt #30.
 No em/en dashes.
 """
 import os
@@ -56,7 +56,7 @@ H2(d,"The proof (blind test)")
 P(d,"On a synthetic population of 250 entities over 485 days (about 14 million events across five log sources), four "
   "nation-state-style campaigns were embedded with full ground truth: an 8-month insider, a 180-day slow APT, a Volt "
   "Typhoon-style living-off-the-land campaign, and a Salt Typhoon-style telecom campaign.")
-B(d,"Result: ","the multi-front threat-profile detector (the primary detector) caught all four by named known-bad technique (C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) at zero false positives; embedding composite scoring also surfaced all four (ranks 1, 2, 7, and 24 of 250) at an 8.1 percent false-positive operating point, where Isolation Forest, One-Class SVM, and Local Outlier Factor each caught zero of four and a z-score method caught one of four.")
+B(d,"Result: ","the multi-front threat-profile detector (the primary detector) caught all four by named known-bad technique (C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) at zero false positives; embedding composite scoring also surfaced all four (ranks 1, 2, 7, and 30 of 250) at a 10.6 percent false-positive operating point, where Isolation Forest, One-Class SVM, and Local Outlier Factor each caught zero of four and a z-score method caught one of four.")
 B(d,"Explainable: ","every alert names the behavior, maps it to a MITRE technique, and is delivered as a risk-ranked list rather than a flood of threshold alarms.")
 H2(d,"Deployability")
 B(d,"Federal-ready. ","Containerized; deployable across IL5, IL6, and JWICS; a local-model option for air-gapped enclaves; no personally identifiable information held in the behavioral representation.")
@@ -87,18 +87,18 @@ def QA(q,a):
 
 H1(d,"Numbers to keep straight")
 B(d,"Dataset: ","250 entities, 485 days, about 14 million events, 5 log sources.")
-B(d,"Detection: ","threat-profile detector (primary) 4 of 4 at 0 FP by named technique; composite 4 of 4 at 8.1 percent false positive (not 8.5), cleanly separating only 2 of 4 (USR-118, USR-156). Baselines: Isolation Forest, SVM, LOF each 0 of 4; z-score 1 of 4.")
-B(d,"Ranks: ","Salt #1, Insider #2, Slow APT #7, Volt #24. Volt is #24, the deck is correct.")
-B(d,"Where 8.1 comes from: ","to catch the stealthiest attacker, Volt at composite 13.70, the threshold sits at 13.70; about 20 normal users score above it, so 20 of 246 = 8.1 percent.")
-B(d,"Separation is by rank, not a clean gap: ","the top normal user (composite 21.5) outscores Slow APT (19.4) and Volt (13.7); all four still surface at the top of the ranked list. Present it that way.")
+B(d,"Detection: ","threat-profile detector (primary) 4 of 4 at 0 FP by named technique; composite 4 of 4 at 10.6 percent false positive, cleanly separating only 2 of 4 (USR-118, USR-156). Baselines: Isolation Forest, SVM, LOF each 0 of 4; z-score 1 of 4.")
+B(d,"Ranks: ","Salt #1, Insider #2, Slow APT #7, Volt #30. Volt is #30, the deck is correct.")
+B(d,"Where 10.6 comes from: ","to catch the stealthiest attacker, Volt at composite 12.95, the threshold sits at 12.95; about 26 normal users score above it, so 26 of 246 = 10.6 percent.")
+B(d,"Separation is by rank, not a clean gap: ","the top normal user (composite 21.5) outscores Slow APT (20.0) and Volt (12.9); all four still surface at the top of the ranked list. Present it that way.")
 
 H1(d,"Questions and answers")
 QA("It is synthetic. How do you know it works on real DoD telemetry?",
    "It is a controlled blind test to prove the mechanism, not operational proof, and we say so. The next step is a bounded pilot on real data.")
-QA("8.1 percent false positive is a lot at DoD scale.",
+QA("10.6 percent false positive is a lot at DoD scale.",
    "It is a risk-ranked list, not threshold alerts; analysts work top-down. The operating point is a proof-of-concept reporting benchmark to be tuned and re-validated on real data.")
-QA("Show me where 8.1 percent comes from.",
-   "Sort the 250 entities by composite. To catch Volt at 13.70 (rank #24), the threshold is 13.70; 20 normal users score above it, so 20 of 246 = 8.1 percent, catching all four. We can derive it live from the results file.")
+QA("Show me where 10.6 percent comes from.",
+   "Sort the 250 entities by composite. To catch Volt at 12.95 (rank #30), the threshold is 12.95; 26 normal users score above it, so 26 of 246 = 10.6 percent, catching all four. We can derive it live from the results file.")
 QA("Your top normal user outscores two of your attackers, so that is not clean separation.",
    "Correct, and we present it that way. The two stealthiest attackers (Volt, Slow APT) do not separate on raw score; they surface by rank, which is why we deliver a risk-ranked list, not a threshold. The claim is recall at the top of the ranking.")
 QA("How is this different from Exabeam, Securonix, or Splunk UBA?",

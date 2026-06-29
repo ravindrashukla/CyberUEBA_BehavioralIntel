@@ -538,7 +538,7 @@ def slide_07_multi_tier(prs):
          ORANGE, "4 of 4", "High FP",
          [
              "Composite scoring aggregates multiple methods",
-             "Achieves 4/4 detection at 8.1% FP",
+             "Achieves 4/4 detection at 10.6% FP",
              "Still no directional intelligence per detection",
              "Analyst sees a score but not which zone drifted",
          ],
@@ -552,7 +552,7 @@ def slide_07_multi_tier(prs):
              "Detects subtle pattern shifts across all contexts",
              "Catches Salt Typhoon, Insider, Slow APT, Volt Typhoon",
          ],
-         "Result: All 4 attacks detected at 8.1% false positive rate."),
+         "Result: All 4 attacks detected at 10.6% false positive rate."),
     ]
 
     for i, (name, tools, clr, score, pct, bullets, result) in enumerate(tiers):
@@ -730,7 +730,7 @@ def slide_09_screenshot_heatmap(prs):
     tbox(slide, Inches(0.7), y_arow, Inches(2.5), Inches(0.3), "Composite Score", sz=11, color=NAVY)
     for ci in range(4):
         tbox(slide, col_x[ci], y_arow, Inches(1.8), Inches(0.3), "DETECTED", sz=10, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
-    tbox(slide, Inches(11.5), y_arow, Inches(1.2), Inches(0.3), "8.1%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
+    tbox(slide, Inches(11.5), y_arow, Inches(1.2), Inches(0.3), "10.6%", sz=10, color=DARK_GRAY, align=PP_ALIGN.CENTER)
 
     badge_ace = rect(slide, Inches(11), y_ace + Inches(0.1), Inches(1.8), Inches(0.35), fill=GREEN, radius=True)
     tbox(slide, Inches(11.05), y_ace + Inches(0.12), Inches(1.7), Inches(0.3),
@@ -809,15 +809,15 @@ def slide_12_screenshot_verdict(prs):
         ("COMPOSITE SCORING", "Multi-method statistical ensemble",
          "4 of 4", ORANGE,
          "Aggregates LOF, Z-Score, Isolation Forest, and OCSVM into a composite "
-         "score. Achieves 4/4 detection at 8.1% FP but still produces undirected "
+         "score. Achieves 4/4 detection at 10.6% FP but still produces undirected "
          "alerts — no zone-level explanation of which behavior changed.",
-         "FP: 8.1% — detects all but no zones"),
+         "FP: 10.6% — detects all but no zones"),
         ("V-INTELLIGENCE UEBA", "Behavioral Digital Twin + Zone Intelligence",
          "4 of 4", GREEN,
          "Same 4/4 detection PLUS zone-level directional intelligence for each "
          "detection. Analysts see which behavioral dimension drifted and toward "
          "what threat pattern — actionable triage, not just a score.",
-         "FP: 8.1% — all 4 + directed triage"),
+         "FP: 10.6% — all 4 + directed triage"),
     ]
 
     for i, (name, subtitle, score, clr, desc, metric) in enumerate(tiers):
@@ -849,7 +849,7 @@ def slide_12_screenshot_verdict(prs):
          "V-Intelligence UEBA builds the behavioral digital twin. Composite Scoring detects the anomaly.",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
     tbox(slide, Inches(0.8), Inches(5.82), Inches(11.7), Inches(0.25),
-         "4/4 attacks detected at 8.1% FP — with zone-level directional intelligence for each detection.",
+         "4/4 attacks detected at 10.6% FP — with zone-level directional intelligence for each detection.",
          sz=11, bold=True, color=RGBColor(160, 200, 224), align=PP_ALIGN.CENTER)
 
     # Salt Typhoon callout
@@ -857,7 +857,7 @@ def slide_12_screenshot_verdict(prs):
     tbox(slide, Inches(0.8), Inches(6.32), Inches(11.7), Inches(0.22),
          "Real-World Validation: Salt Typhoon (USR-118)", sz=12, bold=True, color=GREEN)
     tbox(slide, Inches(0.8), Inches(6.55), Inches(11.7), Inches(0.3),
-         "5+ years undetected by every traditional tool. V-Intelligence UEBA ranks it #1 out of 250 users (score: 51.3).",
+         "5+ years undetected by every traditional tool. V-Intelligence UEBA ranks it #1 out of 250 users (score: 51.7).",
          sz=10, color=RGBColor(160, 200, 224))
 
     footer(slide)
@@ -877,7 +877,7 @@ def slide_13_unique_results(prs):
     attackers = [
         ("USR-118", "Salt Typhoon Telecom", "Telecom infrastructure pivot — router config exfiltration, "
          "call metadata harvesting, DNS tunneling",
-         "51.3", "#1 / 250", "100th", GREEN,
+         "51.7", "#1 / 250", "100th", GREEN,
          "Mirrors real Salt Typhoon — 5+ years undetected worldwide"),
         ("USR-156", "Insider Threat", "Gradual privilege escalation — restricted file access, "
          "off-hours activity, slow data exfiltration",
@@ -885,11 +885,11 @@ def slide_13_unique_results(prs):
          "Slow 14-month escalation — no single week anomalous"),
         ("USR-234", "Slow APT", "Low-and-slow persistent access — credential harvesting, "
          "lateral movement across network segments",
-         "19.4", "#7 / 250", "97th", BLUE,
+         "20.0", "#7 / 250", "97th", BLUE,
          "417-day campaign — deliberately stays below every threshold"),
         ("USR-042", "Volt Typhoon LOTL", "Living-off-the-land — PowerShell, WMI, legitimate tools, "
          "no malware deployed",
-         "13.7", "#24 / 250", "90th", PURPLE,
+         "12.9", "#30 / 250", "88th", PURPLE,
          "Mirrors real Volt Typhoon — only built-in OS tools"),
     ]
 
@@ -922,7 +922,7 @@ def slide_13_unique_results(prs):
     # Bottom bar
     box = rect(slide, Inches(0.6), Inches(6.85), Inches(12.1), Inches(0.55), fill=NAVY, radius=True)
     tbox(slide, Inches(0.9), Inches(6.88), Inches(11.5), Inches(0.45),
-         "All 4 attackers in top 10%  |  8.1% false positive rate  |  "
+         "All 4 attackers in top 10%  |  10.6% false positive rate  |  "
          "Zero threshold tuning  |  Traditional methods: undirected flags only",
          sz=14, bold=True, color=GOLD, align=PP_ALIGN.CENTER)
 
@@ -958,7 +958,7 @@ def slide_14_salt_typhoon_proof(prs):
     sim_lines = [
         "Same attack pattern simulated among 250 users",
         "All traditional algorithms: MISSED (max z-score = 1.71)",
-        "V-Intelligence UEBA Composite Score: 51.3",
+        "V-Intelligence UEBA Composite Score: 51.7",
         "V-Intelligence UEBA Rank: #1 out of 250 users (100th percentile)",
         "Strongest behavioral anomaly in the entire population",
     ]
@@ -984,7 +984,7 @@ def slide_14_salt_typhoon_proof(prs):
     results = [
         ("5+ years", "undetected by\ntraditional tools"),
         ("#1 / 250", "V-Intelligence UEBA rank\n(highest anomaly)"),
-        ("51.3", "composite\nbehavioral score"),
+        ("51.7", "composite\nbehavioral score"),
         ("0 zones", "directional intelligence\nfrom traditional methods"),
     ]
     for i, (val, desc) in enumerate(results):
@@ -1266,7 +1266,7 @@ def slide_17_closing(prs):
     results = [
         ("4 / 4", "attack types\ndetected"),
         ("#1 / 250", "Salt Typhoon\nranked highest"),
-        ("8.1%", "false positive\nrate"),
+        ("10.6%", "false positive\nrate"),
         ("Zero", "threshold tuning\nrequired"),
     ]
     for i, (val, desc) in enumerate(results):

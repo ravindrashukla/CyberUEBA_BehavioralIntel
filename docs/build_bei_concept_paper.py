@@ -369,7 +369,7 @@ def build():
     body(doc, (
         "Validated through a cybersecurity proof of concept on synthetic telemetry — 250 users, "
         "485 days, ~14 million events, 4 embedded attack campaigns — BEI achieves 4 of 4 "
-        "attack detection at 8.1% false positive rate, while traditional methods catch at most 1 "
+        "attack detection at 10.6% false positive rate, while traditional methods catch at most 1 "
         "of the 4 (Z-Score catches one; LOF, Isolation Forest, and OCSVM catch none). BEI also "
         "adds zone-level directional intelligence — which behavioral dimension changed and toward "
         "what threat pattern. "
@@ -960,7 +960,7 @@ def build():
              "APT C2 beacon: persistent novel IP appearing every week for 60 weeks;\n"
              "LOTL: legitimate admin tools used in anomalous temporal/contextual patterns"],
             ["Traditional Gap", "All 4 attack users remain within normal statistical ranges on all 23 individual features"],
-            ["BEI Result", "4/4 detected at 8.1% FP via multi-phase composite scoring"],
+            ["BEI Result", "4/4 detected at 10.6% FP via multi-phase composite scoring"],
         ],
         col_widths=[1.5, 5.0],
     )
@@ -1291,7 +1291,7 @@ def build():
             ["Attack campaigns", "4 long-duration, multi-month campaigns"],
             ["Attack types", "Insider threat, Slow APT (C2), Volt Typhoon LOTL, Salt Typhoon telecom"],
             ["Traditional detection", "catches at most 1/4 (Z-Score 1 of 4; LOF/IForest/OCSVM 0 of 4) — and no directional intelligence"],
-            ["BEI composite scoring", "4 of 4 detected at 8.1% false positive rate"],
+            ["BEI composite scoring", "4 of 4 detected at 10.6% false positive rate"],
             ["Detection method", "Multi-phase composite: signal strength + breadth + sustained +\n"
              "context divergence + novelty persistence"],
         ],
@@ -1302,13 +1302,13 @@ def build():
     table(doc,
         ["Attack User", "Type", "Duration", "Composite\nScore", "Rank\n(/250)", "Primary Detection Signal"],
         [
-            ["USR-118", "Salt Typhoon\n(Telecom)", "412 days", "51.3", "#1",
+            ["USR-118", "Salt Typhoon\n(Telecom)", "412 days", "51.7", "#1",
              "Signal strength + breadth across\nmultiple behavioral zones"],
             ["USR-156", "Insider\nThreat", "14 months", "46.2", "#2",
              "Sustained deviation over 14-month\nescalation; data behavior zone drift"],
-            ["USR-234", "Slow APT\n(C2 Beacon)", "417 days", "19.4", "#7",
+            ["USR-234", "Slow APT\n(C2 Beacon)", "417 days", "20.0", "#7",
              "Novelty persistence: C2 beacon IP\nappears in 60/60 post-baseline weeks"],
-            ["USR-042", "Volt Typhoon\n(LOTL)", "412 days", "13.7", "#24",
+            ["USR-042", "Volt Typhoon\n(LOTL)", "412 days", "12.9", "#30",
              "Context divergence + signal strength\nfrom LOTL tool usage patterns"],
         ],
         col_widths=[0.7, 0.8, 0.7, 0.7, 0.5, 3.1],
@@ -1421,7 +1421,7 @@ def build():
 
     body(doc, (
         "The framework is validated through a cybersecurity proof of concept achieving "
-        "4 of 4 attack detection at 8.1% false positive rate with zone-level directional "
+        "4 of 4 attack detection at 10.6% false positive rate with zone-level directional "
         "intelligence that traditional methods cannot provide. More importantly, the framework "
         "is domain-agnostic — the same "
         "analytical architecture that detects insider threats in cybersecurity detects "

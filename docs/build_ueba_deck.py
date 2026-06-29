@@ -352,7 +352,7 @@ s=slide(); header(s,"Results: the Blind Test","Four nation-state-style attackers
 dtable(s,Inches(0.5),Inches(1.65),Inches(12.3),Inches(2.7),
  ["Method","Catches","Note"],
  [["Precision detector (Layer A)","4 of 4 at 0 false positives","named fingerprint per attacker"],
-  ["Discovery twin (Layer B)","4 of 4 by rank (8.1% operating point)","no fingerprint; names MITRE direction"],
+  ["Discovery twin (Layer B)","4 of 4 by rank (10.6% operating point)","no fingerprint; names MITRE direction"],
   ["Isolation Forest / One-Class SVM / LOF","0 of 4","point-anomaly, no behavior over time"],
   ["Z-score baseline","1 of 4","magnitude only"]],fs=12,widths=[4.4,3.6,4.3])
 bullets(s,Inches(0.6),Inches(4.7),Inches(12.2),Inches(1.7),[

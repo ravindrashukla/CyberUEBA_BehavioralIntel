@@ -104,7 +104,7 @@ def fig1_scoreboard():
     methods = ['Isolation\nForest', 'LOF', 'One-Class\nSVM', 'Z-Score', 'Feature\nCUSUM',
                'V-Intelligence\nComposite']
     caught = [0, 0, 0, 1, 0, 4]
-    fp = ['5.3% FP', '4.5% FP', '14.6% FP', '9.8% FP', '10.2% FP', '8.1% FP']
+    fp = ['5.3% FP', '4.5% FP', '14.6% FP', '9.8% FP', '10.2% FP', '10.6% FP']
     colors = [C_TRAD, C_TRAD, C_TRAD, C_TRADR, C_TRAD, C_VI]
     x = np.arange(len(methods))
     fig, ax = plt.subplots(figsize=(7.0, 3.2))
@@ -170,10 +170,10 @@ def fig3_ranks():
     # Normal population backdrop: 246 normal users, bulk low, upper tail toward ~14
     normals = np.concatenate([rng.gamma(2.2, 1.8, 220), rng.gamma(3.0, 3.0, 26)])
     normals = np.clip(normals, 0.2, 17.5)
-    attackers = [('USR-118  Salt Typhoon', 51.3, '#1 of 250'),
+    attackers = [('USR-118  Salt Typhoon', 51.7, '#1 of 250'),
                  ('USR-156  Insider Threat', 46.2, '#2 of 250'),
-                 ('USR-234  Slow APT', 19.4, '#7 of 250'),
-                 ('USR-042  Volt Typhoon LoTL', 13.7, '#24 of 250')]
+                 ('USR-234  Slow APT', 20.0, '#7 of 250'),
+                 ('USR-042  Volt Typhoon LoTL', 12.9, '#30 of 250')]
     fig, ax = plt.subplots(figsize=(7.0, 3.0))
     ax.scatter(normals, rng.uniform(-0.32, 0.32, len(normals)), s=12, color=C_TRAD, alpha=0.4,
                label='246 normal users (synthetic backdrop)')
@@ -184,8 +184,8 @@ def fig3_ranks():
         ax.annotate(f'{name}\nscore {score} — rank {rank}', xy=(score, 0), xytext=(score, ytxt),
                     ha='center', fontsize=8.4, color=C_NAVY, fontweight='bold',
                     arrowprops=dict(arrowstyle='-', color=C_NAVY, lw=0.8))
-    ax.axvline(13.7, color=C_TRADR, lw=1.2, ls='--', alpha=0.8)
-    ax.text(13.4, -1.18, 'operating point: threshold that catches all 4\nadmits 20 normal users = 8.1% FP',
+    ax.axvline(12.95, color=C_TRADR, lw=1.2, ls='--', alpha=0.8)
+    ax.text(12.65, -1.18, 'operating point: threshold that catches all 4\nadmits 26 normal users = 10.6% FP',
             fontsize=8.2, color=C_TRADR, ha='right')
     ax.set_xlim(-1, 56); ax.set_ylim(-1.45, 1.25)
     ax.set_yticks([])
@@ -271,14 +271,14 @@ bullet(' four of the five traditional detectors caught 0 of 4 campaigns; the bes
 bullet(' measuring behavioral drift in semantic space begins to surface the insider and the slow APT that '
        'magnitude-based methods cannot see.', lead='Intermediate (Tier 2): ')
 bullet(' the digital-twin composite ranked all 4 of 4 campaigns in the top tier of 250 entities, at a '
-       'false-positive (FP) rate of 8.1% — 20 of 246 normal users above the operating threshold — with each alert '
+       'false-positive (FP) rate of 10.6% — 26 of 246 normal users above the operating threshold — with each alert '
        'explaining which behavioral zone changed, in what direction, and toward which named threat pattern.',
        lead='V-Intelligence (Tier 3): ')
 para('The Salt Typhoon-style campaign, representing the class of intrusion that compromised U.S. telecommunications '
      'carriers in the real world, ranked #1 of all 250 entities, even though its largest measured deviation on any '
      'traditional feature was 1.71 standard deviations, deep inside the normal statistical band and invisible to '
      'every traditional detector. The Volt Typhoon-style campaign, among the hardest threat classes to detect, '
-     'surfaced in the top ~10%. The only traditional catch on the entire benchmark was Z-Score\'s bare "anomalous" '
+     'surfaced in the top ~12%. The only traditional catch on the entire benchmark was Z-Score\'s bare "anomalous" '
      'flag on this same entity, which was correct but unexplained and indistinguishable from a busy week. The '
      'capability this approach adds is the ability to surface a five-year-invisible threat together with an '
      'explanation of why it was flagged.', bold=True)
@@ -387,28 +387,28 @@ para('All three tiers ran on the same synthetic enterprise: 250 users, 485 days,
      'text-embedding-3-small), not simulated. The false-positive rate is reported at a defined operating '
      'point: the score threshold that recalls all four campaigns. That threshold was set with knowledge of the '
      'ground truth and is used as a transparent reporting device rather than a deployable setting. At that '
-     'threshold, 20 of the 246 normal users rank above the lowest-ranked campaign, an 8.1% false-positive rate.')
+     'threshold, 26 of the 246 normal users rank above the lowest-ranked campaign, a 10.6% false-positive rate.')
 add_fig(FIG1, 'Figure 2 — The scoreboard. Five traditional detectors against the four stealth campaigns: four catch '
               'none, Z-Score catches one (at a comparable 9.8% false-positive rate, and with no explanation). The '
-              'V-Intelligence multi-phase composite ranks all four in the top tier at 8.1% false positives — with '
+              'V-Intelligence multi-phase composite ranks all four in the top tier at 10.6% false positives — with '
               'zone, direction, and MITRE ATT&CK context attached to every alert. (Synthetic data.)')
 H2('6.1  Per-attacker results: each caught by a different tell')
 para('The four campaigns are not caught by a single mechanism applied four times. Each one relies on a different '
      'mix of scoring phases, which is why fusion rather than any single detector carries the result:')
 table(['Entity', 'Campaign', 'Rank / score', 'How it was caught'],
-      [('USR-118', 'Salt Typhoon — telecom infrastructure pivot (412 days)', '#1 of 250\nscore 51.3',
+      [('USR-118', 'Salt Typhoon — telecom infrastructure pivot (412 days)', '#1 of 250\nscore 51.7',
         'Composite drift + breadth: quiet movement across segments lights up several zones at once. Its largest measured z-score on any traditional feature was 1.71 — deep inside the normal band — yet it ranked #1.'),
        ('USR-156', 'Insider threat — 14-month escalation', '#2 of 250\nscore 46.2',
         'Signal strength, breadth, and sustained deviation concentrated in the data-behavior zone while identity stayed flat.'),
-       ('USR-234', 'Slow APT — 417-day C2 beaconing', '#7 of 250\nscore 19.4',
+       ('USR-234', 'Slow APT — 417-day C2 beaconing', '#7 of 250\nscore 20.0',
         'Novelty persistence: among the lowest raw signal of any entity (2–3 beacons/day), but the same never-before-seen infrastructure recurring week after week — the axis no threshold measures.'),
-       ('USR-042', 'Volt Typhoon — living off the land (412 days)', '#24 of 250\nscore 13.7',
-        'Composite drift + breadth: the hardest case, sitting in the upper normal tail — surfaced in the top ~10%. The one traditional catch on the benchmark was Z-Score\'s flag on this entity (measured z = 3.04, barely over the common z = 3 alarm line) — a bare "anomalous" with no indication of why.')],
+       ('USR-042', 'Volt Typhoon — living off the land (412 days)', '#30 of 250\nscore 12.9',
+        'Composite drift + breadth: the hardest case, sitting in the upper normal tail — surfaced in the top ~12%. The one traditional catch on the benchmark was Z-Score\'s flag on this entity (measured z = 3.04, barely over the common z = 3 alarm line) — a bare "anomalous" with no indication of why.')],
       widths=[0.9, 2.2, 1.2, 2.6])
 add_fig(FIG3, 'Figure 3 — Where the four campaigns land on the composite ranking (real run output; normal-user '
               'backdrop illustrative). Salt Typhoon and the insider stand far clear of the population; the slow APT '
               'and the Volt Typhoon LoTL campaign sit above the bulk but nearer the tail — recalling all four admits '
-              '20 normal users, the 8.1% operating point.')
+              '26 normal users, the 10.6% operating point.')
 H2('6.2  The role of fusion')
 para('Taken individually, the system\'s underlying detectors are each noisy; a naive union of their individual '
      'alarms would flag roughly 19% of normal users. Treated as a ranking problem, each scoring phase is only a '
@@ -418,12 +418,11 @@ para('Taken individually, the system\'s underlying detectors are each noisy; a n
      'ranking, and an attacker cannot evade it by defeating a single phase, because staying hidden requires '
      'evading all five at once. This is the property that makes the design resistant to evasion.')
 add_fig(FIG4, 'Figure 4 — Ranking quality by scoring phase versus the fused composite (250 users, real embeddings). '
-              'Every individual phase is only a partial discriminator; fusion lifts ranking quality to 0.98. For '
-              'context, the best traditional discriminator on a separate 50-user run reached about 0.81.')
-H2('6.3  What 8.1% false positives actually means')
-para('It does not mean the system blocks 8.1% of employees. The composite is a ranked triage list. At the '
-     'threshold that catches all four campaigns, an analyst reviewing the list top-down would work through about 24 '
-     'entities (4 real campaigns plus 20 normal users) out of 250, each with its zone, direction, and '
+              'Every individual phase is only a partial discriminator; fusion lifts ranking quality to 0.98.')
+H2('6.3  What 10.6% false positives actually means')
+para('It does not mean the system blocks 10.6% of employees. The composite is a ranked triage list. At the '
+     'threshold that catches all four campaigns, an analyst reviewing the list top-down would work through about 30 '
+     'entities (4 real campaigns plus 26 normal users) out of 250, each with its zone, direction, and '
      'threat-concept explanation attached rather than a bare "anomalous" flag. A stricter threshold trades the '
      'hardest case (the Volt Typhoon entity, closest to the boundary) for fewer reviews; that '
      'detection-versus-false-alarm curve will be published on larger data.')
@@ -470,7 +469,7 @@ bullet('All results are from synthetic telemetry; real-data validation with reca
        'next step.')
 bullet('Four embedded campaigns demonstrate the concept end to end but are not a statistically powered evaluation; '
        'a larger, more varied campaign set is next.')
-bullet('The 8.1% figure is measured at the threshold that catches all four campaigns; the full '
+bullet('The 10.6% figure is measured at the threshold that catches all four campaigns; the full '
        'detection-versus-false-alarm curve on larger data will let each operator set their own alert budget.')
 bullet('The behavioral narratives include interpretive wording ("restricted," "rising") that helps the model but '
        'may also prime it; a plain-numbers control run is planned to confirm the signal holds without it.')
@@ -485,7 +484,7 @@ para('Three generations of detection on one dataset make the case clearly. Tradi
      'the stealthy campaigns, catching 0 of 4 for most methods and 1 of 4 for the best, and even when it fires the '
      'alert says only "anomalous," leaving the analyst the same manual triage. An intermediate drift approach '
      'begins to recover direction. The V-Intelligence digital twin, combining zones, trajectories, peer cohorts, '
-     'relationships, and multi-phase fusion, finds all four campaigns at an 8.1% false-positive rate, including a '
+     'relationships, and multi-phase fusion, finds all four campaigns at a 10.6% false-positive rate, including a '
      'Salt Typhoon-class intrusion ranked #1 of 250 and a Volt Typhoon-class campaign of the kind that stayed '
      'invisible in U.S. critical infrastructure for five years.')
 para('Traditional analytics can detect anomalous users, but detection without direction leaves the analyst with '
@@ -508,7 +507,7 @@ gl = [
     ('SIEM / SOC', 'Security Information and Event Management (the log-collection platform) / Security Operations Center (the team that triages its alerts).'),
     ('CUSUM', 'Cumulative-sum change detection — accumulating small week-over-week changes so a slow trend becomes visible even when each step is tiny.'),
     ('Z-Score', 'How many standard deviations a value sits from its own baseline average; z = 3 is a common alarm line. The Salt Typhoon entity never exceeded z = 1.71 — statistically "normal" throughout.'),
-    ('False positive (FP)', 'A normal user flagged for review. Here 8.1% means 20 of 246 normal users ranked above the threshold that catches all four campaigns — a triage list, not auto-blocking.'),
+    ('False positive (FP)', 'A normal user flagged for review. Here 10.6% means 26 of 246 normal users ranked above the threshold that catches all four campaigns — a triage list, not auto-blocking.'),
     ('Operating point', 'The score threshold at which results are reported; here, the threshold that recalls 100% of the embedded campaigns.'),
     ('ROC AUC', 'Ranking quality: the probability a randomly chosen attacker outranks a randomly chosen normal user. 0.5 is a coin flip; 1.0 is perfect.'),
     ('Peer cohort', 'The entity\'s true comparison group (administrators vs. administrators, analysts vs. analysts) rather than the whole population.'),

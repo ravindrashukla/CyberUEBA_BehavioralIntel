@@ -170,16 +170,16 @@ def fig2_scoreboard():
 def fig3_composite():
     """Per-attacker composite scores vs the detection threshold; USR-234's novelty rescue."""
     labels = ['Salt Typhoon\ntelecom (USR-118)\nRank #1', 'Insider threat\n(USR-156)\nRank #2',
-              'Slow APT, C2 beacon\n(USR-234)\nRank #7', 'Volt Typhoon LOTL\n(USR-042)\nRank #24']
-    scores = [51.3, 46.2, 19.4, 13.7]
+              'Slow APT, C2 beacon\n(USR-234)\nRank #7', 'Volt Typhoon LOTL\n(USR-042)\nRank #30']
+    scores = [51.7, 46.2, 20.0, 12.9]
     x = np.arange(len(labels))
     fig, ax = plt.subplots(figsize=(7.0, 3.3))
-    ax.bar(x[[0, 1, 3]], [51.3, 46.2, 13.7], color=C_VI, width=0.58)
-    # USR-234 stacked: 6.4 without novelty + 13.0 novelty persistence
-    ax.bar(x[2], 6.4, color=C_LEG, width=0.58, label='USR-234 without the novelty signal: 6.4 (rank ~#105 — missed)')
-    ax.bar(x[2], 13.0, bottom=6.4, color=C_VI, width=0.58,
+    ax.bar(x[[0, 1, 3]], [51.7, 46.2, 12.9], color=C_VI, width=0.58)
+    # USR-234 stacked: 7.0 without novelty + 13.0 novelty persistence
+    ax.bar(x[2], 7.0, color=C_LEG, width=0.58, label='USR-234 without the novelty signal: 7.0 (rank ~#105 — missed)')
+    ax.bar(x[2], 13.0, bottom=7.0, color=C_VI, width=0.58,
            label='Novelty persistence: +13.0 (new C2 address recurs 60 of 60 weeks)')
-    thresh = 13.5
+    thresh = 12.95
     ax.axhline(thresh, color=C_LEGD, lw=1.8, ls='--')
     ax.text(2.64, thresh + 8.0, 'Detection threshold\n(catches all four attackers)', fontsize=8.6, color=C_LEGD,
             ha='center', fontweight='bold')
@@ -345,8 +345,8 @@ bullet('Of four industry-standard anomaly-detection algorithms run against the s
        'the four attack campaigns, and the best detected exactly one. That single detection was a statistical spike '
        'with no accompanying explanation of which behavior changed or what kind of threat it resembled.',
        lead='Traditional methods miss these attacks. ')
-bullet('V-Intelligence\'s multi-phase composite scoring detected all four attack campaigns at an 8.1% false-positive '
-       'rate (20 of 246 normal users flagged), and identified for the analyst which behavioral dimension drifted and '
+bullet('V-Intelligence\'s multi-phase composite scoring detected all four attack campaigns at a 10.6% false-positive '
+       'rate (26 of 246 normal users flagged), and identified for the analyst which behavioral dimension drifted and '
        'toward what known threat pattern.', lead='Four of four detected, with direction. ')
 bullet(' A slow nation-state intrusion whose behavior barely changes in volume is the hardest case in the study. It is '
        'invisible to every magnitude-based method, yet a single behavioral question detected it: whether a '
@@ -502,7 +502,7 @@ table(['Method', 'Attacks detected', 'False-positive rate', 'What the analyst ge
        ('Z-Score', '1 of 4', '9.8%', 'Catches only the Volt Typhoon spike (z = 3.04, barely over the 3.0 line). The other three never cross it — Salt Typhoon peaks at z = 1.71.'),
        ('Isolation Forest', '0 of 4', '5.3%', 'All four attackers look statistically normal in feature space.'),
        ('One-Class SVM', '0 of 4', '14.6%', '36 false positives and zero true detections.'),
-       ('V-Intelligence Composite', '4 of 4', '8.1%', 'All four detected, each with zone-level explanation: which dimension drifted, toward what threat.')],
+       ('V-Intelligence Composite', '4 of 4', '10.6%', 'All four detected, each with zone-level explanation: which dimension drifted, toward what threat.')],
       widths=[1.7, 1.2, 1.2, 2.8])
 para('Stated precisely, the best traditional method catches 1 of 4 campaigns, and its single detection is a '
      'single-feature spike with no explanation attached. The composite catches all four at a comparable '
@@ -511,19 +511,19 @@ para('Stated precisely, the best traditional method catches 1 of 4 campaigns, an
      'investigation lead.', bold=True)
 add_fig(FIG2, 'Figure 3 — The detection scoreboard across 250 users with four embedded attack campaigns (measured, '
               'synthetic data; verified against the evaluation dataset). Traditional methods catch at most 1 of 4; '
-              'composite scoring catches 4 of 4 at 8.1% false positives, each detection explained.')
+              'composite scoring catches 4 of 4 at 10.6% false positives, each detection explained.')
 H2('5.2  Four attacks, four different fingerprints')
 para('Each campaign was caught by a different combination of the five phases, demonstrating empirically that no '
      'single method would have sufficed.')
-bullet(' the strongest overall anomaly, ranked #1 of 250 (score 51.3). The attack touches sign-in, network, and '
+bullet(' the strongest overall anomaly, ranked #1 of 250 (score 51.7). The attack touches sign-in, network, and '
        'domain-lookup behavior simultaneously, with 18 measurements elevated at once.', lead='Salt Typhoon telecom (rank #1): ')
 bullet(' ranked #2 (score 46.2), caught by sustained deviation and breadth. The campaign showed a 14-month drift from '
        'public toward restricted files while total volume stayed flat, the textbook "same credentials, different '
        'data" signature.', lead='Insider threat (rank #2): ')
-bullet(' ranked #7 (score 19.4), the case that motivates the architecture and is detailed below.', lead='Slow APT (rank #7): ')
-bullet(' ranked #24 of 250 (score 13.7). This was a deliberately quiet campaign using only legitimate admin tools, '
-       'yet it remained inside the top 10% and above the detection threshold on the strength of breadth and signal '
-       'strength.', lead='Volt Typhoon living-off-the-land (rank #24): ')
+bullet(' ranked #7 (score 20.0), the case that motivates the architecture and is detailed below.', lead='Slow APT (rank #7): ')
+bullet(' ranked #30 of 250 (score 12.9). This was a deliberately quiet campaign using only legitimate admin tools, '
+       'yet it remained inside the top 12% and above the detection threshold on the strength of breadth and signal '
+       'strength.', lead='Volt Typhoon living-off-the-land (rank #30): ')
 add_fig(FIG5, 'Figure 4 — The drift projected onto the five scoring dimensions, as percentiles across the '
               '250-user population (measured, synthetic data). Normal users cluster near the center (grey dashed = '
               'median, dotted = 75th percentile). Each attacker breaks out on a different combination — the insider '
@@ -544,14 +544,14 @@ para('Novelty persistence asks a different question, namely whether something ne
      'of any attacker, lifting USR-234 from rank ~#105 to rank #7 and placing it firmly inside the detected set.')
 add_fig(FIG3, 'Figure 5 — Composite scores of the four attack users against the detection threshold '
               '(measured, synthetic data). The slow APT (USR-234) splits into its parts: without the novelty signal it '
-              'scores 6.4 and is missed; the recurring never-before-seen contact adds 13.0 points and detects it.')
+              'scores 7.0 and is missed; the recurring never-before-seen contact adds 13.0 points and detects it.')
 H2('5.4  False positives, treated as a budget')
-para('At the operating point that catches all four attackers, 20 of 246 normal users (8.1%) are flagged alongside '
+para('At the operating point that catches all four attackers, 26 of 246 normal users (10.6%) are flagged alongside '
      'them. Operationally these are not noise; they constitute a prioritized queue of the highest-behavioral-risk '
      'normal users, each explained by the phases that drove its score. The threshold is tunable, and a stricter cut '
      'trades detection margin for fewer flags. The simulated real-world parallels also held: the two campaigns that '
      'no real victim organization ever self-detected, Volt Typhoon and Salt Typhoon, were both detected here, at '
-     'ranks #24 and #1.')
+     'ranks #30 and #1.')
 
 # ================= 6. DEPLOYMENT =================
 H1('6.  Deployment in Practice')
@@ -598,7 +598,7 @@ bullet(' All results are from synthetic telemetry. The attack campaigns are care
        'figure must be re-measured on real data.')
 bullet(' The detection threshold reported here is the operating point that catches all four attackers; it was chosen '
        'with knowledge of the answers. In production the threshold must be set blind and tuned per environment.')
-bullet(' An 8.1% false-positive rate means 20 flagged normal users per 250; acceptable as a ranked triage queue, but '
+bullet(' A 10.6% false-positive rate means 26 flagged normal users per 250; acceptable as a ranked triage queue, but '
        'it is a real analyst cost — and it is not an auto-blocking threshold.')
 bullet(' Baselines need 4–6 weeks of history before detection is meaningful, and legitimate behavioral shifts — role '
        'changes, project transitions — are the main source of false flags.')
@@ -618,7 +618,7 @@ para('V-Intelligence UEBA maintains a living behavioral chart for every user and
      'meaning rather than in raw numbers, accumulates slow drift until it is statistically significant, names the '
      'direction against known adversary behavior, and combines five independent behavioral questions into one '
      'ranked and explained list. On a 250-user, 485-day validation with four embedded campaigns, it detected 4 of 4, '
-     'compared with 1 of 4 for the best traditional method, at an 8.1% false-positive rate and with every detection '
+     'compared with 1 of 4 for the best traditional method, at a 10.6% false-positive rate and with every detection '
      'explained.')
 para('An insider changes what they access rather than how much, and an APT changes where it communicates rather than '
      'how often. Traditional tools measure magnitude; V-Intelligence UEBA measures direction, which is the dimension '
@@ -643,7 +643,7 @@ gl = [
     ('CISA', 'Cybersecurity and Infrastructure Security Agency — the U.S. government agency that publishes authoritative threat advisories.'),
     ('Composite scoring', 'Fusing five independent behavioral questions (signal strength, breadth, persistence, context divergence, novelty) into one ranked risk score per user.'),
     ('Novelty persistence', 'A never-before-seen behavior (e.g., a new external contact) that keeps recurring week after week — the fingerprint of covert C2 infrastructure.'),
-    ('False-positive rate', 'The share of normal users incorrectly flagged; here 8.1% = 20 of 246 normal users at the chosen threshold.'),
+    ('False-positive rate', 'The share of normal users incorrectly flagged; here 10.6% = 26 of 246 normal users at the chosen threshold.'),
     ('Z-Score / Isolation Forest / Local Outlier Factor / One-Class SVM', 'The four industry-standard statistical and machine-learning anomaly detectors used as the traditional comparison baseline in this study.'),
     ('Zero Trust', 'The federal security architecture mandate that no user or device is trusted by default; every access is continuously verified.'),
     ('Synthetic data', 'Simulated telemetry built to prove the concept — here calibrated against public CISA advisories — before access to real operational data.'),

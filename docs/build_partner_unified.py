@@ -133,7 +133,7 @@ say(d,["What you will see today is one platform, the 22nd Century V-Intelligence
  "full attack lifecycle under one MITRE vocabulary. Every layer runs live. We will be explicit about what is "
  "operational today versus on the roadmap. Let's start with the behavioral core."])
 H2(d,"Block 1 - Layer 2, the digital twin (22CT, anchor)")
-meta(d,"Content:","The 7-part anatomy + the live four-attacker demo + the 8.1% derivation. Real numbers (Section 7).")
+meta(d,"Content:","The 7-part anatomy + the live four-attacker demo + the 10.6% derivation. Real numbers (Section 7).")
 meta(d,"Honesty line:","\"The behavioral core is our IP and runs live. Identity fusion, forensics, and response are our roadmap.\"")
 H2(d,"Block 2 - Layer 1, Preemptive (22CT brand, Rigor drives)")
 meta(d,"Content:","Formal-proof network assurance. Scenario: prove Volt's misconfigured-edge entry path is closed before traffic flows.")
@@ -160,10 +160,10 @@ B(d,"Kellsie Herrmann (policy): ","why it matters: Volt/Salt, valid-account crit
 H1(d,"7. Numbers to keep straight (digital twin)")
 B(d,"Dataset: ","250 entities, 485 days, ~14M events, 5 log sources.")
 B(d,"Threat-profile detector (primary): ","4/4 at 0 FP by named technique (C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection).")
-B(d,"FP (composite): ","8.1% composite (~20/246 normals above Volt's 13.70), 4/4 caught but cleanly separating only 2/4 (USR-118, USR-156). Use 8.1, never 8.5.")
-B(d,"Ranks: ","Salt #1 (51.27); Insider #2 (46.24); Slow APT #7 (19.44); Volt #24 (13.70).")
+B(d,"FP (composite): ","10.6% composite (~26/246 normals above Volt's 12.95), 4/4 caught but cleanly separating only 2/4 (USR-118, USR-156).")
+B(d,"Ranks: ","Salt #1 (51.71); Insider #2 (46.24); Slow APT #7 (20.00); Volt #30 (12.90).")
 B(d,"Baselines: ","Isolation Forest / OC-SVM / LOF each 0/4; z-score 1/4.")
-B(d,"Separation is by RANK: ","top normal (21.5) outscores Slow APT (19.4) and Volt (13.7). Present a ranked list.")
+B(d,"Separation is by RANK: ","top normal (21.5) outscores Slow APT (20.0) and Volt (12.9). Present a ranked list.")
 
 H1(d,"8. Logistics (in-person, all partners present)")
 callout(d,"In-person, all three teams in the room. The #1 failure mode is network access at an Army facility. Plan for no internet.")

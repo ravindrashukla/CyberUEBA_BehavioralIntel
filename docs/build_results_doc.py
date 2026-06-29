@@ -572,7 +572,7 @@ def build_document():
 
     add_body_text(doc, (
         "Multiple methods achieve high detection counts — Z-Score detects 4/4 at 4.9% FP, "
-        "OCSVM detects 4/4 at 29.7% FP, Composite Scoring detects 4/4 at 8.1% FP. "
+        "OCSVM detects 4/4 at 29.7% FP, Composite Scoring detects 4/4 at 10.6% FP. "
         "However, none of these provide directional intelligence: they flag anomalous "
         "users without indicating which behavioral dimension changed or toward what "
         "threat pattern. Only zone-level analysis provides actionable triage."

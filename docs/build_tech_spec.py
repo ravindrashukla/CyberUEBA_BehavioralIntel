@@ -1611,14 +1611,14 @@ def build_document():
         ["User", "Attack Type", "Composite", "Signal", "Breadth", "Sustained",
          "Ctx Spread", "Ctx Max", "Novelty", "Rank"],
         [
-            ["USR-118", "Salt Typhoon", "51.3", "26.8", "9", "5.3",
-             "5.7", "4.2", "0.0", "#1"],
-            ["USR-156", "Insider Threat", "46.2", "23.1", "8", "6.8",
-             "4.9", "3.4", "0.0", "#2"],
-            ["USR-234", "Slow APT (C2)", "19.4", "4.5", "1", "1.6",
-             "1.5", "0.8", "13.0", "#7"],
-            ["USR-042", "Volt Typhoon", "13.7", "7.2", "3", "2.1",
-             "2.3", "1.1", "0.0", "#24"],
+            ["USR-118", "Salt Typhoon", "51.7", "30.6", "17", "9.6",
+             "9.0", "8.1", "2.8", "#1"],
+            ["USR-156", "Insider Threat", "46.2", "30.0", "19", "8.4",
+             "4.3", "6.8", "0.0", "#2"],
+            ["USR-234", "Slow APT (C2)", "20.0", "4.5", "2", "1.6",
+             "1.5", "0.9", "13.0", "#7"],
+            ["USR-042", "Volt Typhoon", "12.9", "6.2", "10", "3.7",
+             "0.4", "1.4", "0.0", "#30"],
         ],
         col_widths=[0.6, 1.0, 0.6, 0.5, 0.5, 0.6, 0.6, 0.5, 0.5, 0.4],
     )
@@ -1627,7 +1627,7 @@ def build_document():
         "Key observations from the breakdown:")
     add_bullet(doc, "USR-118 (Salt Typhoon): ", bold_prefix="Rank #1. ")
     add_body_text(doc,
-        "Dominates signal strength (26.8) and breadth (9 features above 1.5σ). "
+        "Dominates signal strength (30.6) and breadth (17 features above 1.5σ). "
         "The telecom infrastructure pivot creates anomalies across multiple behavioral "
         "zones simultaneously — authentication, network, and DNS patterns all shift. "
         "Despite this, no single feature exceeds the z>3 threshold, making it invisible "
@@ -1643,10 +1643,10 @@ def build_document():
         "Without novelty persistence, this user's composite would be only 6.4 — barely "
         "noticeable. The novelty score of 13.0 is the sole reason for detection. "
         "See Section 12.4 for detailed analysis.", space_after=4)
-    add_bullet(doc, "USR-042 (Volt Typhoon): ", bold_prefix="Rank #24. ")
+    add_bullet(doc, "USR-042 (Volt Typhoon): ", bold_prefix="Rank #30. ")
     add_body_text(doc,
         "Living-off-the-land attacks use legitimate admin tools (PowerShell, wmic, certutil), "
-        "creating moderate anomalies across context divergence. Detected at rank #24, "
+        "creating moderate anomalies across context divergence. Detected at rank #30, "
         "still within the p90 threshold.", space_after=4)
 
     add_section_heading(doc, "12.4. USR-234 Novelty Persistence — Detailed Analysis", level=2)
@@ -1686,7 +1686,7 @@ def build_document():
         "Without novelty persistence, USR-234's composite score would be 6.4 "
         "(signal=4.5 + breadth=0.5 + sustained=0.5 + context=1.0). "
         "At 6.4, this user would rank approximately #80 out of 250 — well below any "
-        "detection threshold. Novelty persistence elevates the score to 19.4 (rank #7), "
+        "detection threshold. Novelty persistence elevates the score to 20.0 (rank #7), "
         "placing it firmly within the detected set.")
 
     add_body_text(doc,
@@ -1885,7 +1885,7 @@ def build_document():
         "volume-based anomalies; embeddings provide semantic understanding for catching "
         "behavioral shifts at constant volume. The composite scoring tier fuses both "
         "perspectives — using group-relative z-scores from raw features with novelty "
-        "persistence from qualitative analysis — to achieve 4/4 detection at 8.1% FP.")
+        "persistence from qualitative analysis — to achieve 4/4 detection at 10.6% FP.")
 
     add_page_break(doc)
 

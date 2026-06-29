@@ -210,7 +210,7 @@ def build():
                 prefix="Cohort comparison. ")
     callout(doc, "Bottom line: the attackers are realistic precisely because they are invisible to "
                  "volume-based measures — proven here with numbers — and V-Intelligence UEBA still "
-                 "ranks all four in the top 10% of 250 users at an 8.1% false-positive rate, where "
+                 "ranks all four in the top 12% of 250 users at a 10.6% false-positive rate, where "
                  "four standard algorithms detect at most one.")
     pbreak(doc)
 
@@ -374,21 +374,21 @@ def build():
             ["Isolation Forest", "Traditional", "0 of 4", "5.3%"],
             ["Z-Score (3-sigma)", "Traditional", "1 of 4", "9.8%"],
             ["One-Class SVM", "Traditional", "0 of 4", "14.6%"],
-            ["Composite Scoring", "V-Intelligence UEBA", "4 of 4", "8.1%"],
+            ["Composite Scoring", "V-Intelligence UEBA", "4 of 4", "10.6%"],
         ],
         widths=[1.7, 1.6, 1.3, 1.6])
     body(doc, "The traditional methods are quiet because they are blind: they achieve low "
               "false-positive rates by being insensitive to exactly the behavioral changes the "
-              "attackers exhibit. Composite scoring detects all four campaigns at a manageable 8.1% "
+              "attackers exhibit. Composite scoring detects all four campaigns at a manageable 10.6% "
               "rate by fusing five behavioral phases rather than thresholding any single metric. "
-              "Each attacker ranks in the top 10% of all 250 users:")
+              "Each attacker ranks in the top 12% of all 250 users:")
     table(doc,
         ["Attacker", "Campaign", "Composite score", "Rank (of 250)", "Caught by"],
         [
-            ["USR-118", "Salt Typhoon", "51.3", "#1", "signal strength + breadth"],
+            ["USR-118", "Salt Typhoon", "51.7", "#1", "signal strength + breadth"],
             ["USR-156", "Insider threat", "46.2", "#2", "sustained deviation + breadth"],
-            ["USR-234", "Slow APT", "19.4", "#7", "novelty persistence"],
-            ["USR-042", "Volt Typhoon", "13.7", "#24", "breadth + signal strength"],
+            ["USR-234", "Slow APT", "20.0", "#7", "novelty persistence"],
+            ["USR-042", "Volt Typhoon", "12.9", "#30", "breadth + signal strength"],
         ],
         widths=[1.0, 1.5, 1.2, 1.2, 1.9])
     callout(doc, "The slow APT (USR-234) is the proof of the whole approach: invisible to all four "
@@ -413,7 +413,7 @@ def build():
              "Passing"],
             ["Numerical stability", "Zero vectors, single-user groups, extreme values",
              "Passing"],
-            ["Detection accuracy", "4-of-4 at 8.1% FP reproduced from stored results",
+            ["Detection accuracy", "4-of-4 at 10.6% FP reproduced from stored results",
              "Passing"],
             ["Security / evasion", "Rotating-address, orthogonal-drift, low-drift evasion cases",
              "Passing"],
@@ -422,7 +422,7 @@ def build():
     body(doc, "Across the deep-analysis and AI/ML suites, 176 of 177 tests pass; the single "
               "exception is an out-of-date count assertion in a reference-library test (the library "
               "legitimately grew from 12 to 16 threat concepts) and does not affect detection. The "
-              "detection outcome — four of four at 8.1% — is reproduced directly from the stored "
+              "detection outcome — four of four at 10.6% — is reproduced directly from the stored "
               "results on every run.")
     pbreak(doc)
 
@@ -451,7 +451,7 @@ def build():
               "volume measure. They are realistic because they are, by design, invisible to the "
               "tools most organizations rely on — confirmed by four standard algorithms detecting at "
               "most one of four.")
-    body(doc, "On that same hard data, V-Intelligence UEBA detects all four campaigns at an 8.1% "
+    body(doc, "On that same hard data, V-Intelligence UEBA detects all four campaigns at a 10.6% "
               "false-positive rate by measuring behavioral direction and accumulating it over time — "
               "the digital entity, zone decomposition, cumulative drift, novelty persistence, and "
               "peer-relative scoring shown step by step above. The attacker changes what it does, "

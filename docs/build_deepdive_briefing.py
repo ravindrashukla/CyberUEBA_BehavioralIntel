@@ -82,7 +82,7 @@ table(["Block","Time","Content","Driver"],
  [["0. Open","5 min","His goals, confirm time, set the arc","You"],
   ["1. Problem + Innovation","25 min","Threat inflection (Volt/Salt, LoTL, T1078); meaning vs magnitude; architecture","You"],
   ["2. Data + Digital Twin","35 min","Synthetic dataset; build one entity into a behavioral twin live; the 4 campaigns","Demo driver"],
-  ["3. Detection deep dive","50 min","Drift, direction/projection, composite scoring; walk Salt #1 and Volt #24; 4/4 vs 0-1/4","Both"],
+  ["3. Detection deep dive","50 min","Drift, direction/projection, composite scoring; walk Salt #1 and Volt #30; 4/4 vs 0-1/4","Both"],
   ["4. Operationalize + Federal fit","25 min","Deploy (IL5/6, JWICS, air-gap, no PII), SIEM fit, roadmap, honest validation path","You"],
   ["5. Policy + next steps","15 min","Preemptive shift, the national gap, pilot, thought leadership","You"],
   ["Buffer","15 min","His tangents and questions","-"]],
@@ -93,7 +93,7 @@ P("Keep these three columns straight at all times. If asked about a roadmap item
   "the architecture and is the next build phase; what you are seeing today is the detection core.\"")
 table(["Show live (BUILT)","Show with precision (PARTIAL)","Designed next / separate (DO NOT claim built)"],
  [["4 attack simulators","Digital twin: 5 signals + zones built; identity fusion NOT built","Identity fusion across 10+ systems (ROADMAP)"],
-  ["Behavioral embedding (text to 1536-d)","FP economics: 8.1% composite real (cleanly separates 2/4); multi-front Threat-Profile detector built, 4/4 at 0 FP","HMAC tamper-evident forensics (ROADMAP)"],
+  ["Behavioral embedding (text to 1536-d)","FP economics: 10.6% composite real (cleanly separates 2/4); multi-front Threat-Profile detector built, 4/4 at 0 FP","HMAC tamper-evident forensics (ROADMAP)"],
   ["Drift / CUSUM","Cross-domain DLA: same architecture ported, no live data link","ABAC proportional response, MFA/lockout (ROADMAP)"],
   ["Direction / MITRE projection","","Layer 1 (preemptive), Layer 3 API, Layer 5 Mythos: presented as our four-layer platform; only the behavioral layer is in this codebase"],
   ["5-phase composite scoring","",""],
@@ -105,11 +105,11 @@ table(["Show live (BUILT)","Show with precision (PARTIAL)","Designed next / sepa
 slide("0.4","Numbers to Keep Straight (he will check)","FRAME")
 B("Dataset: ","250 synthetic entities, 485 days (70 weeks), 2025-01-01 to 2026-04-30, ~14 million events across 5 log sources.")
 B("Embedding: ","1536 dimensions (OpenAI text-embedding-3-small, mandatory; the pipeline hard-fails without an API key). For air-gapped runs a local open embedding model swaps in behind the same embedder interface.")
-B("False-positive rate: ","8.1 percent at the composite operating point (about 20 false positives out of 246 normal users), catching all four campaigns. Use 8.1, not 8.5; the deck's 8.5 is wrong. Where 8.1 comes from, and you can derive it live: to catch the stealthiest attacker, Volt at composite 13.70 (rank #24), the threshold sits at 13.70, and 20 normal users score above that, so 20/246 = 8.1 percent, catching 4 of 4.")
-B("Ranks (from composite_scores.csv): ","Salt USR-118 #1 (composite 51.27); Insider USR-156 #2 (46.24); Slow APT USR-234 #7 (19.44); Volt USR-042 #24 (13.70). Volt is #24, and the deck is correct; do not 'correct' it to #25.")
+B("False-positive rate: ","10.6 percent at the composite operating point (about 26 false positives out of 246 normal users), catching all four campaigns. Where 10.6 comes from, and you can derive it live: to catch the stealthiest attacker, Volt at composite 12.95 (rank #30), the threshold sits at 12.95, and 26 normal users score above that, so 26/246 = 10.6 percent, catching 4 of 4.")
+B("Ranks (from composite_scores.csv): ","Salt USR-118 #1 (composite 51.7); Insider USR-156 #2 (46.2); Slow APT USR-234 #7 (20.0); Volt USR-042 #30 (12.95). Volt is #30; do not 'correct' it.")
 B("Baselines: ","Isolation Forest 0/4 (5.3% FP); One-Class SVM 0/4 (14.6% FP); Local Outlier Factor 0/4 (4.5% FP); z-score 1/4 (9.8% FP). So traditional methods catch 0 to 1 of 4.")
-B("Detection results to keep straight: ","traditional (IsolationForest/SVM/LOF) 0/4; z-score 1/4; composite 4/4 at 8.1% FP but cleanly separates only 2/4 (USR-118, USR-156); multi-front Threat-Profile detector 4/4 at 0 FP (named profiles: C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) is the primary detector.")
-B("Separation is by RANK, not a clean threshold gap (say this honestly): ","the top normal user (USR-081, composite 21.5) outscores the two stealthiest attackers, Slow APT (19.4) and Volt (13.7); about 20 normal users score above Volt. All four attackers still surface in the top of the risk-ranked list. This is precisely why we present a ranked list, not a threshold. Do not claim 'clean separation' on raw composite; the honest claim is recall at the top of the ranking.")
+B("Detection results to keep straight: ","traditional (IsolationForest/SVM/LOF) 0/4; z-score 1/4; composite 4/4 at 10.6% FP but cleanly separates only 2/4 (USR-118, USR-156); multi-front Threat-Profile detector 4/4 at 0 FP (named profiles: C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) is the primary detector.")
+B("Separation is by RANK, not a clean threshold gap (say this honestly): ","the top normal user (USR-081, composite 21.5) outscores the two stealthiest attackers, Slow APT (20.0) and Volt (12.9); about 26 normal users score above Volt. All four attackers still surface in the top of the risk-ranked list. This is precisely why we present a ranked list, not a threshold. Do not claim 'clean separation' on raw composite; the honest claim is recall at the top of the ranking.")
 B("Operating-point candor: ","the composite threshold was selected with knowledge of ground truth in the proof of concept. Present it as a reporting benchmark to be re-validated on real data, not a deployable threshold.")
 
 # ===== SECTION 1: PROBLEM & INNOVATION =====
@@ -198,20 +198,20 @@ field("Talking track:","\"A normal user can be extreme on one front by chance. A
 slide("9","Card 8: The Four Case Studies (the proof)","BUILT")
 field("Message:","Four campaigns, four different tells. Composite scoring catches each on the phase that exposes it, blind, over 250 entities.")
 table(["Entity","Campaign","Rank","Composite","The tell"],
- [["USR-118","Salt Typhoon (telecom)","#1","51.27","Extreme and broad: 16 features above z=2.0, driven by sustained deviation and context divergence. The strongest, clearest attacker (do NOT call it invisible to thresholds)."],
-  ["USR-156","Insider (8-month)","#2","46.24","Signal strength + breadth; strong, broad, sustained escalation"],
-  ["USR-234","Slow APT (180-day)","#7","19.44","The genuine sub-threshold case: signal strength only 4.47, breadth 1, invisible to per-feature thresholds; caught only by novelty persistence (a C2 beacon recurs weekly)"],
-  ["USR-042","Volt Typhoon (LoTL)","#24","13.70","Breadth; living-off-the-land creates breadth, not magnitude. Hardest case: about 20 normal users outscore it; it surfaces by rank, not by a clean gap"]],
+ [["USR-118","Salt Typhoon (telecom)","#1","51.7","Extreme and broad: 16 features above z=2.0, driven by sustained deviation and context divergence. The strongest, clearest attacker (do NOT call it invisible to thresholds)."],
+  ["USR-156","Insider (8-month)","#2","46.2","Signal strength + breadth; strong, broad, sustained escalation"],
+  ["USR-234","Slow APT (180-day)","#7","20.0","The genuine sub-threshold case: signal strength only 4.5, breadth 2, invisible to per-feature thresholds; caught only by novelty persistence (a C2 beacon recurs weekly)"],
+  ["USR-042","Volt Typhoon (LoTL)","#30","12.9","Breadth; living-off-the-land creates breadth, not magnitude. Hardest case: about 26 normal users outscore it; it surfaces by rank, not by a clean gap"]],
  widths=[0.9,1.9,0.6,1.0,2.6])
-field("Honesty note:","Volt ranks #24 (the deck is correct; do not 'correct' it). It is the hardest case because living-off-the-land blends with normal IT admin behavior, so about 20 normal users actually outscore it and it surfaces by rank, not by a clean threshold gap. Say this openly: the method still finds the stealthiest attacker by ranking, and it is the strongest motivation for identity fusion and richer signals on the roadmap. Likewise, present Slow APT USR-234, not Salt, as the 'sub-threshold, invisible to per-feature thresholds' case.")
+field("Honesty note:","Volt ranks #30; do not 'correct' it. It is the hardest case because living-off-the-land blends with normal IT admin behavior, so about 26 normal users actually outscore it and it surfaces by rank, not by a clean threshold gap. Say this openly: the method still finds the stealthiest attacker by ranking, and it is the strongest motivation for identity fusion and richer signals on the roadmap. Likewise, present Slow APT USR-234, not Salt, as the 'sub-threshold, invisible to per-feature thresholds' case.")
 
 slide("10","Card 9: False-Positive Economics","PARTIAL")
-field("Message:","All four caught at 8.1 percent false positive, where traditional tools caught zero to one. This is a risk-ranked list, not a flood of threshold alerts.")
+field("Message:","All four caught at 10.6 percent false positive, where traditional tools caught zero to one. This is a risk-ranked list, not a flood of threshold alerts.")
 field("Technical detail:","")
-B("Composite: ","4 of 4 at about 8.1 percent FP (about 20 false positives among 246 normal users). The 8.1 percent is the price of catching the stealthiest attacker: Volt sits at composite 13.70, and 20 normal users score above that threshold (20/246 = 8.1 percent).")
+B("Composite: ","4 of 4 at about 10.6 percent FP (about 26 false positives among 246 normal users). The 10.6 percent is the price of catching the stealthiest attacker: Volt sits at composite 12.95, and 26 normal users score above that threshold (26/246 = 10.6 percent).")
 B("Baselines at comparable thresholds: ","Isolation Forest 5.3 percent FP (0/4), Local Outlier Factor 4.5 percent FP (0/4), One-Class SVM 14.6 percent FP (0/4), z-score 9.8 percent FP (1/4).")
 B("Operational framing: ","analysts triage the top of a ranked list, not thousands of alarms; the value is recall on the threats that matter with explainable ranking.")
-field("Two detectors, two results:","The composite/embedding result above is 4 of 4 at 8.1 percent FP, but cleanly separates only 2 of 4 (USR-118, USR-156). The multi-front Threat-Profile detector (threat_profile_detector.py) is built and is the primary detector: named known-bad behavioral profiles (C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) catch all 4 of 4 at 0 false positives. Present the Threat-Profile 4/4-at-0-FP as the headline detection result and the composite 8.1% as the embedding/anomaly-ranking comparison.")
+field("Two detectors, two results:","The composite/embedding result above is 4 of 4 at 10.6 percent FP, but cleanly separates only 2 of 4 (USR-118, USR-156). The multi-front Threat-Profile detector (threat_profile_detector.py) is built and is the primary detector: named known-bad behavioral profiles (C2-beacon, DGA, LOTL-process, cohort-rare access, recon-fanout, insider-collection) catch all 4 of 4 at 0 false positives. Present the Threat-Profile 4/4-at-0-FP as the headline detection result and the composite 10.6% as the embedding/anomaly-ranking comparison.")
 field("Likely questions:","")
 qa("8 percent FP at DoD scale is a lot.","It is a ranked list, not threshold alerts; analysts work top-down. The operating point is a PoC reporting benchmark to be tuned and re-validated on real data.")
 
@@ -267,8 +267,8 @@ qa("Scale, 250 entities versus millions?","The architecture, cohorts, and snapsh
 qa("Can an adversary who knows about behavioral detection evade it?","Multi-front design; being normal on every front at once is far harder than beating one threshold. Hardening the detector itself (adversarial ML, MITRE ATLAS) is on the roadmap.")
 qa("Data sovereignty / commercial model?","Real embeddings today; local open model in an enclave for offline runs; no PII in embeddings.")
 qa("Identity fusion, forensics, response, the other layers, are they built?","Detection core is built and demoed; those are designed-next or separate. We are explicit about the line.")
-qa("Show me where the 8.1 percent comes from.","Sort the 250 entities by composite. To catch the stealthiest attacker, Volt at 13.70 (rank #24), the threshold is 13.70; 20 normal users score above it, so 20/246 = 8.1 percent, and all four attackers are caught. We can derive it live from composite_scores.csv.")
-qa("Your top normal user outscores two of your attackers, so that is not clean separation.","Correct, and we present it that way. The two stealthiest attackers (Volt, Slow APT) do not separate on raw score; about 20 normal users outscore Volt. They surface by rank, which is why we deliver a risk-ranked list, not a threshold. The honest claim is recall at the top of the ranking, not a clean gap.")
+qa("Show me where the 10.6 percent comes from.","Sort the 250 entities by composite. To catch the stealthiest attacker, Volt at 12.95 (rank #30), the threshold is 12.95; 26 normal users score above it, so 26/246 = 10.6 percent, and all four attackers are caught. We can derive it live from composite_scores.csv.")
+qa("Your top normal user outscores two of your attackers, so that is not clean separation.","Correct, and we present it that way. The two stealthiest attackers (Volt, Slow APT) do not separate on raw score; about 26 normal users outscore Volt. They surface by rank, which is why we deliver a risk-ranked list, not a threshold. The honest claim is recall at the top of the ranking, not a clean gap.")
 
 slide("18","Next Steps and the Ask","FRAME")
 B("Bounded validation pilot ","on representative DoD or critical-infrastructure telemetry, scoped to detection and explainability.")

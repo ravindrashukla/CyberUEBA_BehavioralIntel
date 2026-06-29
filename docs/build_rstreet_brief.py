@@ -238,7 +238,7 @@ _box(s, Inches(0.5), Inches(5.25), Inches(12.3), Inches(1.4), fill=CARD, accent=
 _txt(s, Inches(0.8), Inches(5.31), Inches(11.7), Inches(0.3), 'VALIDATION — BLIND DETECTION TEST, 250 ENTITIES', 13, GREEN, True)
 tf = _txt(s, Inches(0.8), Inches(5.68), Inches(11.7), Inches(0.9),
      'Against four stealth campaigns (insider, slow APT, Volt Typhoon LoTL, Salt Typhoon telecom): traditional SIEM '
-     'caught 0 of 4; z-score caught 1 of 4; V-Intelligence + composite scoring caught 4 of 4 at 8.1% false-positive '
+     'caught 0 of 4; z-score caught 1 of 4; V-Intelligence + composite scoring caught 4 of 4 at 10.6% false-positive '
      '(cleanly separating 2 of 4); the multi-front threat-profile detector caught 4 of 4 at 0% false-positive. '
      'Salt Typhoon (max z-score 1.71 — invisible to thresholds) ranked #1 of 250.', 11, BODY)
 
@@ -458,7 +458,7 @@ _txt(s, Inches(0.8), Inches(5.11), Inches(11.7), Inches(0.3), 'THE PAYOFF — SE
 _txt(s, Inches(0.8), Inches(5.5), Inches(11.7), Inches(1.05),
      'In feature space the four stealth attackers sit inside the normal band — undetectable. In V-Intelligence\'s '
      'semantic embedding space, all four separate from the population. Composite scoring then ranks them: '
-     'insider #2, slow APT #7, Volt Typhoon LoTL #24, Salt Typhoon #1 — all at 8.1% false-positive, where traditional '
+     'insider #2, slow APT #7, Volt Typhoon LoTL #30, Salt Typhoon #1 — all at 10.6% false-positive, where traditional '
      'methods caught zero.', 11, BODY)
 
 _bottom_bar(s, 'V-Intelligence builds the digital entity. Composite scoring detects the anomaly. Direction makes it actionable.')
@@ -475,10 +475,10 @@ attackers = [
      'Tell: Signal Strength 30 + Breadth 19', 'Strong, broad, sustained escalation across many features.'),
     ('USR-234', 'Slow APT · 180-day', 'Rank #7 / 250', ORG,
      'Tell: Novelty Persistence 13', 'Low magnitude, but novel C2 destinations recur week after week.'),
-    ('USR-042', 'Volt Typhoon LoTL · 115-day', 'Rank #24 / 250', GOLD,
-     'Tell: Breadth 11', 'Living-off-the-Land creates breadth, not magnitude.'),
+    ('USR-042', 'Volt Typhoon LoTL · 115-day', 'Rank #30 / 250', GOLD,
+     'Tell: Breadth 10', 'Living-off-the-Land creates breadth, not magnitude.'),
     ('USR-118', 'Salt Typhoon Telecom · 100-day', 'Rank #1 / 250', TEAL,
-     'Tell: Sustained 9.6 + Context 7.9', 'Max z-score 1.71 — invisible to thresholds — ranked #1 of 250.'),
+     'Tell: Sustained 9.6 + Context 8.1', 'Max z-score 1.71 — invisible to thresholds — ranked #1 of 250.'),
 ]
 xs = [Inches(0.5), Inches(3.62), Inches(6.74), Inches(9.86)]
 cw = Inches(2.97)
@@ -495,7 +495,7 @@ _box(s, Inches(0.5), Inches(4.45), Inches(6.0), Inches(1.55), fill=CYAN, accent=
 _txt(s, Inches(0.78), Inches(4.51), Inches(5.5), Inches(0.3), 'THE DISCRIMINATION MARGIN', 11.5, GREEN, True)
 tf = _txt(s, Inches(0.78), Inches(4.88), Inches(5.5), Inches(1.05),
      'Normal users — average composite 6.6, max 21.5.', 10.5, BODY)
-_p(tf, 'Attackers — lowest 13.7, average 32.7.', 10.5, NAVY, True, sp=Pt(5))
+_p(tf, 'Attackers — lowest 12.9, average 32.7.', 10.5, NAVY, True, sp=Pt(5))
 _p(tf, 'The gap between the strongest normal user and the weakest attacker is clean separation no single method achieves.', 10.5, BODY, sp=Pt(5))
 
 # detection timeline band
@@ -506,7 +506,7 @@ tf = _txt(s, Inches(6.98), Inches(4.88), Inches(5.6), Inches(1.05),
 _p(tf, 'V-Intelligence + composite:  flags in Week 8 — before data-access escalation.', 10.5, GREEN, True, sp=Pt(5))
 _p(tf, 'Direction tracked: baseline → off-hours access → cross-dept scope creep → data staging + exfiltration.', 10.5, BODY, sp=Pt(5))
 
-_bottom_bar(s, '4 / 4 detected at 8.1% false-positive (threat-profile detector: 0% FP) — versus 0 / 4 traditional and 1 / 4 z-score. Earlier detection = smaller blast radius.')
+_bottom_bar(s, '4 / 4 detected at 10.6% false-positive (threat-profile detector: 0% FP) — versus 0 / 4 traditional and 1 / 4 z-score. Earlier detection = smaller blast radius.')
 
 
 # ================================================================
@@ -520,7 +520,7 @@ _txt(s, Inches(0.75), Inches(1.58), Inches(3.5), Inches(0.4), 'PROVEN', 13, ORG,
 tf = _txt(s, Inches(0.75), Inches(2.0), Inches(3.5), Inches(3.1),
      'Behavioral trajectory engine fielded at DLA on the Entity Digital Model (500+ entities, CUSUM, 5 signals).', 10.5, BODY)
 _p(tf, 'Same architecture, retargeted to cyber UEBA.', 10.5, BODY)
-_p(tf, '4 / 4 stealth campaigns detected at 8.1% FP (threat-profile detector: 0% FP) in blind test.', 10.5, NAVY, True)
+_p(tf, '4 / 4 stealth campaigns detected at 10.6% FP (threat-profile detector: 0% FP) in blind test.', 10.5, NAVY, True)
 _p(tf, 'Explainable: WHAT is happening, WHERE it lives, WHO else is affected.', 10.5, BODY, sp=Pt(8))
 
 _box(s, Inches(4.65), Inches(1.5), Inches(3.95), Inches(3.7), fill=CARD, accent=TEAL)

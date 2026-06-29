@@ -229,7 +229,7 @@ AUDIENCE_CONFIGS = {
             "detection dimensions into a single ranked output, and novelty persistence "
             "detection that identifies recurring contact with previously-unseen "
             "infrastructure. The result: 4 of 4 embedded attack campaigns detected "
-            "at 8.1% false positive rate — a ranked list, not a flood of alerts."
+            "at 10.6% false positive rate — a ranked list, not a flood of alerts."
         ),
     },
 }
@@ -314,7 +314,7 @@ def _build_exec_summary(doc, audience_key):
                bold_prefix="Finding 2: ")
     add_bullet(doc, "Multi-phase composite scoring — fusing signal strength, breadth, sustained "
                "deviation, context divergence, and novelty persistence — detects all 4 attack "
-               "types at 8.1% false positive rate (20 false positives out of 246 normal users).",
+               "types at 10.6% false positive rate (26 false positives out of 246 normal users).",
                bold_prefix="Finding 3: ")
     add_bullet(doc, "Semantic behavioral embeddings outperform raw feature vectors by capturing "
                "what kind of behavioral change occurred (direction), not just how much changed "
@@ -1213,7 +1213,7 @@ def _build_core(doc):
             ["Attack campaigns", "4 long-duration campaigns (412-485 days each)"],
             ["Analysis window", "70 weeks (weekly aggregation)"],
             ["Detection threshold", "90th percentile of composite scores"],
-            ["False positive rate", "8.1% (20 FP / 246 normal users)"],
+            ["False positive rate", "10.6% (26 FP / 246 normal users)"],
         ],
         col_widths=[2.0, 5.0],
     )
@@ -1528,9 +1528,9 @@ def _build_core(doc):
 
     add_body(doc, (
         "The V-Intelligence UEBA simulation validates this analysis empirically. In our "
-        "250-user synthetic environment, both Volt Typhoon (USR-042, rank #24) and Salt "
+        "250-user synthetic environment, both Volt Typhoon (USR-042, rank #30) and Salt "
         "Typhoon (USR-118, rank #1) are detected by composite scoring at the 90th-percentile "
-        "threshold with 8.1% false positive rate. Traditional algorithms (Isolation Forest, "
+        "threshold with 10.6% false positive rate. Traditional algorithms (Isolation Forest, "
         "LOF, One-Class SVM, Z-Score) fail to detect these campaigns — the same failure "
         "mode observed in the real-world compromises."
     ))
@@ -1560,7 +1560,7 @@ def _build_core(doc):
             ["One-Class SVM", "Traditional", "DET", "DET", "DET", "DET",
              "4/4", "73", "29.7%"],
             ["Composite Scoring", "V-Intelligence\nUEBA", "DET", "DET", "DET",
-             "DET", "4/4", "20", "8.1%"],
+             "DET", "4/4", "26", "10.6%"],
         ],
         col_widths=[1.4, 1.0, 0.7, 0.6, 0.6, 0.6, 0.5, 0.4, 0.6],
     )
@@ -1590,13 +1590,13 @@ def _build_core(doc):
         ["Attack User", "Composite\nScore", "Rank\n(/250)", "Signal", "Breadth\n(>1.5σ)",
          "Sustained", "Novelty", "Dominant Phase"],
         [
-            ["USR-118\n(Salt Typhoon)", "51.3", "#1", "29.9", "18", "9.6", "2.8",
+            ["USR-118\n(Salt Typhoon)", "51.7", "#1", "30.6", "17", "9.6", "2.8",
              "Signal + Breadth"],
             ["USR-156\n(Insider)", "46.2", "#2", "30.0", "19", "8.4", "0.0",
              "Sustained + Breadth"],
-            ["USR-234\n(Slow APT)", "19.4", "#7", "4.5", "1", "1.6", "13.0",
+            ["USR-234\n(Slow APT)", "20.0", "#7", "4.5", "2", "1.6", "13.0",
              "Novelty Persistence"],
-            ["USR-042\n(Volt Typhoon)", "13.7", "#24", "6.4", "11", "3.8", "0.0",
+            ["USR-042\n(Volt Typhoon)", "12.9", "#30", "6.2", "10", "3.7", "0.0",
              "Breadth + Signal"],
         ],
         col_widths=[1.3, 0.7, 0.5, 0.6, 0.7, 0.7, 0.6, 1.4],
@@ -1606,7 +1606,7 @@ def _build_core(doc):
     add_body(doc, (
         "The telecom infrastructure pivot produces the strongest overall anomaly. It "
         "scores highest on signal strength and breadth — the attack touches authentication, "
-        "network, and DNS behavior simultaneously, elevating 18 features beyond 1.5 standard "
+        "network, and DNS behavior simultaneously, elevating 17 features beyond 1.5 standard "
         "deviations. Traditional algorithms flag USR-118 as anomalous but cannot distinguish "
         "this telecom pivot from other anomaly types without zone-level direction."
     ))
@@ -1634,12 +1634,12 @@ def _build_core(doc):
         "infrastructure, and it is the sole reason USR-234 is detected."
     ))
 
-    add_body(doc, "USR-042 (Volt Typhoon LOTL) — Rank #24:", bold=True, space_after=2)
+    add_body(doc, "USR-042 (Volt Typhoon LOTL) — Rank #30:", bold=True, space_after=2)
     add_body(doc, (
         "The living-off-the-land campaign uses legitimate administrative tools, producing "
-        "a broad but moderate behavioral footprint — 11 features elevated beyond 1.5 "
-        "standard deviations across access and endpoint behavior. It ranks #24 of 250, "
-        "still within the top 10% and above the detection threshold, caught by the "
+        "a broad but moderate behavioral footprint — 10 features elevated beyond 1.5 "
+        "standard deviations across access and endpoint behavior. It ranks #30 of 250, "
+        "still within the top 12% and above the detection threshold, caught by the "
         "combination of breadth and signal strength."
     ))
 
@@ -1671,16 +1671,16 @@ def _build_core(doc):
              "Detects 3/4, misses slow APT.\nMagnitude-only, no behavioral\ndirection context."],
             ["One-Class SVM", "4 of 4", "29.7%",
              "Detects all 4 but excessive FP.\n73 false positives overwhelm\nSOC investigation capacity."],
-            ["Composite Scoring", "4 of 4", "8.1%",
-             "Detects all 4 with zone-level\nexplanation. 20 FP — each with\nbehavioral phase attribution."],
+            ["Composite Scoring", "4 of 4", "10.6%",
+             "Detects all 4 with zone-level\nexplanation. 26 FP — each with\nbehavioral phase attribution."],
         ],
         col_widths=[1.4, 1.1, 0.7, 2.8],
     )
 
     add_body(doc, (
-        "Composite scoring's 8.1% false positive rate corresponds to 20 normal users "
+        "Composite scoring's 10.6% false positive rate corresponds to 26 normal users "
         "flagged alongside the 4 attackers at the 90th-percentile threshold. In an "
-        "operational setting, these 20 are not noise to be discarded but a prioritized "
+        "operational setting, these 26 are not noise to be discarded but a prioritized "
         "investigation queue — the highest-behavioral-risk normal users, ranked and "
         "explained by which behavioral phases drove their score. The threshold is tunable: "
         "a higher percentile reduces false positives at the cost of detection margin."
@@ -1761,7 +1761,7 @@ def _build_core(doc):
 
     add_callout(doc,
         "Composite scoring is the minimum viable deployment: it detects all four campaign "
-        "types at 8.1% false positive rate as a single ranked output. The magnitude "
+        "types at 10.6% false positive rate as a single ranked output. The magnitude "
         "pre-filter and investigation-context layers add speed and explainability for "
         "production environments."
     )
@@ -1830,26 +1830,26 @@ def _build_core(doc):
         ["Attack User", "Type", "Composite\nScore", "Rank\n(/250)",
          "Primary Detection Phase(s)"],
         [
-            ["USR-118", "Salt Typhoon\n(Telecom)", "51.3", "#1",
-             "Signal Strength (29.9) + Breadth (18 features >1.5σ)\n"
+            ["USR-118", "Salt Typhoon\n(Telecom)", "51.7", "#1",
+             "Signal Strength (30.6) + Breadth (17 features >1.5σ)\n"
              "Massive multi-zone anomaly across auth, network, DNS"],
             ["USR-156", "Insider Threat", "46.2", "#2",
              "Sustained Deviation (8.4) + Breadth (19 features >1.5σ)\n"
              "14-month escalation from public to restricted files"],
-            ["USR-234", "Slow APT\n(C2 Beacon)", "19.4", "#7",
+            ["USR-234", "Slow APT\n(C2 Beacon)", "20.0", "#7",
              "Novelty Persistence (13.0)\n"
              "C2 beacon IP persists in 60/60 post-baseline weeks"],
-            ["USR-042", "Volt Typhoon\n(LOTL)", "13.7", "#24",
-             "Signal Strength (7.2) + Context Divergence (2.3)\n"
+            ["USR-042", "Volt Typhoon\n(LOTL)", "12.9", "#30",
+             "Signal Strength (6.2) + Breadth (10 features >1.5σ)\n"
              "LOTL tools create cross-context anomalies"],
         ],
         col_widths=[0.7, 1.0, 0.7, 0.5, 3.8],
     )
 
     add_body(doc, (
-        "All four attackers rank in the top 25 of 250 users (top 10%). At the 90th "
+        "All four attackers rank in the top 30 of 250 users (top 12%). At the 90th "
         "percentile detection threshold, 4 of 4 attacks are detected with a false "
-        "positive rate of 8.1% (20 false positives out of 246 normal users)."
+        "positive rate of 10.6% (26 false positives out of 246 normal users)."
     ))
 
     add_section_heading(doc, "10.3. USR-234 Novelty Persistence — Case Study", level=2)
@@ -2111,7 +2111,7 @@ def _build_core(doc):
         "context divergence, and novelty persistence — into a single ranked score per user. "
         "A normal user might score high on one phase by chance; an attacker scores high on "
         "multiple phases simultaneously. This approach detects all 4 attack campaigns at "
-        "8.1% false positive rate across 250 users."
+        "10.6% false positive rate across 250 users."
     ))
 
     add_body(doc, "4. Novelty persistence catches what even semantic drift misses.", bold=True, space_after=2)
@@ -2121,7 +2121,7 @@ def _build_core(doc):
         "(rank ~80, undetectable). Novelty persistence identifies that a previously-unseen "
         "external IP appears in every post-baseline week for over a year — the behavioral "
         "fingerprint of C2 beacon infrastructure. This single signal elevates the score to "
-        "19.4 (rank #7), placing it firmly within the detected set."
+        "20.0 (rank #7), placing it firmly within the detected set."
     ))
 
     add_callout(doc,
@@ -2269,8 +2269,8 @@ def _build_universal():
     add_bullet(doc, "Behavioral drift analysis alone fails when attack signals from one "
                "behavioral zone are diluted by four stable zones.",
                bold_prefix="Finding 2: ")
-    add_bullet(doc, "Multi-phase composite scoring detects all 4 attack types at 8.1% "
-               "false positive rate (20 FP out of 246 normal users).",
+    add_bullet(doc, "Multi-phase composite scoring detects all 4 attack types at 10.6% "
+               "false positive rate (26 FP out of 246 normal users).",
                bold_prefix="Finding 3: ")
     add_bullet(doc, "Semantic behavioral embeddings outperform raw feature vectors by "
                "capturing what kind of change occurred, not just how much changed.",

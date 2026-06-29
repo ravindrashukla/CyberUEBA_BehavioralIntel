@@ -192,14 +192,14 @@ def build():
               "class nation-state campaigns.", italic=True, color=GRAY)
     table(doc, ["Approach", "Campaigns caught (of 4)", "False-positive rate", "Directional explanation"],
           [["Traditional magnitude-based\n(LOF, IForest, OCSVM, Z-Score)", "0 – 1 of 4", "4.5% – 14.6%", "None"],
-           ["V-Intelligence composite", "4 of 4", "8.1%", "Zone + direction + MITRE concept"],
+           ["V-Intelligence composite", "4 of 4", "10.6%", "Zone + direction + MITRE concept"],
            ["V-Intelligence threat-profile detector", "4 of 4", "0%", "Named technique (C2-beacon, DGA, LOTL, etc.)"]],
           widths=[2.4, 1.5, 1.4, 1.7])
     bullet(doc, "the multi-front threat-profile detector — the primary detector — caught all four by "
                 "named known-bad technique (C2-beacon, DGA, LOTL-process, cohort-rare access, "
                 "recon-fanout, insider-collection) at ZERO false positives.", prefix="Primary detection: ")
     bullet(doc, "embedding composite scoring also caught all four — including BOTH Volt and Salt Typhoon — "
-                "at the operating point that recalls every campaign (8.1% false positives), though it "
+                "at the operating point that recalls every campaign (10.6% false positives), though it "
                 "cleanly separates only two of the four (USR-118, USR-156); ranking AUC ≈ 0.98.", prefix="Composite: ")
     bullet(doc, "traditional detectors caught at most one of the four and ranked the stealthy "
                 "campaigns among ordinary users.", prefix="The contrast: ")

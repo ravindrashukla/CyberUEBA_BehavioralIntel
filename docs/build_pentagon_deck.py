@@ -294,7 +294,7 @@ txt(s,Inches(0.6),Inches(1.35),Inches(12),Inches(0.5),"Each user's features beco
 rect(s,Inches(0.6),Inches(2.05),Inches(12.1),Inches(1.0),LIGHT)
 txt(s,Inches(0.8),Inches(2.2),Inches(11.7),Inches(0.75),"composite = signal_strength + 0.5 x breadth + 0.3 x sustained + 0.5 x ctx_spread + 0.3 x ctx_max + novelty",size=13.5,color=NAVY,font="Consolas",bold=True)
 rect(s,Inches(0.6),Inches(3.35),Inches(12.1),Inches(1.5),RGBColor(0xf2,0xf6,0xfc))
-txt(s,Inches(0.8),Inches(3.55),Inches(11.7),Inches(1.1),"Volt:   6.40 + 5.50 + 1.14 + 0.23 + 0.43 + 0.00  =  13.70   (rank #24, stealthiest)\nSalt:  29.89 + 9.00 + 2.87 + 4.32 + 2.39 + 2.80  =  51.27   (rank #1)",size=13,color=RGBColor(0x22,0x22,0x22),font="Consolas")
+txt(s,Inches(0.8),Inches(3.55),Inches(11.7),Inches(1.1),"Volt:   6.20 + 5.00 + 1.11 + 0.20 + 0.42 + 0.00  =  12.93   (rank #30, stealthiest)\nSalt:  30.60 + 8.50 + 2.88 + 4.50 + 2.43 + 2.80  =  51.71   (rank #1)",size=13,color=RGBColor(0x22,0x22,0x22),font="Consolas")
 txt(s,Inches(0.6),Inches(5.1),Inches(12),Inches(0.8),"Every composite re-derives live from the formula, in front of the room, from the results file.",size=14,color=GREEN,bold=True)
 fin(s)
 
@@ -302,22 +302,22 @@ fin(s)
 s=slide(); header(s,"Digital Twin in Detail: The Four Attackers, by the Numbers","Why each scored where it did")
 dtable(s,Inches(0.5),Inches(1.5),Inches(12.3),Inches(2.5),
  ["Attacker","signal","breadth","sustained","ctx spr/max","novelty","composite (rank)"],
- [["Salt","29.89","18","9.58","8.65 / 7.94","2.8","51.27 (#1)"],
+ [["Salt","30.60","17","9.58","9.00 / 8.10","2.8","51.71 (#1)"],
   ["Insider","30.02","19","8.37","4.34 / 6.80","0.0","46.24 (#2)"],
-  ["Slow APT","4.47","1","1.57","1.48 / 0.85","13.0","19.44 (#7)"],
-  ["Volt","6.40","11","3.80","0.47 / 1.43","0.0","13.70 (#24)"]],fs=12)
+  ["Slow APT","4.50","2","1.57","1.48 / 0.85","13.0","20.00 (#7)"],
+  ["Volt","6.20","10","3.70","0.40 / 1.40","0.0","12.90 (#30)"]],fs=12)
 txt(s,Inches(0.6),Inches(4.6),Inches(12.1),Inches(1.7),
- "Read it: Slow APT is invisible on every magnitude column (signal 4.47, breadth 1) and is caught by novelty ALONE "
- "(13.0, a novel C2 IP every week for 60 weeks). Volt has breadth (11) of small signals and no novelty: the "
+ "Read it: Slow APT is invisible on every magnitude column (signal 4.50, breadth 2) and is caught by novelty ALONE "
+ "(13.0, a novel C2 IP every week for 60 weeks). Volt has breadth (10) of small signals and no novelty: the "
  "living-off-the-land signature. No single number flags either; the twin separates them by the full picture.",
  size=15,color=NAVY)
 fin(s)
 
 # ---- 10 LAYER 2 PROOF ----
-s=slide(); header(s,"Layer 2 - The Discovery Net (the twin)","Unsupervised, by rank: 4 of 4 surfaced at an 8.1% operating point")
+s=slide(); header(s,"Layer 2 - The Discovery Net (the twin)","Unsupervised, by rank: 4 of 4 surfaced at a 10.6% operating point")
 rect(s,Inches(0.6),Inches(1.5),Inches(7.3),Inches(4.7),LIGHT)
 hdr=["Attacker","Rank","Composite"]
-rowsP=[("Salt Typhoon","#1","51.27",L2),("Insider","#2","46.24",L2),("Slow APT","#7","19.44",AMBER),("Volt Typhoon","#24","13.70",RED)]
+rowsP=[("Salt Typhoon","#1","51.71",L2),("Insider","#2","46.24",L2),("Slow APT","#7","20.00",AMBER),("Volt Typhoon","#30","12.90",RED)]
 txt(s,Inches(0.8),Inches(1.65),Inches(7,),Inches(0.4),"Four-attacker blind test (risk-ranked of 250)",size=14,color=NAVY,bold=True)
 yy=Inches(2.2)
 for a,rk,cp,col in rowsP:
@@ -327,7 +327,7 @@ for a,rk,cp,col in rowsP:
     yy+=Inches(0.62)
 rect(s,Inches(8.2),Inches(1.5),Inches(4.6),Inches(4.7),NAVY)
 txt(s,Inches(8.4),Inches(1.9),Inches(4.2),Inches(1.0),"4 of 4",size=44,color=WHITE,bold=True,align=PP_ALIGN.CENTER)
-txt(s,Inches(8.4),Inches(3.0),Inches(4.2),Inches(0.8),"surfaced by rank at an 8.1% operating point (value is coverage + MITRE direction)",size=14,color=RGBColor(0xcf,0xdd,0xf2),align=PP_ALIGN.CENTER)
+txt(s,Inches(8.4),Inches(3.0),Inches(4.2),Inches(0.8),"surfaced by rank at a 10.6% operating point (value is coverage + MITRE direction)",size=14,color=RGBColor(0xcf,0xdd,0xf2),align=PP_ALIGN.CENTER)
 txt(s,Inches(8.4),Inches(3.9),Inches(4.2),Inches(1.5),"Classical methods (Isolation Forest, One-Class SVM, LOF): 0 of 4.  z-score: 1 of 4.",size=15,color=RGBColor(0xff,0xe0,0xe0),align=PP_ALIGN.CENTER,bold=True)
 txt(s,Inches(0.6),Inches(6.4),Inches(12),Inches(0.5),"Controlled, synthetic-data proof of concept, indicative rather than a guarantee of field performance.",size=12,color=SLATE,italic=True)
 fin(s)
@@ -337,7 +337,7 @@ s=slide(); header(s,"Layer 2 - The Two Data Points That Carry the Room")
 rect(s,Inches(0.6),Inches(1.6),Inches(5.9),Inches(4.4),LIGHT); rect(s,Inches(0.6),Inches(1.6),Inches(5.9),Inches(0.8),AMBER)
 txt(s,Inches(0.8),Inches(1.7),Inches(5.5),Inches(0.6),"Slow APT: invisible to thresholds",size=17,color=WHITE,bold=True,anchor=MSO_ANCHOR.MIDDLE)
 txt(s,Inches(0.8),Inches(2.6),Inches(5.5),Inches(3.2),
- "Signal strength 4.47, breadth 1: invisible to every magnitude method. Caught by novelty alone, a "
+ "Signal strength 4.50, breadth 2: invisible to every magnitude method. Caught by novelty alone, a "
  "novel command-and-control IP recurring every week for 60 weeks. That one signal lifts it to rank #7.",size=15,color=RGBColor(0x33,0x33,0x33))
 rect(s,Inches(6.8),Inches(1.6),Inches(5.9),Inches(4.4),LIGHT); rect(s,Inches(6.8),Inches(1.6),Inches(5.9),Inches(0.8),RED)
 txt(s,Inches(7.0),Inches(1.7),Inches(5.5),Inches(0.6),"Volt: living off the land",size=17,color=WHITE,bold=True,anchor=MSO_ANCHOR.MIDDLE)
@@ -446,7 +446,7 @@ fin(s)
 
 # ---- 20 WHY IT MATTERS ----
 s=slide(); header(s,"Why This Matters","It satisfies all three seats at once")
-cards=[("Esquibel","Measured detection fidelity: 4 of 4 at 8.1% where classical methods catch 0 of 4, on the logs she already has.",L2),
+cards=[("Esquibel","Measured detection fidelity: 4 of 4 at 10.6% where classical methods catch 0 of 4, on the logs she already has.",L2),
        ("DiGrezio","One fieldable platform from one vendor, not four procurements. Agentless start, clear acquisition path.",L1),
        ("Herrmann","A complete answer to the national valid-account / critical-infrastructure gap she can carry upward.",L3)]
 x=Inches(0.5)
@@ -462,8 +462,8 @@ fin(s)
 s=slide(); header(s,"Numbers to Keep Straight","The reference card")
 bullets(s,Inches(0.6),Inches(1.5),Inches(12),Inches(5),[
  (0,"Dataset: 250 entities, 485 days (70 weekly snapshots), ~14M events, 5 log sources.",),
- (0,"Production (threat-profile detector): 4 of 4 at 0 false positives, by named fingerprint. Discovery (twin): 4 of 4 by rank at 8.1% FP; classical baselines 0 of 4, z-score 1 of 4.",NAVY,True),
- (0,"Ranks: Salt #1 (51.27), Insider #2 (46.24), Slow APT #7 (19.44), Volt #24 (13.70).",),
+ (0,"Production (threat-profile detector): 4 of 4 at 0 false positives, by named fingerprint. Discovery (twin): 4 of 4 by rank at 10.6% FP; classical baselines 0 of 4, z-score 1 of 4.",NAVY,True),
+ (0,"Ranks: Salt #1 (51.71), Insider #2 (46.24), Slow APT #7 (20.00), Volt #30 (12.90).",),
  (0,"Separation is by rank, not a clean gap: top normal user outscores Slow APT and Volt; present a ranked list.",AMBER,True),
  (0,"Layer 1: 99% of firewall breaches are misconfiguration; first findings in under 15 days.",),
  (0,"Layer 3: ~99% of AI-related vulnerabilities are API-related; 95% of API attacks are authenticated.",),
