@@ -247,7 +247,7 @@ def build_document():
         "No embedding, composite, or single statistical method achieves clean 4/4 "
         "separation. Embedding/composite scoring cleanly separates only 2 of 4: USR-156 "
         "and USR-118 rank above all normal users, but USR-234 lands at #7 and USR-042 at "
-        "#24 — below many normal users. The best Tier 1 method is Feature CUSUM at 3/4 "
+        "#30 — below many normal users. The best Tier 1 method is Feature CUSUM at 3/4 "
         "(8.9% FP), which misses the slow APT campaign."
     ), bold_prefix="Tier 1/2 Gap: ")
 
@@ -415,7 +415,7 @@ def build_document():
             ["Tier 1+2\nCombined", "IForest + V-Intelligence UEBA", "2/4", "19.9%",
              "Still misses Insider + Salt"],
             ["Tier 3\nCombined (composite)", "T3 Combined", "2/4", "15.0%",
-             "Cleanly separates only USR-156 + USR-118;\nUSR-234 (#7) and USR-042 (#24) below normals"],
+             "Cleanly separates only USR-156 + USR-118;\nUSR-234 (#7) and USR-042 (#30) below normals"],
             ["Threat-Profile\nDetector", "Multi-front profiles", "4/4", "0.0%",
              "None — all attacks detected, zero FP"],
         ],
@@ -523,7 +523,7 @@ def build_document():
             ["T3 Contextual", "DETECTED",
              "apt_hunt context consistency = 0.833\n(highest across contexts)"],
             ["T3 Combined", "BELOW normal",
-             "Composite score ranks USR-042 only #24 —\nbelow many normal users"],
+             "Composite score ranks USR-042 only #30 —\nbelow many normal users"],
             ["Threat-Profile Detector", "DETECTED",
              "LOTL-process + recon-fanout profiles\nfire on admin-tool activity (0 FP)"],
         ],
@@ -587,7 +587,7 @@ def build_document():
         "Across 17 statistical detection methods, only one achieves 4/4 detection — "
         "Temporal Z-Score (94.3% FP — operationally useless). Embedding/composite "
         "scoring (T3 Combined) cleanly separates only 2 of 4: USR-156 and USR-118 rank "
-        "above all normal users, while USR-234 (#7) and USR-042 (#24) fall below many "
+        "above all normal users, while USR-234 (#7) and USR-042 (#30) fall below many "
         "normal users. The clean 4/4 at zero false positives is achieved by the separate "
         "multi-front threat-profile detector. Every statistical method misses at least one "
         "attack at a viable FP rate."
@@ -613,7 +613,7 @@ def build_document():
              "APT drift too gradual for\ncumulative threshold"],
             ["T3 Combined\n(composite)", "2/4",
              "Slow APT (USR-234),\nVolt Typhoon (USR-042)",
-             "Composite ranks both below\nnormal users (#7 and #24)"],
+             "Composite ranks both below\nnormal users (#7 and #30)"],
             ["Threat-Profile\nDetector", "4/4",
              "None",
              "Known-bad profiles fire on\nall 4 campaigns at 0 FP"],
@@ -713,7 +713,7 @@ def build_document():
         "DGA-DNS, LOTL-process, cohort-rare access, recon-fanout, and insider-collection — "
         "combining cohort-relative and raw-event signals without requiring labels. "
         "Embedding/composite scoring (T3 Combined) cleanly separates only 2 of 4: it ranks "
-        "USR-156 and USR-118 above all normals, but places USR-234 at #7 and USR-042 at #24, "
+        "USR-156 and USR-118 above all normals, but places USR-234 at #7 and USR-042 at #30, "
         "below many normal users. While Feature CUSUM (Tier 1) achieves 3/4 at 8.9% FP, it "
         "misses the APT; while V-Intelligence UEBA Direction (Tier 2) catches APT and Volt "
         "Typhoon, it misses the Insider and Salt Typhoon. Only the threat-profile detector "

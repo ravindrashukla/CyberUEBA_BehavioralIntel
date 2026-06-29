@@ -1222,7 +1222,7 @@ def _build_core(doc):
             ["Attack campaigns", "4 long-duration campaigns (100-240 days each)"],
             ["Analysis window", "70 weeks (weekly aggregation)"],
             ["Detection threshold", "90th percentile of composite scores"],
-            ["False positive rate", "8.1% (20 FP / 246 normal users)"],
+            ["False positive rate", "10.6% (26 FP / 246 normal users)"],
         ],
         col_widths=[2.0, 5.0],
     )
@@ -1315,13 +1315,13 @@ def _build_core(doc):
         ["Attack User", "Composite\nScore", "Rank\n(/250)", "Signal", "Breadth\n(>1.5σ)",
          "Sustained", "Novelty", "Dominant Phase"],
         [
-            ["USR-118\n(Salt Typhoon)", "51.3", "#1", "29.9", "18", "9.6", "2.8",
+            ["USR-118\n(Salt Typhoon)", "51.7", "#1", "30.6", "17", "9.6", "2.8",
              "Signal + Breadth"],
             ["USR-156\n(Insider)", "46.2", "#2", "30.0", "19", "8.4", "0.0",
              "Sustained + Breadth"],
-            ["USR-234\n(Slow APT)", "19.4", "#7", "4.5", "1", "1.6", "13.0",
+            ["USR-234\n(Slow APT)", "20.0", "#7", "4.5", "2", "1.6", "13.0",
              "Novelty Persistence"],
-            ["USR-042\n(Volt Typhoon)", "13.7", "#24", "6.4", "11", "3.8", "0.0",
+            ["USR-042\n(Volt Typhoon)", "12.9", "#30", "6.2", "10", "3.7", "0.0",
              "Breadth + Signal"],
         ],
         col_widths=[1.3, 0.7, 0.5, 0.6, 0.7, 0.7, 0.6, 1.4],
@@ -1331,7 +1331,7 @@ def _build_core(doc):
     add_body(doc, (
         "The telecom infrastructure pivot produces the strongest overall anomaly. It "
         "scores highest on signal strength and breadth — the attack touches authentication, "
-        "network, and DNS behavior simultaneously, elevating 18 features beyond 1.5 standard "
+        "network, and DNS behavior simultaneously, elevating 17 features beyond 1.5 standard "
         "deviations. Despite this, no single feature crosses a traditional detection "
         "threshold, which is why all four traditional algorithms miss it."
     ))
@@ -1351,7 +1351,7 @@ def _build_core(doc):
         "This is the most important case. The slow APT scores low on every conventional "
         "phase — signal strength, breadth, and sustained deviation are all minimal because "
         "the behavioral change is small in magnitude. Without novelty persistence, its "
-        "composite score would be approximately 6.4, ranking it near the middle of the "
+        "composite score would be approximately 4.5, ranking it near the middle of the "
         "population and rendering it undetectable. Novelty persistence contributes 13.0 "
         "points — the single largest phase contribution for any attacker — because a "
         "previously-unseen external IP appears in every one of the 60 post-baseline weeks "
@@ -1359,11 +1359,11 @@ def _build_core(doc):
         "infrastructure, and it is the sole reason USR-234 is detected."
     ))
 
-    add_body(doc, "USR-042 (Volt Typhoon LOTL) — Rank #24:", bold=True, space_after=2)
+    add_body(doc, "USR-042 (Volt Typhoon LOTL) — Rank #30:", bold=True, space_after=2)
     add_body(doc, (
         "The living-off-the-land campaign uses legitimate administrative tools, producing "
-        "a broad but moderate behavioral footprint — 11 features elevated beyond 1.5 "
-        "standard deviations across access and endpoint behavior. It ranks #24 of 250, "
+        "a broad but moderate behavioral footprint — 10 features elevated beyond 1.5 "
+        "standard deviations across access and endpoint behavior. It ranks #30 of 250, "
         "still within the top 10% and above the detection threshold, caught by the "
         "combination of breadth and signal strength."
     ))
@@ -1561,17 +1561,17 @@ def _build_core(doc):
         ["Attack User", "Type", "Composite\nScore", "Rank\n(/250)",
          "Primary Detection Phase(s)"],
         [
-            ["USR-118", "Salt Typhoon\n(Telecom)", "51.3", "#1",
-             "Signal Strength (26.8) + Breadth (9 features)\n"
+            ["USR-118", "Salt Typhoon\n(Telecom)", "51.7", "#1",
+             "Signal Strength (30.6) + Breadth (17 features)\n"
              "Massive multi-zone anomaly across auth, network, DNS"],
             ["USR-156", "Insider Threat", "46.2", "#2",
-             "Sustained Deviation (6.8) + Breadth (8 features)\n"
+             "Sustained Deviation (8.4) + Breadth (19 features)\n"
              "8-month escalation from public to restricted files"],
-            ["USR-234", "Slow APT\n(C2 Beacon)", "19.4", "#7",
+            ["USR-234", "Slow APT\n(C2 Beacon)", "20.0", "#7",
              "Novelty Persistence (13.0)\n"
              "C2 beacon IP persists in 60/60 post-baseline weeks"],
-            ["USR-042", "Volt Typhoon\n(LOTL)", "13.7", "#24",
-             "Signal Strength (7.2) + Context Divergence (2.3)\n"
+            ["USR-042", "Volt Typhoon\n(LOTL)", "12.9", "#30",
+             "Signal Strength (6.2) + Context Divergence (1.4)\n"
              "LOTL tools create cross-context anomalies"],
         ],
         col_widths=[0.7, 1.0, 0.7, 0.5, 3.8],
@@ -1857,11 +1857,11 @@ def _build_core(doc):
     add_body(doc, "4. Novelty persistence catches what even semantic drift misses.", bold=True, space_after=2)
     add_body(doc, (
         "USR-234 (Slow APT) has minimal semantic drift — its behavioral embedding changes "
-        "are small. Without novelty persistence detection, its composite score would be 6.4 "
+        "are small. Without novelty persistence detection, its composite score would be 4.5 "
         "(rank ~80, undetectable). Novelty persistence identifies that a previously-unseen "
         "external IP appears in every post-baseline week for over a year — the behavioral "
         "fingerprint of C2 beacon infrastructure. This single signal elevates the score to "
-        "19.4 (rank #7), placing it firmly within the detected set."
+        "20.0 (rank #7), placing it firmly within the detected set."
     ))
 
     add_callout(doc,

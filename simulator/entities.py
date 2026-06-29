@@ -102,6 +102,17 @@ def generate_users() -> pd.DataFrame:
 
     hire_days_ago = rng.integers(30, 2000, size=n)
 
+    # Plausible department for the injected attackers. Role is unchanged, so cohort
+    # (ROLE_TO_GROUP) and all role-driven behavior/telemetry are unaffected; this only
+    # fixes implausible role↔department pairings surfaced in the UI review. Applied
+    # after all rng draws so the random sequence (and every other user) is identical.
+    departments = departments.astype(object)
+    for _uid, _dep in {"USR-042": "Security", "USR-118": "Engineering",
+                       "USR-234": "Data Science"}.items():
+        _i = int(_uid.split("-")[1]) - 1
+        if 0 <= _i < n:
+            departments[_i] = _dep
+
     return pd.DataFrame({
         "user_id": user_ids,
         "username": usernames,

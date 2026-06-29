@@ -8,7 +8,7 @@ from selenium import webdriver
 from selenium.webdriver.common.by import By
 
 URL = "http://localhost:8502/"
-W, H = 1680, 1600
+W, H = 1680, 2200
 OUT = "docs/page_audit"
 PW_CHROME = os.path.expanduser("~/AppData/Local/ms-playwright/chromium-1223/chrome-win/chrome.exe")
 
@@ -46,7 +46,7 @@ def make_driver():
     raise SystemExit("No browser:\n" + "\n".join(errs))
 
 
-def full_png(d, path, cap=2600):
+def full_png(d, path, cap=9000):
     m = d.execute_cdp_cmd("Page.getLayoutMetrics", {})
     w = math.ceil(m["cssContentSize"]["width"]); h = min(math.ceil(m["cssContentSize"]["height"]), cap)
     res = d.execute_cdp_cmd("Page.captureScreenshot",

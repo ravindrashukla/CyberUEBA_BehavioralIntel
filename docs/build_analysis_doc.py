@@ -378,7 +378,7 @@ def build_document():
     add_body_text(doc, (
         "Embedding/composite scoring narrows but does not close this gap: it cleanly "
         "separates only 2 of 4 attacks (USR-156 and USR-118 rank above all normal users, "
-        "while USR-234 lands at #7 and USR-042 at #24, below many normal users). The clean "
+        "while USR-234 lands at #7 and USR-042 at #30, below many normal users). The clean "
         "4/4 detection at zero false positives is achieved by a separate multi-front "
         "threat-profile detector. It scores each user against known-bad behavioral profiles—"
         "C2-beacon, DGA-DNS, LOTL-process, cohort-rare access, recon-fanout, and "
@@ -1072,7 +1072,7 @@ def build_document():
         "(C2-beacon, DGA-DNS, LOTL-process, cohort-rare access, recon-fanout, "
         "insider-collection) using cohort-relative and raw-event signals with no labels. "
         "Embedding/composite scoring (T3 Combined) cleanly separates only 2 of 4: it ranks "
-        "USR-156 and USR-118 above all normals, but places USR-234 (#7) and USR-042 (#24) "
+        "USR-156 and USR-118 above all normals, but places USR-234 (#7) and USR-042 (#30) "
         "below many normal users. The legacy temporal methods that nominally reach 4/4 "
         "(Temporal Z-Score, feature/embedding CUSUM) fire on ~99–100% of normal users when "
         "forced to catch every campaign."
@@ -1097,7 +1097,7 @@ def build_document():
     )
     add_bullet(doc, (
         "Embedding/composite scoring cleanly separates only 2 of 4 — USR-156 and USR-118 "
-        "rank above all normals, but USR-234 (#7) and USR-042 (#24) fall below many normal "
+        "rank above all normals, but USR-234 (#7) and USR-042 (#30) fall below many normal "
         "users, so the composite alone cannot deliver clean coverage."),
         bold_prefix="Embedding / composite: "
     )
@@ -1221,7 +1221,7 @@ def build_document():
         "profiles (C2-beacon, DGA-DNS, LOTL-process, cohort-rare access, recon-fanout, "
         "insider-collection) using cohort-relative and raw-event signals with no labels. "
         "Embedding/composite scoring, by contrast, cleanly separates only 2 of 4—it ranks "
-        "USR-156 and USR-118 above all normals but places USR-234 (#7) and USR-042 (#24) "
+        "USR-156 and USR-118 above all normals but places USR-234 (#7) and USR-042 (#30) "
         "below many normal users—and the legacy temporal methods that nominally reach 4/4 "
         "fire on ~99–100% of normal users. Only the threat-profile detector achieves complete "
         "coverage at zero false positive cost."

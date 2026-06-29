@@ -569,7 +569,7 @@ def slide_09_per_attacker(prs):
          sz=16, color=DARK_GRAY)
 
     attackers = [
-        ("USR-118", "Salt Typhoon", "Telecom Intrusion", "#1 / 250", "51.3",
+        ("USR-118", "Salt Typhoon", "Telecom Intrusion", "#1 / 250", "51.7",
          GREEN, RGBColor(41, 128, 185),
          "Signal Strength + Sustained Deviation",
          "Missed by all 4 traditional methods — mirrors the real Salt Typhoon (5 years undetected in US telecom). "
@@ -732,7 +732,7 @@ def slide_11_salt_typhoon(prs):
         ("Multi-Zone Analysis", "Identity stable, but network footprint drifting"),
         ("Sustained Signal", "Behavioral deviation persists across every week"),
         ("Context Divergence", "Anomalous from multiple analytical perspectives"),
-        ("Signal Strength", "29.9 — strongest drift in the entire population"),
+        ("Signal Strength", "30.6 — strongest drift in the entire population"),
     ]
     for i, (phase, desc) in enumerate(ace_lines):
         y = Inches(2.75) + Inches(i * 0.55)
@@ -741,7 +741,7 @@ def slide_11_salt_typhoon(prs):
         tbox(slide, Inches(9.6), y, Inches(3.0), Inches(0.32), desc, sz=12, color=DARK_GRAY)
 
     tbox(slide, Inches(7.2), Inches(5.2), Inches(5.2), Inches(0.35),
-         "Composite Score: 51.3 — Rank #1 out of 250 users",
+         "Composite Score: 51.7 — Rank #1 out of 250 users",
          sz=15, bold=True, color=GREEN, align=PP_ALIGN.CENTER)
 
     # Bottom: Key insight

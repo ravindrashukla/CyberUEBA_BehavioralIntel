@@ -858,7 +858,7 @@ def slide_12_screenshot_verdict(prs):
     tbox(slide, Inches(0.8), Inches(6.32), Inches(11.7), Inches(0.22),
          "Real-World Validation: Salt Typhoon (USR-118)", sz=12, bold=True, color=GREEN)
     tbox(slide, Inches(0.8), Inches(6.55), Inches(11.7), Inches(0.3),
-         "5+ years undetected by every traditional tool. V-Intelligence UEBA ranks it #1 out of 250 users (score: 51.3).",
+         "5+ years undetected by every traditional tool. V-Intelligence UEBA ranks it #1 out of 250 users (score: 51.7).",
          sz=10, color=RGBColor(160, 200, 224))
 
     footer(slide)
@@ -878,7 +878,7 @@ def slide_13_unique_results(prs):
     attackers = [
         ("USR-118", "Salt Typhoon Telecom", "Telecom infrastructure pivot — router config exfiltration, "
          "call metadata harvesting, DNS tunneling",
-         "51.3", "#1 / 250", "100th", GREEN,
+         "51.7", "#1 / 250", "100th", GREEN,
          "Mirrors real Salt Typhoon — 5+ years undetected worldwide"),
         ("USR-156", "Insider Threat", "Gradual privilege escalation — restricted file access, "
          "off-hours activity, slow data exfiltration",
@@ -959,7 +959,7 @@ def slide_14_salt_typhoon_proof(prs):
     sim_lines = [
         "Same attack pattern simulated among 250 users",
         "All traditional algorithms: MISSED (max z-score = 1.71)",
-        "V-Intelligence UEBA Composite Score: 51.3",
+        "V-Intelligence UEBA Composite Score: 51.7",
         "V-Intelligence UEBA Rank: #1 out of 250 users (100th percentile)",
         "Strongest behavioral anomaly in the entire population",
     ]
@@ -985,7 +985,7 @@ def slide_14_salt_typhoon_proof(prs):
     results = [
         ("5+ years", "undetected by\ntraditional tools"),
         ("#1 / 250", "V-Intelligence UEBA rank\n(highest anomaly)"),
-        ("51.3", "composite\nbehavioral score"),
+        ("51.7", "composite\nbehavioral score"),
         ("0 of 4", "traditional methods\nthat detected it"),
     ]
     for i, (val, desc) in enumerate(results):

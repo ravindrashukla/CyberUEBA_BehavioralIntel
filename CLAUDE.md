@@ -17,9 +17,9 @@
   python -m streamlit run streamlit_app.py --server.port 8502 --server.headless true   # → http://localhost:8502/
   ```
 - **Nav:** 16 pages grouped into 5 sections via `NAV_GROUPS` (selectbox "Section" → radio of pages). Page names unchanged, so `if/elif page == "<name>":` blocks are intact. Find a page's code: search `elif page == "<name>":`.
-- **Dataset:** 250 users · 70 weeks · 485 days · 17,500 weekly rows (246 normal + 4 attackers: USR-118 Salt Typhoon #1/51.3, USR-156 insider #2/46.2, USR-234 slow-APT #7/19.4, USR-042 Volt-Typhoon-LOTL #24/13.7). Never "19 weeks / 4,750".
-- **Canonical detection story — keep EVERY page consistent:** traditional 0/4 → z-score 1/4 (noisy) → composite 4/4 (cleanly separates only 2/4) at **8.1% FP** → threat-profile **4/4 at 0 FP**.
-- **FP convention = "catch-all-four" (8.1%):** threshold = lowest attacker composite `cs[cs.is_attack]["composite"].min()` (=13.70) → 20/246 = **8.1%**. Do NOT use `composite.quantile(0.90)` (→13.49 → 8.5%) for a "catch all 4" claim — that conflation was fixed 2026-06.
+- **Dataset:** 250 users · 70 weeks · 485 days · 17,500 weekly rows (246 normal + 4 attackers: USR-118 Salt Typhoon #1/51.7, USR-156 insider #2/46.2, USR-234 slow-APT #7/20.0, USR-042 Volt-Typhoon-LOTL #30/12.9). Never "19 weeks / 4,750". (Composite scores updated 2026-06-28 after the attacker-department fix re-embed.)
+- **Canonical detection story — keep EVERY page consistent:** traditional 0/4 → z-score 1/4 (noisy) → composite 4/4 (cleanly separates only 2/4) at **10.6% FP** → threat-profile **4/4 at 0 FP**.
+- **FP convention = "catch-all-four":** threshold = lowest attacker composite `cs[cs.is_attack]["composite"].min()` (=12.95) → 26/246 = **10.6%** (as of 2026-06-28). **NEVER hardcode this number** — the app computes it live (`FP_ALL4_TXT` in `streamlit_app.py`); docs cite the current value. Do NOT use `composite.quantile(0.90)` for a "catch all 4" claim — use the lowest-attacker-composite threshold.
 - **USR-234 acid test:** the slow APT escapes BOTH drift lenses (feature + embedding CUSUM); only the known-bad profile + novelty persistence catch it. Any "drift catches all 4" claim is wrong.
 
 ## Development

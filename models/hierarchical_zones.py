@@ -101,6 +101,16 @@ class BehavioralContext:
     recent_history: list[dict[str, float]] = field(default_factory=list)
 
 
+def _human_bytes(n: float) -> str:
+    """Human-readable byte size (e.g. 469838822 -> '448 MB')."""
+    n = float(n)
+    for unit in ("bytes", "KB", "MB", "GB", "TB"):
+        if n < 1024 or unit == "TB":
+            return f"{n:.0f} {unit}" if unit == "bytes" else f"{n:.1f} {unit}"
+        n /= 1024
+    return f"{n:.1f} TB"
+
+
 def _percentile_label(z: float) -> str:
     if z > 3.0:
         return "extreme"
@@ -474,7 +484,7 @@ def _serialize_network_interpretive(uid, role, dept, features, ctx):
     if ext_z > 1.0:
         parts.append(f"External ratio {_percentile_label(ext_z)} at {ext_ratio:.4f}.")
     if bytes_z > 1.0:
-        parts.append(f"Outbound traffic {_percentile_label(bytes_z)}: {bytes_out:.0f} bytes.")
+        parts.append(f"Outbound traffic {_percentile_label(bytes_z)}: {_human_bytes(bytes_out)}.")
     if nxd_z > 1.0:
         parts.append(f"NXDOMAIN ratio {_percentile_label(nxd_z)} at {nxdomain:.4f}.")
     parts.append(f"Connecting to {unique_dsts:.0f} destinations, {dns_domains:.0f} DNS domains.")

@@ -53,10 +53,10 @@ Dataset: **250 users, 70 weeks (week_idx 0–69), 485 days telemetry, 17,500 wee
 
 | uid | Campaign | Composite rank / score | Caught by |
 |-----|----------|------------------------|-----------|
-| USR-118 | Salt Typhoon (telecom recon) | #1 / 51.3 | feature CUSUM (loud), composite, profile (recon fan-out) |
+| USR-118 | Salt Typhoon (telecom recon) | #1 / 51.7 | feature CUSUM (loud), composite, profile (recon fan-out) |
 | USR-156 | 8-month insider | #2 / 46.2 | embedding CUSUM (early), composite, profile (mass collection + cohort-rare dst) |
-| USR-234 | 417-day slow APT | #7 / 19.4 | **only** profile (C2 beacon + DGA) + novelty persistence — escapes BOTH drift lenses |
-| USR-042 | Volt Typhoon (LOTL) | #24 / 13.7 | z-score (single spike), composite, profile (LOTL process) |
+| USR-234 | 417-day slow APT | #7 / 20.0 | **only** profile (C2 beacon + DGA) + novelty persistence — escapes BOTH drift lenses |
+| USR-042 | Volt Typhoon (LOTL) | #30 / 12.9 | z-score (single spike), composite, profile (LOTL process) |
 
 CUSUM first-clear-detection weeks — feature: 156=39, 042=47, 118=36, 234=never;
 embedding: 156=4, 042=15, 118=60, 234=never. USR-234 in-band 97% of weeks per-week.
@@ -74,9 +74,9 @@ The detection story, in order — **every page must agree with these**:
 | Composite scoring (5-phase fused) | **4 of 4**, but cleanly separates only **2 of 4** (USR-118, USR-156); FP cost below |
 | Threat-Profile detector (multi-front known-bad) | **4 of 4 at 0 false positives** |
 
-**FP convention — standardized to "catch-all-four" = 8.1%.** The headline FP for "catches all 4"
-is computed at the **lowest attacker composite score (USR-042 = 13.70)** → 20 of 246 normals =
-**8.1%**. Do NOT use `composite.quantile(0.90)` (13.49 → 21/246 = 8.5%) for a "catch all 4"
+**FP convention — standardized to "catch-all-four" = 10.6%.** The headline FP for "catches all 4"
+is computed at the **lowest attacker composite score (USR-042 = 12.95)** → 26 of 246 normals =
+**10.6%**. Do NOT use `composite.quantile(0.90)` for a "catch all 4"
 sentence — that's a different operating point and was the source of an 8.1/8.5 inconsistency
 (fixed 2026-06 in Story Mode, the Three-Tier composite hero, and the verdict/comparison helpers).
 Use: `cs[cs.is_attack]["composite"].min()` as the threshold. "~8%" is an acceptable hedge.
@@ -115,7 +115,7 @@ view-selector. Alerts and Threat Profiles share `threat_profile_alerts.csv`. The
 Appended at the end of `streamlit_app.py` (`elif page == "Guided Demo":`). A 9-step stepper
 (session_state `gd_step`, Back/Restart/Next) with **live Plotly** charts computed from the DB via
 cached `_gd_prep()`. Steps: Welcome → Layer 1 (0/4) → Layer 2 drift → signal separation →
-USR-234 hard case → Layer 3 radar → Layer 4 composite (8.1% FP) → Layer 5 known-bad (0 FP) →
+USR-234 hard case → Layer 3 radar → Layer 4 composite (10.6% FP) → Layer 5 known-bad (0 FP) →
 verdict. Chart builders inline: `_gd_cusum`, `_gd_radar`, `_gd_composite`.
 
 ---
@@ -173,13 +173,11 @@ In `docs/`:
 Builders: `docs/build_*.py` (this repo) and `CyberUEBA_Whitepapers/docs/build_*.py`.
 **Editing a builder does NOT regenerate its .docx/.pptx — re-run the builder.** All UEBA doc
 builders were aligned (2026-06) to the canonical facts:
-- FP for "catches all 4" = **8.1%** (catch-all-four threshold), never 8.5% (that's the 90th-pct point).
+- FP for "catches all 4" = **10.6%** (catch-all-four threshold), computed live in-app via FP_ALL4_TXT — never hardcode it.
 - Dataset = 250 users · 70 weeks · 485 days · 17,500 rows (never "19 weeks / 4,750").
-- Detection ladder: traditional 0/4 → z-score 1/4 → composite 4/4 @ 8.1% (cleanly separates only 2/4) → **Threat-Profile detector 4/4 @ 0 FP** (primary; named techniques C2-beacon/DGA/LOTL-process/cohort-rare/recon-fanout/insider-collection).
+- Detection ladder: traditional 0/4 → z-score 1/4 → composite 4/4 @ 10.6% (cleanly separates only 2/4) → **Threat-Profile detector 4/4 @ 0 FP** (primary; named techniques C2-beacon/DGA/LOTL-process/cohort-rare/recon-fanout/insider-collection).
 - We measure **magnitude AND direction** (not "direction instead of magnitude").
 - Real OpenAI text-embedding-3-small is **mandatory** (no mock/fallback embedder).
 - No self-promotional "honest/honestly" wording.
 
-**CAVEAT — do NOT force the 250-user canon onto these:** `CyberUEBA_Whitepapers/docs/build_analysis_doc.py`,
-`build_analysis_deck.py`, and `build_technical_deck.py` describe a *separate* 50-user / 130-day /
-19-week / 950-vector controlled study with its own LOF-ensemble results (50×19=950 is internally consistent).
+**NOTE (2026-06-28):** the separate 50-user / 130-day / 19-week / 950-vector study (Whitepapers `build_analysis_doc.py`, `build_analysis_deck.py`, `build_technical_deck.py` + their outputs) was DELETED at the user's request — all collateral is now the 250-user demo only.

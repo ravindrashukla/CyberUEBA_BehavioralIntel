@@ -4,6 +4,7 @@ falls back to pipeline output files."""
 
 import json
 import os
+import re
 from datetime import datetime, timedelta
 from pathlib import Path
 
@@ -84,6 +85,7 @@ st.markdown(f"""
     .metric-card.critical {{ border-left-color: {RED}; }}
     .metric-card.gold {{ border-left-color: {GOLD}; }}
     .metric-card.teal {{ border-left-color: {TEAL}; }}
+    .metric-card.green {{ border-left-color: #27AE60; }}
     .metric-value {{ font-size: 2.2rem; font-weight: 700; color: {NAVY}; margin: 0; }}
     .metric-label {{ font-size: 0.85rem; color: #6C757D; margin: 0; text-transform: uppercase; letter-spacing: 0.5px; }}
     .header-bar {{
@@ -111,6 +113,26 @@ alerts_df = db_load_alerts()
 kill_chains = db_load_kill_chains()
 drift_df = db_load_drift_series()
 log_stats = db_load_log_stats()
+
+
+# Catch-all-four false-positive rate — computed LIVE from the DB, never hardcoded.
+# Threshold = lowest attacker composite; FP = % of normal users scoring >= it.
+def _compute_catch_all4_fp():
+    try:
+        _cs = db_load_composite_scores()
+        if _cs.empty or "is_attack" not in _cs.columns:
+            return None
+        _atk_min = _cs[_cs["is_attack"]]["composite"].min()
+        _nrm = _cs[~_cs["is_attack"]]
+        if not len(_nrm):
+            return None
+        return 100.0 * (_nrm["composite"] >= _atk_min).sum() / len(_nrm)
+    except Exception:
+        return None
+
+
+CATCH_ALL4_FP = _compute_catch_all4_fp()
+FP_ALL4_TXT = f"{CATCH_ALL4_FP:.1f}%" if CATCH_ALL4_FP is not None else "the catch-all-four FP"
 
 # ── SIDEBAR ──
 with st.sidebar:
@@ -299,7 +321,10 @@ if page == "Story Mode":
         act_cols = ["auth_total", "file_total", "net_bytes_out", "dns_unique_domains"]
         avail_act = [c for c in act_cols if c in _story_wf.columns]
         if avail_act:
-            _story_feat_df = _story_wf.groupby("user_id")[avail_act].mean().reset_index()
+            # Plot the actual per-user-week rows (not 70-week means). Averaging collapses
+            # real variance into an artificially tight cluster; weekly points show the
+            # genuine spread — and make the "one week per dot" caption true.
+            _story_feat_df = _story_wf[["user_id"] + avail_act].dropna(subset=avail_act).copy()
 
     if _story_feat_df is not None and not _story_feat_df.empty:
         user_means = _story_feat_df
@@ -308,7 +333,7 @@ if page == "Story Mode":
 
         fig_scatter.add_trace(go.Scatter(
             x=user_means.get("auth_total", []), y=user_means.get("file_total", []),
-            mode="markers", marker=dict(size=10, color=BLUE, opacity=0.6),
+            mode="markers", marker=dict(size=5, color=BLUE, opacity=0.35),
             text=user_means["user_id"], hovertemplate="%{text}<br>Auth: %{x:.0f}<br>Files: %{y:.0f}",
             showlegend=False,
         ), row=1, col=1)
@@ -316,7 +341,7 @@ if page == "Story Mode":
         if "net_bytes_out" in user_means.columns and "dns_unique_domains" in user_means.columns:
             fig_scatter.add_trace(go.Scatter(
                 x=user_means["net_bytes_out"], y=user_means["dns_unique_domains"],
-                mode="markers", marker=dict(size=10, color=BLUE, opacity=0.6),
+                mode="markers", marker=dict(size=5, color=BLUE, opacity=0.35),
                 text=user_means["user_id"], hovertemplate="%{text}<br>Bytes: %{x:.0f}<br>DNS: %{y:.0f}",
                 showlegend=False,
             ), row=1, col=2)
@@ -547,7 +572,7 @@ if page == "Story Mode":
     if not comp_story.empty:
         n_story = len(comp_story)
         # Catch-all-four threshold = lowest attacker composite score (the minimum
-        # cutoff that still flags all 4). Gives the "catch all 4" FP = 8.1%.
+        # cutoff that still flags all 4). Gives the "catch all 4" FP (computed live).
         thresh_story = comp_story[comp_story["is_attack"]]["composite"].min()
         flagged_story = comp_story[comp_story["composite"] >= thresh_story]
         tp_story = len(flagged_story[flagged_story["is_attack"]])
@@ -575,7 +600,7 @@ if page == "Story Mode":
                          box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
                 <h4 style="color:#27AE60; margin:0;">All 4 Detected</h4>
                 <div style="font-size:2.5rem; font-weight:700; color:#27AE60;">4 / 4</div>
-                <p style="color:#6C757D; font-size:0.85rem;">at {fp_rate_story:.0f}% false positives<br>(threat-profile detector: 4/4 at 0% FP)</p>
+                <p style="color:#6C757D; font-size:0.85rem;">at {fp_rate_story:.1f}% false positives<br>(threat-profile detector: 4/4 at 0% FP)</p>
             </div>
             """, unsafe_allow_html=True)
         with ens_c3:
@@ -624,7 +649,7 @@ if page == "Story Mode":
             <p style="color:{GOLD}; font-size:1.5rem; font-weight:700; margin:0;">
             4 campaigns. Composite ranks them. Threat profiles catch them.</p>
             <p style="color:#A0C8E0; font-size:1.1rem; margin:12px 0 0 0;">
-            Composite scoring catches all 4 — at {fp_rate_story:.0f}% false positives; the multi-front
+            Composite scoring catches all 4 — at {fp_rate_story:.1f}% false positives; the multi-front
             <b>threat-profile detector catches all 4 at 0 false positives</b>, each named by technique.<br>
             No manual algorithm selection — one ranked output, plus an explainable alert per attacker.</p>
             <p style="color:{GOLD}; font-size:0.95rem; margin:16px 0 0 0; font-weight:600;">
@@ -645,7 +670,7 @@ elif page == "Proof of Realism":
     </div>
     """, unsafe_allow_html=True)
     st.info("This page proves the attacks are realistic — they blend into normal ranges, which is why standard tools miss them. "
-            "How we catch them anyway: see the **Detection Pipeline** page (phased: signatures → peer comparison → Vector Intelligence) "
+            "How we catch them anyway: see the **Detection Pipeline** page (phased: signatures → peer comparison → Composite Scoring) "
             "and **Threat Profiles** (the confirmed 4/4 alerts).")
 
     _ATTACK_LABELS = {"USR-234": "Slow APT", "USR-118": "Salt Typhoon",
@@ -956,29 +981,34 @@ elif page == "Dashboard":
 
     _threat_profile_banner()
 
+    # Headline KPIs reflect the confirmed-intruder story, not the raw behavioral-drift
+    # event stream (which fires on ~all users and was the old "alarm fatigue" problem).
+    _tp_dash = Path("data/threat_profile_alerts.csv")
+    if _tp_dash.exists():
+        _tpd = pd.read_csv(_tp_dash)
+        n_intruders = int(_tpd["is_known_attack"].sum())
+        n_fp = int((~_tpd["is_known_attack"]).sum())
+    else:
+        n_intruders, n_fp = 0, 0
+
     if USE_DB:
         db_stats = load_dashboard_stats()
-        n_alerts = db_stats.get("total_events", 0)
-        n_critical = db_stats.get("high_events", 0)
         n_users = db_stats.get("total_users", 0)
-        n_entities = db_stats.get("entities_affected", 0)
     else:
-        n_alerts = len(alerts_df) if not alerts_df.empty else 0
-        n_critical = len(alerts_df[alerts_df["severity"] == "critical"]) if not alerts_df.empty else 0
         _roster = db_load_user_roster()
-        n_users = len(_roster) if not _roster.empty else alerts_df["entity_id"].nunique() if not alerts_df.empty else 0
-        n_entities = alerts_df["entity_id"].nunique() if not alerts_df.empty else 0
+        n_users = len(_roster) if not _roster.empty else (alerts_df["entity_id"].nunique() if not alerts_df.empty else 0)
+    n_days = 485
 
     c1, c2, c3, c4 = st.columns(4)
     with c1:
         st.markdown(f"""<div class="metric-card critical">
-            <p class="metric-label">Trajectory Events</p>
-            <p class="metric-value">{n_alerts:,}</p>
+            <p class="metric-label">Confirmed Intruders</p>
+            <p class="metric-value">{n_intruders}</p>
         </div>""", unsafe_allow_html=True)
     with c2:
-        st.markdown(f"""<div class="metric-card critical">
-            <p class="metric-label">High Severity</p>
-            <p class="metric-value">{n_critical:,}</p>
+        st.markdown(f"""<div class="metric-card green">
+            <p class="metric-label">False Positives</p>
+            <p class="metric-value">{n_fp}</p>
         </div>""", unsafe_allow_html=True)
     with c3:
         st.markdown(f"""<div class="metric-card gold">
@@ -987,162 +1017,10 @@ elif page == "Dashboard":
         </div>""", unsafe_allow_html=True)
     with c4:
         st.markdown(f"""<div class="metric-card teal">
-            <p class="metric-label">Entities Affected</p>
-            <p class="metric-value">{n_entities}</p>
+            <p class="metric-label">Days of Telemetry</p>
+            <p class="metric-value">{n_days}</p>
         </div>""", unsafe_allow_html=True)
 
-    col_left, col_right = st.columns([3, 2])
-
-    with col_left:
-        st.subheader("Event Severity Distribution")
-        events_df = load_trajectory_events(limit=500) if USE_DB else alerts_df
-        if not events_df.empty and "severity" in events_df.columns:
-            sev_order = ["critical", "high", "medium", "low", "info"]
-            sev_colors = {"critical": RED, "high": "#E67E22", "medium": GOLD, "low": TEAL, "info": "#6C757D"}
-            sev_counts = events_df["severity"].value_counts().reindex(sev_order).dropna()
-            fig = px.bar(
-                x=sev_counts.index,
-                y=sev_counts.values,
-                color=sev_counts.index,
-                color_discrete_map=sev_colors,
-                labels={"x": "Severity", "y": "Count"},
-            )
-            fig.update_layout(
-                showlegend=False,
-                plot_bgcolor="white",
-                height=320,
-                margin=dict(l=40, r=20, t=20, b=40),
-                font=dict(family="Segoe UI"),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown(f"""
-            <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {GOLD}; font-size:0.78rem; color:#555;">
-                <strong>High</strong> — Sustained behavioral drift exceeding baseline thresholds; warrants analyst review.<br>
-                <strong>Medium</strong> — Moderate deviation from established behavioral patterns; monitor for escalation.
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("No event data available. Run the pipeline first.")
-
-    with col_right:
-        if USE_DB and not events_df.empty and "event_type" in events_df.columns:
-            st.subheader("Event Types")
-            type_counts = events_df["event_type"].value_counts().head(10)
-            fig = px.bar(
-                x=type_counts.values,
-                y=type_counts.index,
-                orientation="h",
-                labels={"x": "Count", "y": "Event Type"},
-                color_discrete_sequence=[BLUE],
-            )
-            fig.update_layout(
-                showlegend=False,
-                plot_bgcolor="white",
-                height=320,
-                margin=dict(l=60, r=20, t=20, b=40),
-                yaxis=dict(autorange="reversed"),
-                font=dict(family="Segoe UI"),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown(f"""
-            <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {BLUE}; font-size:0.78rem; color:#555;">
-                <strong>Regime Shift</strong> — Fundamental change in behavioral phase; consecutive embedding similarity drops below threshold.<br>
-                <strong>Anomaly</strong> — Statistically significant deviation from the entity's own behavioral baseline.<br>
-                <strong>Trend Change</strong> — Sustained directional shift in drift velocity or acceleration over multiple observation windows.
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.subheader("MITRE Tactics Observed")
-            if not alerts_df.empty:
-                all_techniques = []
-                for _, row in alerts_df.iterrows():
-                    if isinstance(row.get("mitre_techniques"), list):
-                        all_techniques.extend(row["mitre_techniques"])
-                if all_techniques:
-                    tech_counts = pd.Series(all_techniques).value_counts().head(10)
-                    fig = px.bar(
-                        x=tech_counts.values,
-                        y=tech_counts.index,
-                        orientation="h",
-                        labels={"x": "Occurrences", "y": "Technique"},
-                        color_discrete_sequence=[BLUE],
-                    )
-                    fig.update_layout(
-                        showlegend=False,
-                        plot_bgcolor="white",
-                        height=320,
-                        margin=dict(l=60, r=20, t=20, b=40),
-                        yaxis=dict(autorange="reversed"),
-                        font=dict(family="Segoe UI"),
-                    )
-                    st.plotly_chart(fig, use_container_width=True)
-
-    st.subheader("Behavioral Drift Heatmap")
-    heatmap_df = load_drift_heatmap() if USE_DB else pd.DataFrame()
-    if not heatmap_df.empty:
-        zone_drift_cols = [c for c in heatmap_df.columns if c.startswith("zone_")]
-        if zone_drift_cols:
-            display_df = heatmap_df.set_index("entity_id")[zone_drift_cols].head(30)
-            display_df.columns = [c.replace("zone_", "").replace("_", " ").title() for c in display_df.columns]
-            hover_text = [[f"{display_df.index[i]}<br>{display_df.columns[j]}: {display_df.iloc[i, j]:.4f}"
-                           for j in range(len(display_df.columns))]
-                          for i in range(len(display_df))]
-            fig = go.Figure(data=go.Heatmap(
-                z=display_df.values,
-                x=display_df.columns.tolist(),
-                y=display_df.index.tolist(),
-                text=hover_text,
-                hoverinfo="text",
-                colorscale=[[0, "#EBF5FB"], [0.05, "#D4E6F1"], [0.3, "#1B4F72"], [0.6, "#E67E22"], [1.0, RED]],
-                colorbar=dict(title="Zone Drift"),
-                zmin=0,
-            ))
-            fig.update_layout(
-                height=500,
-                margin=dict(l=80, r=20, t=20, b=40),
-                font=dict(family="Segoe UI"),
-                yaxis=dict(autorange="reversed"),
-            )
-            st.plotly_chart(fig, use_container_width=True)
-            st.markdown(f"""
-            <div style="background:#F7F8FA; padding:8px 14px; border-radius:8px; font-size:0.75rem; color:#888;">
-            Cells near white indicate minimal drift (e.g., Identity rarely changes because role/department are stable).
-            Hover over any cell to see the exact drift value.
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            st.info("Zone drift data not yet available.")
-    elif not drift_df.empty:
-        pivot = drift_df.pivot_table(
-            index="entity_id", columns="cutoff_date", values="drift_from_first", aggfunc="mean"
-        )
-        pivot = pivot.loc[pivot.max(axis=1).sort_values(ascending=False).head(20).index]
-        fig = px.imshow(
-            pivot.values,
-            x=[str(c.date()) if hasattr(c, "date") else str(c) for c in pivot.columns],
-            y=pivot.index.tolist(),
-            color_continuous_scale=[[0, "#EBF5FB"], [0.3, "#1B4F72"], [0.6, "#E67E22"], [1.0, RED]],
-            labels={"color": "Drift Magnitude"},
-            aspect="auto",
-        )
-        fig.update_layout(
-            height=400,
-            margin=dict(l=80, r=20, t=20, b=40),
-            font=dict(family="Segoe UI"),
-        )
-        st.plotly_chart(fig, use_container_width=True)
-    else:
-        st.info("No drift data available. Run the pipeline first.")
-
-    st.markdown(f"""
-    <div style="background:#F7F8FA; padding:12px 16px; border-radius:8px; border-left:3px solid {TEAL}; font-size:0.78rem; color:#555; margin-bottom:16px;">
-        <strong>Identity</strong> — Role, department, clearance level, and tenure. Drift here indicates organizational changes (e.g., role reassignment).<br>
-        <strong>Access Pattern</strong> — Authentication volume, failure rates, off-hours logins, unique sources. Drift signals credential misuse or lateral movement.<br>
-        <strong>Data Behavior</strong> — File access volume, restricted/confidential file ratios, write operations. Drift indicates data staging or exfiltration activity.<br>
-        <strong>Network Footprint</strong> — Outbound bytes, unique destinations, external connection ratios, DNS patterns. Drift reveals C2 beaconing or tunneling.<br>
-        <strong>Risk Posture</strong> — Endpoint process risk scores, suspicious process ratios, unique executables. Drift flags malware execution or tool deployment.
-    </div>
-    """, unsafe_allow_html=True)
 
     st.subheader("Telemetry Ingestion")
     if log_stats:
@@ -1205,75 +1083,16 @@ elif page == "Alerts":
                 <div style="margin-top:5px; color:#2C3E50; font-size:0.9rem;"><b>Why flagged:</b> {'; '.join(_reasons)}.</div>
             </div>
             """, unsafe_allow_html=True)
-        st.markdown("---")
-        st.markdown("##### Behavioral anomaly alerts (embedding pipeline)")
-
-    if alerts_df.empty:
-        st.warning("No alerts found. Run the pipeline: `python run_pipeline.py`")
+        st.caption(
+            "These four are the complete confirmed-intruder set from the primary "
+            "Threat-Profile Detector — 0 false positives. See the Threat Profiles "
+            "and Detection Pipeline pages for how each is found."
+        )
     else:
-        fc1, fc2, fc3 = st.columns(3)
-        with fc1:
-            sev_filter = st.multiselect(
-                "Severity",
-                ["critical", "high", "medium", "low", "info"],
-                default=["critical", "high"],
-            )
-        with fc2:
-            method_filter = st.multiselect(
-                "Detection Method",
-                alerts_df["detection_method"].unique().tolist(),
-                default=alerts_df["detection_method"].unique().tolist(),
-            )
-        with fc3:
-            entity_filter = st.text_input("Entity ID (contains)", "")
-
-        filtered = alerts_df.copy()
-        if sev_filter:
-            filtered = filtered[filtered["severity"].isin(sev_filter)]
-        if method_filter:
-            filtered = filtered[filtered["detection_method"].isin(method_filter)]
-        if entity_filter:
-            filtered = filtered[filtered["entity_id"].str.contains(entity_filter, case=False)]
-
-        st.markdown(f"**{len(filtered)}** alerts matching filters")
-
-        st.markdown(f"""
-<div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {RED}; font-size:0.78rem; color:#555;">
-    <strong>Drift Magnitude</strong> — Cosine distance between the entity's current behavioral embedding and its baseline. Higher values indicate greater behavioral change.<br>
-    <strong>Confidence</strong> — Probability that the observed drift represents a genuine behavioral shift rather than normal variance.<br>
-    <strong>Detection Method</strong> — Algorithm that triggered the alert: threshold (static cutoff), drift_direction (cosine alignment with threat concepts), or CUSUM (cumulative sum change-point detection).<br>
-    <em style="color:#777;">These are behavioral-drift alert types (a complementary, higher-volume feed). The confirmed-intruder list above comes from the primary <strong>Threat-Profile Detector</strong> (4/4 at 0 false positives).</em>
-</div>
-""", unsafe_allow_html=True)
-
-        for _, alert in filtered.iterrows():
-            sev = alert["severity"]
-            sev_class = f"severity-{sev}"
-            with st.expander(
-                f"{'🔴' if sev == 'critical' else '🟠' if sev == 'high' else '🟡' if sev == 'medium' else '🔵'} "
-                f"[{sev.upper()}] {alert['title']}  —  {alert['entity_id']}"
-            ):
-                ac1, ac2, ac3 = st.columns(3)
-                ac1.metric("Drift Magnitude", f"{alert['drift_magnitude']:.4f}")
-                ac2.metric("Confidence", f"{alert['confidence']:.1%}")
-                ac3.metric("Detection", alert["detection_method"])
-
-                st.markdown(f"**Description:** {alert['description']}")
-
-                if isinstance(alert.get("concept_alignments"), list) and alert["concept_alignments"]:
-                    st.markdown("**Concept Alignments:**")
-                    for ca in alert["concept_alignments"]:
-                        st.markdown(
-                            f"- `{ca['concept']}` — similarity: {ca['similarity']:.3f}, "
-                            f"severity: {ca.get('severity', 'n/a')}, "
-                            f"techniques: {', '.join(ca.get('mitre_techniques', []))}"
-                        )
-
-                if isinstance(alert.get("mitre_techniques"), list) and alert["mitre_techniques"]:
-                    st.markdown(f"**MITRE Techniques:** {', '.join(alert['mitre_techniques'])}")
-
-                if alert.get("kill_chain_id"):
-                    st.markdown(f"**Kill Chain:** `{alert['kill_chain_id']}`")
+        st.warning(
+            "Threat-Profile alerts not found. Run the detector: "
+            "`python threat_profile_detector.py`"
+        )
 
 
 # ── PAGE: KILL CHAINS ──
@@ -1281,76 +1100,86 @@ elif page == "Kill Chains":
     st.markdown(f"""
     <div class="header-bar">
         <h1>🔗 Kill Chain Reconstruction</h1>
-        <p>Correlated attack sequences across entities. Alerts linked by entity overlap and temporal proximity.</p>
+        <p>Attack progression for each confirmed intruder — the techniques that fired, ordered by MITRE ATT&CK phase.</p>
     </div>
     """, unsafe_allow_html=True)
 
     _threat_profile_banner()
 
-    if not kill_chains:
-        st.warning("No kill chains found. Run the pipeline: `python run_pipeline.py`")
+    # Technique → (MITRE tactic, plain-English description)
+    KC_TECH_MAP = {
+        "c2_beacon": ("Command and Control", "Beacons to one fixed external server on a robotic schedule (C2)"),
+        "dga_dns": ("Command and Control", "Resolves many algorithmically-generated throwaway domains (DGA)"),
+        "cohort_rare_dst": ("Exfiltration", "Contacts external destinations no peer on the team ever touches"),
+        "recon_fanout": ("Reconnaissance", "Reaches far more destinations than teammates (network fan-out)"),
+        "mass_collection": ("Collection", "Pulls far more files than teammates (mass data collection)"),
+        "insider_collection": ("Collection", "Opens restricted/confidential files unusual for the role"),
+        "lotl_process": ("Defense Evasion", "Abnormal activity using legitimate built-in tools (living-off-the-land)"),
+        "data_exfil": ("Exfiltration", "Moves a large volume of sensitive data out"),
+        "highrisk_endpoint": ("Execution", "Runs high-risk processes on its device"),
+        "brute_force": ("Credential Access", "Unusual number of failed logins (possible brute force)"),
+        "ransomware": ("Impact", "Mass file writes (possible ransomware)"),
+    }
+    KC_TACTIC_ORDER = ["Reconnaissance", "Initial Access", "Execution", "Persistence",
+                       "Privilege Escalation", "Defense Evasion", "Credential Access",
+                       "Discovery", "Lateral Movement", "Collection",
+                       "Command and Control", "Exfiltration", "Impact"]
+
+    _kc_path = Path("data/threat_profile_alerts.csv")
+    if not _kc_path.exists():
+        st.warning("Threat-Profile alerts not found. Run the detector: `python threat_profile_detector.py`")
     else:
-        for i, kc in enumerate(kill_chains):
-            sev = kc.get("severity", "medium")
-            icon = "🔴" if sev == "critical" else "🟠" if sev == "high" else "🟡"
-            n_events = len(kc.get("events", []))
-            entities = kc.get("entities_involved", [])
-            tactics = kc.get("tactics_observed", [])
-            duration_s = kc.get("duration_seconds", 0)
-            duration_str = f"{duration_s / 3600:.1f} hours" if duration_s > 3600 else f"{duration_s / 60:.0f} min"
+        _kc = pd.read_csv(_kc_path)
+        _kc = _kc[_kc["is_known_attack"]]
+        for _, r in _kc.iterrows():
+            steps = []
+            for part in str(r["techniques"]).split(";"):
+                part = part.strip()
+                if not part:
+                    continue
+                name = part.split("=")[0].strip()
+                score = part.split("=")[1].strip() if "=" in part else ""
+                tactic, desc = KC_TECH_MAP.get(name, ("Execution", name))
+                steps.append({"name": name, "score": score, "tactic": tactic, "desc": desc})
+            steps.sort(key=lambda s: KC_TACTIC_ORDER.index(s["tactic"]) if s["tactic"] in KC_TACTIC_ORDER else 99)
+            tactics = []
+            for s in steps:
+                if s["tactic"] not in tactics:
+                    tactics.append(s["tactic"])
 
             with st.expander(
-                f"{icon} Chain {i + 1}: {' → '.join(tactics)}  |  "
-                f"{n_events} events  |  {len(entities)} entities  |  {duration_str}"
+                f"🔴 {r['user_id']} — {r['attack_type']}  |  "
+                f"{len(steps)} technique(s)  |  {'  →  '.join(tactics)}",
+                expanded=True,
             ):
-                kc1, kc2, kc3, kc4 = st.columns(4)
-                kc1.metric("Severity", sev.upper())
-                kc2.metric("Events", n_events)
-                kc3.metric("Entities", len(entities))
-                kc4.metric("Duration", duration_str)
+                kc1, kc2, kc3 = st.columns(3)
+                kc1.metric("Cohort", str(r["cohort"]).title())
+                kc2.metric("Techniques", len(steps))
+                kc3.metric("Detection Fronts", int(r["n_fronts"]))
 
-                st.markdown(f"**Entities:** {', '.join(f'`{e}`' for e in entities)}")
-                st.markdown(f"**Tactics Progression:** {' → '.join(tactics)}")
+                _badges = "  →  ".join(
+                    f'<span style="background:{MITRE_TACTIC_COLORS.get(t, "#6C757D")}; color:white; '
+                    f'padding:3px 11px; border-radius:12px; font-size:0.8rem; font-weight:700;">{t}</span>'
+                    for t in tactics
+                )
+                st.markdown(
+                    f'<div style="margin:4px 0 12px;"><span style="color:#6C757D; font-size:0.8rem;">'
+                    f'MITRE ATT&CK progression:</span><div style="margin-top:6px;">{_badges}</div></div>',
+                    unsafe_allow_html=True,
+                )
 
-                if kc.get("events"):
-                    fig = go.Figure()
-                    for j, evt in enumerate(kc["events"]):
-                        tactic = evt.get("tactic", "Unknown")
-                        color = MITRE_TACTIC_COLORS.get(tactic, "#6C757D")
-                        fig.add_trace(go.Scatter(
-                            x=[j],
-                            y=[evt.get("confidence", 0.5)],
-                            mode="markers+text",
-                            marker=dict(size=20, color=color),
-                            text=[tactic[:12]],
-                            textposition="top center",
-                            name=f"{evt['entity_id']}: {tactic}",
-                            hovertext=f"{evt['entity_id']}<br>{evt['description'][:80]}",
-                        ))
-                    fig.update_layout(
-                        height=250,
-                        plot_bgcolor="white",
-                        showlegend=False,
-                        xaxis=dict(title="Event Sequence", showgrid=False),
-                        yaxis=dict(title="Confidence", range=[0, 1]),
-                        margin=dict(l=40, r=20, t=40, b=40),
-                        font=dict(family="Segoe UI"),
+                st.markdown("**Evidence — the techniques that fired:**")
+                for s in steps:
+                    st.markdown(
+                        f"- **{s['tactic']}** — {s['desc']}"
+                        + (f"  _(signal strength: {s['score']})_" if s["score"] else "")
                     )
-                    st.plotly_chart(fig, use_container_width=True)
-
-                    st.markdown("**Event Timeline:**")
-                    for evt in kc["events"]:
-                        st.markdown(
-                            f"- **{evt['tactic']}** — `{evt['entity_id']}` — "
-                            f"confidence: {evt['confidence']:.2f} — "
-                            f"{evt['description'][:100]}"
-                        )
 
     st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {GOLD}; font-size:0.78rem; color:#555;">
-    <strong>Kill Chain</strong> — Correlated sequence of alerts linked by entity overlap and temporal proximity, reconstructing multi-stage attack progression.<br>
-    <strong>Tactics</strong> — MITRE ATT&CK tactical phases observed (e.g., Reconnaissance → Initial Access → Execution). Progression through tactics indicates campaign advancement.<br>
-    <strong>Confidence</strong> — Per-event probability that the behavioral anomaly aligns with the attributed tactic based on concept similarity scoring.
+    <strong>Kill chain</strong> — The sequence of adversary techniques a confirmed intruder performed, ordered by MITRE ATT&CK phase. Reconstructed from the techniques the Threat-Profile Detector matched — not from drift correlation across unrelated users.<br>
+    <strong>MITRE ATT&CK progression</strong> — The tactical phases observed for this intruder (e.g., Reconnaissance → Command and Control → Exfiltration).<br>
+    <strong>Signal strength</strong> — How far the measured behavior exceeded the cohort baseline for that technique.
 </div>
 """, unsafe_allow_html=True)
 
@@ -1363,6 +1192,9 @@ elif page == "Behavioral Drift":
         <p>V-Intelligence UEBA behavioral drift analysis — tracking slow behavioral change across entity populations using semantic embeddings.</p>
     </div>
     """, unsafe_allow_html=True)
+
+    st.caption("📊 **Population view** — rank which of the 250 entities are drifting most. Start here for an org-wide scan. "
+               "For one entity vs its peers, see **Drift Trajectory**; for one entity's per-signal breakdown, see **Behavioral Profile**.")
 
     _threat_profile_banner()
 
@@ -1386,6 +1218,24 @@ elif page == "Behavioral Drift":
             font=dict(family="Segoe UI"),
         )
         st.plotly_chart(fig, use_container_width=True)
+
+        # Honest caption: raw drift magnitude does NOT surface the confirmed intruders.
+        _att_ids = {"USR-118", "USR-156", "USR-234", "USR-042"}
+        _ranked = db_heatmap.sort_values("total_drift", ascending=False).reset_index(drop=True)
+        _rank_bits = [
+            f"{a} #{int(_ranked.index[_ranked.entity_id == a][0]) + 1}"
+            for a in sorted(_att_ids) if (_ranked.entity_id == a).any()
+        ]
+        _rank_txt = ", ".join(_rank_bits)
+        if _rank_txt:
+            st.markdown(f"""
+<div style="background:#FEF9E7; padding:10px 14px; border-radius:8px; border-left:4px solid {GOLD}; font-size:0.82rem; color:#555;">
+    <strong>These top drifters are NOT the confirmed intruders.</strong> Raw drift magnitude ranks the four real attackers far down the list
+    ({_rank_txt} of {len(_ranked)}) — stealth attacks barely move in total magnitude. That is exactly why magnitude alone misses them, and why the
+    <strong>Threat-Profile Detector</strong> (Threat Profiles page) is the primary detector.
+</div>
+""", unsafe_allow_html=True)
+
         st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {TEAL}; font-size:0.78rem; color:#555;">
     <strong>Total Drift</strong> — Cumulative behavioral distance from the entity's initial baseline, measured as cosine distance in 1536-dimensional embedding space.
@@ -1519,9 +1369,12 @@ elif page == "Behavioral Profile":
     st.markdown(f"""
     <div class="header-bar">
         <h1>🧬 Entity Behavioral Profile</h1>
-        <p>Per-signal behavioral decomposition over time. Shows how each behavioral dimension evolves independently — proving anomaly detection capability.</p>
+        <p>Per-signal behavioral decomposition — how each dimension changes versus the entity's own history. An investigation drill-down for a flagged entity, not a population detector.</p>
     </div>
     """, unsafe_allow_html=True)
+
+    st.caption("🔬 **Single entity, per-signal breakdown** — decompose one entity's behavior into auth / data / network / etc., each vs its own past. "
+               "For an org-wide ranking, see **Behavioral Drift**; for one entity vs its cohort, see **Drift Trajectory**.")
 
     SIGNAL_LABELS = {
         "user": {
@@ -1777,9 +1630,13 @@ elif page == "Behavioral Profile":
         else:
             drift_scores = compute_signal_drift_scores(profile)
 
-            # ── COMPOSITE DRIFT RADAR ──
-            st.subheader("Behavioral Signal Drift (Normalized)")
-            st.markdown("Each signal normalized to 0-1 against its baseline. Spikes indicate behavioral anomalies in that dimension.")
+            # ── SELF-RELATIVE SIGNAL DRIFT (investigation drill-down) ──
+            st.subheader("Behavioral Signal Drift (self-relative)")
+            st.markdown(
+                "Each signal is scaled 0–1 against **this entity's own history** "
+                "(1 = its own peak week). Use it to see *what* changed for a flagged "
+                "entity — a flat line means that dimension didn't move."
+            )
 
             fig = px.line(
                 drift_scores.melt(id_vars="week", var_name="signal", value_name="drift"),
@@ -1787,10 +1644,8 @@ elif page == "Behavioral Profile":
                 y="drift",
                 color="signal",
                 color_discrete_map=SIGNAL_COLORS,
-                labels={"week": "Week", "drift": "Drift Score (0=baseline, 1=max)", "signal": "Behavioral Signal"},
+                labels={"week": "Week", "drift": "Change vs own baseline (0=flat, 1=own peak)", "signal": "Behavioral Signal"},
             )
-            fig.add_hline(y=0.5, line_dash="dash", line_color=GOLD, annotation_text="Elevated")
-            fig.add_hline(y=0.8, line_dash="dash", line_color=RED, annotation_text="Critical")
             fig.update_layout(
                 plot_bgcolor="white",
                 height=400,
@@ -1801,7 +1656,7 @@ elif page == "Behavioral Profile":
             st.plotly_chart(fig, use_container_width=True)
             st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {BLUE}; font-size:0.78rem; color:#555;">
-    <strong>Normalized Drift</strong> — Each signal is the absolute z-score deviation from the entity's baseline (first 2 weeks), normalized to [0,1] by its peak, enabling cross-signal comparison regardless of absolute magnitude.
+    <strong>Self-relative, not a verdict.</strong> Each signal is the absolute z-score deviation from the entity's own baseline (first 2 weeks), scaled to [0,1] by its own peak. Because the scale is per-entity, a high value here is <em>not</em> comparable across users — which is exactly why a stealth attacker like USR-234 can change versus its own past yet still sit inside the normal population range and evade magnitude-based detectors. The Threat-Profile Detector (Threat Profiles page) is what confirms the intruder. A flat line = no change in that dimension.
 </div>
 """, unsafe_allow_html=True)
 
@@ -2064,6 +1919,17 @@ elif page == "Telemetry Explorer":
             df = pd.read_csv(csv_path)
             st.markdown(f"**{len(df):,}** events  |  **{len(df.columns)}** fields  |  `{selected_log}/{selected_date}.csv`")
 
+            # Ground-truth attack-label filter (only some log types carry labels)
+            _label_col = "label" if "label" in df.columns else ("attack_id" if "attack_id" in df.columns else None)
+            if _label_col:
+                _is_atk = df[_label_col].notna() & ~df[_label_col].astype(str).str.strip().str.lower().isin(
+                    ["", "normal", "nan", "none", "0", "false", "benign"])
+                _n_atk = int(_is_atk.sum())
+                if st.checkbox(f"🚩 Show attack-labeled rows only ({_n_atk:,} of {len(df):,})", value=False):
+                    df = df[_is_atk]
+            else:
+                st.caption("This log type has no ground-truth attack labels.")
+
             search = st.text_input("Search (filters all columns)", "")
             if search:
                 mask = df.astype(str).apply(lambda col: col.str.contains(search, case=False)).any(axis=1)
@@ -2106,7 +1972,7 @@ elif page == "Traditional vs V-Intelligence UEBA":
     # Temporal-Z-Score / Feature-CUSUM / embedding-CUSUM rows, which "detected" all
     # four only by firing on ~100% of normal users (98.8–100% FP) — not real
     # detection. The real results: composite scoring at the catch-all-four threshold
-    # (8.1% FP) and the multi-front threat-profile detector (0 FP).
+    # (catch-all-four FP, computed live) and the multi-front threat-profile detector (0 FP).
     try:
         _cs_m = db_load_composite_scores()
         _thr4 = float(_cs_m[_cs_m["is_attack"]]["composite"].min())   # catch-all-four
@@ -2186,7 +2052,7 @@ elif page == "Traditional vs V-Intelligence UEBA":
     st.markdown(f"""
 <div style="background:#EAF4EC; border-left:4px solid #1E8449; border-radius:8px; padding:12px 18px; margin-top:8px; font-size:0.9rem; color:#1D3A2A;">
     <b>What the matrix shows:</b> traditional point-anomaly tools (Isolation Forest / SVM / LOF) catch <b>0 of 4</b> at low FP — they see every attacker as a normal user.
-    The z-score catches <b>1 of 4</b> (the single-feature LOTL spike) at 9.8% FP. <b>Composite scoring catches 4 of 4 at 8.1% FP</b>, and the
+    The z-score catches <b>1 of 4</b> (the single-feature LOTL spike) at 9.8% FP. <b>Composite scoring catches 4 of 4 at {FP_ALL4_TXT} FP</b>, and the
     <b>multi-front threat-profile detector catches 4 of 4 at 0 false positives</b>.<br>
     <span style="color:#7B341E;">The old Temporal-Z-Score / Feature-CUSUM / embedding-CUSUM rows were removed: they "detected" all four only by firing on ~100% of normal users — flagging everyone is not detection.</span>
 </div>
@@ -2267,79 +2133,6 @@ elif page == "Traditional vs V-Intelligence UEBA":
     A method that catches <b>0 of 4</b> (Isolation Forest, One-Class SVM, LOF) has <b>no useful FP rate</b> — its false alarms catch zero attackers, so its FP is shown grey and marked "n/a". A low FP on a tool that detects nothing is not a virtue.
 </div>
 """, unsafe_allow_html=True)
-
-    # ACECARD drift scores for attack users
-    st.subheader("V-Intelligence UEBA Behavioral Drift Scores")
-    col1, col2 = st.columns(2)
-
-    acecard_cols = ["user_id", "acecard_total_drift", "acecard_cusum_value", "acecard_cusum_detected",
-                    "acecard_max_weekly_drift", "acecard_mean_weekly_drift", "label"]
-    acecard_display = comp_df[[c for c in acecard_cols if c in comp_df.columns]].copy()
-
-    with col1:
-        st.markdown("**Attack Users — V-Intelligence UEBA Metrics**")
-        attack_data = acecard_display[acecard_display["user_id"].isin(attack_users.keys())]
-        st.dataframe(attack_data, use_container_width=True, hide_index=True)
-
-    with col2:
-        st.markdown("**CUSUM Distribution (All Users)**")
-        if "acecard_cusum_value" in comp_df.columns:
-            fig_cusum = go.Figure()
-            normal_cusum = comp_df[~comp_df["user_id"].isin(attack_users)]["acecard_cusum_value"].dropna()
-            attack_cusum = comp_df[comp_df["user_id"].isin(attack_users)]["acecard_cusum_value"].dropna()
-
-            fig_cusum.add_trace(go.Histogram(x=normal_cusum, name="Normal Users", marker_color=BLUE, opacity=0.7))
-            fig_cusum.add_trace(go.Histogram(x=attack_cusum, name="Attack Users", marker_color=RED, opacity=0.9))
-            fig_cusum.update_layout(
-                barmode="overlay", height=300,
-                xaxis_title="CUSUM Value",
-                yaxis_title="Count",
-                margin=dict(l=20, r=20, t=30, b=20),
-            )
-            st.plotly_chart(fig_cusum, use_container_width=True)
-
-    st.markdown(f"""
-<div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {RED}; font-size:0.78rem; color:#555;">
-    <strong>CUSUM</strong> — Cumulative Sum control chart. Accumulates small deviations over time; detects slow drift that single-point thresholds miss.<br>
-    <strong>Weekly Drift</strong> — Per-week cosine distance between consecutive behavioral embeddings. Spikes indicate abrupt behavioral changes.
-</div>
-""", unsafe_allow_html=True)
-
-    # Feature CUSUM comparison
-    st.subheader("The Detection-Precision Tradeoff")
-
-    feat_cusum_cols = ["user_id", "feat_cusum_value", "feat_cusum_detected", "feat_max_weekly_drift",
-                       "feat_top_feature", "feat_top_feature_z", "label"]
-    avail_fc = [c for c in feat_cusum_cols if c in comp_df.columns]
-    if avail_fc:
-        fc_col1, fc_col2 = st.columns(2)
-        with fc_col1:
-            st.markdown("**Feature CUSUM Results**")
-            _fc_norm = comp_df[~comp_df["user_id"].isin(attack_users)]
-            _fc_fp_rate = 100 * _fc_norm["feat_cusum_detected"].sum() / max(len(_fc_norm), 1) if "feat_cusum_detected" in comp_df.columns else 0
-            st.markdown(f"""
-            Feature CUSUM applies cumulative drift detection directly on raw feature vectors
-            (auth counts, file access rates, endpoint risk). It **does detect** slow attackers —
-            but at a **{_fc_fp_rate:.0f}% false positive rate**, making it operationally useless.
-            """)
-            fc_attack = comp_df[comp_df["user_id"].isin(attack_users.keys())][avail_fc]
-            st.dataframe(fc_attack, use_container_width=True, hide_index=True)
-
-        with fc_col2:
-            st.markdown("**Why Feature CUSUM is Too Noisy**")
-            if "feat_cusum_value" in comp_df.columns:
-                fig_fc = go.Figure()
-                normal_fc = comp_df[~comp_df["user_id"].isin(attack_users)]["feat_cusum_value"].dropna()
-                attack_fc = comp_df[comp_df["user_id"].isin(attack_users)]["feat_cusum_value"].dropna()
-                fig_fc.add_trace(go.Histogram(x=normal_fc, name="Normal Users", marker_color=BLUE, opacity=0.7))
-                fig_fc.add_trace(go.Histogram(x=attack_fc, name="Attack Users", marker_color=RED, opacity=0.9))
-                fig_fc.update_layout(
-                    barmode="overlay", height=300,
-                    xaxis_title="Feature CUSUM Value",
-                    yaxis_title="Count",
-                    margin=dict(l=20, r=20, t=30, b=20),
-                )
-                st.plotly_chart(fig_fc, use_container_width=True)
 
     # Feature comparison: attack vs normal users
     st.subheader("Why Traditional Methods Fail")
@@ -2545,7 +2338,7 @@ elif page == "Three-Tier Detection":
             _rk = _t3_sorted.index[_t3_sorted["uid"] == _u]
             if len(_rk) and int((~_t3_sorted.iloc[:int(_rk[0])]["is_attack"]).sum()) == 0:
                 clean += 1
-        # Catch-all-four threshold = lowest attacker composite (= "catch all 4" FP = 8.1%).
+        # Catch-all-four threshold = lowest attacker composite (= "catch all 4" FP, computed live).
         threshold_all4 = comp_scores[comp_scores["is_attack"]]["composite"].min()
         flagged = comp_scores[comp_scores["composite"] >= threshold_all4]
         fp = len(flagged[~flagged["is_attack"]])
@@ -2575,7 +2368,7 @@ elif page == "Three-Tier Detection":
         st.markdown(f"""
         <div style="background:#FEF9E7; border:1px solid #F7DC6F; border-radius:6px; padding:10px 16px; margin-top:8px; font-size:0.85rem; color:#7D6608;">
         Composite ranking <b>catches all 4 attacks</b> — but flagging the two stealth attacks (USR-234, USR-042, which rank below
-        some normal users) costs <b>{fp_rate:.0f}% false positives</b> ({fp} normal users also flagged). The <b>multi-front
+        some normal users) costs <b>{fp_rate:.1f}% false positives</b> ({fp} normal users also flagged). The <b>multi-front
         Threat-Profile detector catches all 4 at 0 false positives</b> — see the Threat Profiles page.
         </div>""", unsafe_allow_html=True)
 
@@ -2981,7 +2774,7 @@ elif page == "Three-Tier Detection":
                 <div><span style="color:#6C757D;">Velocity:</span> <strong>{velocity:.4f}</strong></div>
                 <div><span style="color:#6C757D;">Acceleration:</span> <strong>{accel:.4f}</strong></div>
                 <div><span style="color:#6C757D;">Stability:</span> <strong>{stability:.4f}</strong></div>
-                <div><span style="color:#6C757D;">Regime:</span> <strong>{regime}</strong></div>
+                <div><span style="color:#6C757D;">Behavioral regime:</span> <strong>{regime}</strong></div>
                 <div><span style="color:#6C757D;">CUSUM:</span> <strong>{cusum_max:.4f}</strong></div>
             </div>
             <div style="display:flex; gap:24px; margin-top:8px; flex-wrap:wrap;">
@@ -3058,7 +2851,7 @@ elif page == "Three-Tier Detection":
             <div style="font-size:1rem; font-weight:700; color:{GOLD}; margin-bottom:8px;">TIER 3</div>
             <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">4 / 4</div>
             <p style="color:{NAVY}; font-weight:600;">Composite + Threat Profiles</p>
-            <p style="color:#6C757D; font-size:0.85rem;">Composite catches all 4 at ~8% FP; the multi-front<br>
+            <p style="color:#6C757D; font-size:0.85rem;">Composite catches all 4 at {FP_ALL4_TXT} FP; the multi-front<br>
             threat-profile detector catches all 4 at 0% FP.</p>
         </div>
         """, unsafe_allow_html=True)
@@ -3200,8 +2993,11 @@ elif page == "Drift Trajectory":
         <p>Per-week zone drift over time. Compare individual entity drift against cohort baseline. Shows which behavioral dimension is changing and when.</p>
     </div>
     """, unsafe_allow_html=True)
+
+    st.caption("👤 **Single entity vs its cohort** — pick one entity and see how its drift compares to its peer group over time. "
+               "For an org-wide ranking, see **Behavioral Drift**; for a per-signal breakdown of one entity, see **Behavioral Profile**.")
     st.info("This drift view is **one input** to detection, not a verdict on its own. See the **Detection Pipeline** page "
-            "for how raw signals, peer comparison, and the Vector Intelligence fusion lens combine to catch each intruder — "
+            "for how raw signals, peer comparison, and the Composite Scoring fusion lens combine to catch each intruder — "
             "and **Threat Profiles** for the confirmed alerts.")
 
     traj_df = db_load_weekly_trajectories()
@@ -3512,7 +3308,7 @@ elif page == "Digital Entity":
         <p>Inspect the transformation pipeline: Raw Features → Zone Partitioning → Text Serialization → 1536-d Embedding → Phase State</p>
     </div>
     """, unsafe_allow_html=True)
-    st.info("The 1536-d embedding here is the **Vector Intelligence fusion lens** — it combines every behavioral angle into one view. "
+    st.info("The 1536-d embedding here is the **Composite Scoring fusion lens** — it combines every behavioral angle into one view. "
             "It's the *deep* phase of detection (best for subtle, distributed threats); see the **Detection Pipeline** page for where it fits, "
             "and **Threat Profiles** for the confirmed alerts.")
 
@@ -3566,7 +3362,7 @@ elif page == "Digital Entity":
             fields = [("Entity ID", sel_id), ("Type", entity.get("entity_type", "user")),
                       ("Department", profile.get("department", "—")), ("Role", profile.get("role", "—")),
                       ("Clearance", profile.get("clearance", "—")),
-                      ("Regime", phase.get("current_regime", "—"))]
+                      ("Behavioral regime", phase.get("current_regime", "—"))]
             _id_cols = list(st.columns(3)) + list(st.columns(3))
             for col, (label, val) in zip(_id_cols, fields):
                 col.metric(label, val)
@@ -3610,8 +3406,11 @@ elif page == "Digital Entity":
             with st.expander("Stage 3: Text Serialization (what gets embedded)", expanded=True):
                 st.caption("Each zone's features are serialized into structured text, then sent to the embedding model (text-embedding-3-small → 1536-d vector).")
                 zone_texts = entity.get("zone_serialized_text", {})
+                from models.hierarchical_zones import _human_bytes as _hb
+                def _fmt_bytes_in_text(s: str) -> str:
+                    return re.sub(r"(\d{5,})\s*bytes", lambda m: _hb(int(m.group(1))), s)
                 for zname in ["identity", "access_pattern", "data_behavior", "network_footprint", "risk_posture"]:
-                    text = zone_texts.get(zname, "—")
+                    text = _fmt_bytes_in_text(zone_texts.get(zname, "—"))
                     color = {"identity": "#3498DB", "access_pattern": "#E74C3C", "data_behavior": "#9B59B6",
                              "network_footprint": "#E67E22", "risk_posture": "#1ABC9C"}.get(zname, BLUE)
                     st.markdown(f"""
@@ -3725,7 +3524,7 @@ elif page == "Detection Comparison":
             <span style="color:#27AE60; font-weight:700; font-size:0.95rem;">Layer 2: Composite Scoring</span>
             <span style="color:#A0C8E0; font-size:0.8rem; display:block; margin-top:4px;">
             Uses V-Intelligence UEBA's rich entity features to score anomalies — fusing signal strength, breadth,
-            sustained deviation, context divergence, and novelty persistence into a ranked list (8.1% FP).</span>
+            sustained deviation, context divergence, and novelty persistence into a ranked list ({FP_ALL4_TXT} FP).</span>
         </div>
     </div>
 </div>
@@ -4046,7 +3845,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.markdown(f"""
         <div style="background:#EAFAF1; padding:12px 18px; border-radius:8px; margin-top:12px;
                      border:1px solid #A9DFBF; text-align:center;">
-            <span style="color:#27AE60; font-weight:700;">{ace_det} of {len(ATTACK_USERS)} detected — at {_ace_fp_pct:.0f}% false positives</span><br>
+            <span style="color:#27AE60; font-weight:700;">{ace_det} of {len(ATTACK_USERS)} detected — at {_ace_fp_pct:.1f}% false positives</span><br>
             <span style="color:#6C757D; font-size:0.8rem;">Composite catches all 4 (vs 0/4 traditional, 1/4 z-score) — but flagging the two stealth attacks
             (slow-APT, LOTL) costs false alarms on normal users. The multi-front detector below catches all 4 at <b>0% false positives</b>.</span>
         </div>
@@ -4748,7 +4547,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
         st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {NAVY}; font-size:0.78rem; color:#555;">
     <strong>CUSUM Value</strong> — Accumulated behavioral drift over time. The vertical axis (V-Intelligence UEBA embeddings) provides separation that scalar features cannot.
-    V-Intelligence UEBA creates the data — high-dimensional entity features. Composite Scoring uses that data to determine anomalies and produce a ranked list at 8.1% FP.
+    V-Intelligence UEBA creates the data — high-dimensional entity features. Composite Scoring uses that data to determine anomalies and produce a ranked list at {FP_ALL4_TXT} FP.
 </div>
 """, unsafe_allow_html=True)
 
@@ -5074,7 +4873,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
             <h3 style="color:#27AE60; margin:0;">V-INTELLIGENCE UEBA + COMPOSITE SCORING</h3>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Digital Entity Features → 5-Phase Anomaly Detection</p>
             <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">4 of 4</div>
-            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite catches all 4 at ~8% FP; threat-profile detector catches all 4 at 0% FP</p>
+            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite catches all 4 at {FP_ALL4_TXT} FP; threat-profile detector catches all 4 at 0% FP</p>
             <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Composite scoring ranks USR-156 &amp; USR-118 above all normal
             users but buries the stealth slow-APT &amp; LOTL. The multi-front <b>threat-profile detector</b> catches all four by named
             technique (C2-beacon, DGA, LOTL-process, cohort-rare access) at zero false positives.</p>
@@ -5148,7 +4947,7 @@ elif page == "Threat Profiles":
             <div style="border-left:4px solid {bar}; background:#F7F8FA; padding:10px 16px; border-radius:6px; margin-bottom:8px;">
                 <strong style="color:{NAVY};">{r['user_id']}</strong>
                 <span style="color:#6C757D; font-size:0.85rem;">({r['cohort']} cohort)</span> &nbsp; {tag}
-                <span style="background:#EAEFF5; border-radius:10px; padding:1px 8px; font-size:0.75rem; color:{NAVY};">{int(r['n_fronts'])} front(s)</span>
+                <span style="background:#EAEFF5; border-radius:10px; padding:1px 8px; font-size:0.75rem; color:{NAVY};">{int(r['n_fronts'])} front{'s' if int(r['n_fronts']) != 1 else ''}</span>
                 <div style="margin-top:6px; font-size:0.9rem; color:#2C3E50;">{techs}{drift}</div>
             </div>
             """, unsafe_allow_html=True)
@@ -5171,26 +4970,26 @@ elif page == "Detection Pipeline":
     st.markdown(f"""
     <h2 style="color:{NAVY};">Detection Pipeline: Catch Early, Escalate Smartly</h2>
     <p style="color:#6C757D; font-size:1.02rem;">No single method catches every intruder, and the most powerful one is also the most
-    expensive. So we run detection in <b>phases</b> — cheap, fast checks first to catch the loud and obvious intruders the moment they act,
-    and we escalate to the deep <b>Vector Intelligence</b> lens only for the subtle ones who slip through. Every intruder is caught at its
+    expensive. So we run detection in <b>layers</b> — cheap, fast checks first to catch the loud and obvious intruders the moment they act,
+    and we escalate to the deep <b>Composite Scoring</b> lens only for the subtle ones who slip through. Every intruder is caught at its
     earliest point, at the lowest cost.</p>
     """, unsafe_allow_html=True)
 
     _phases = [
-        ("#3498DB", "Phase 1", "Known-Bad Signatures — Threat-Profile Detector", "instant · near-free",
+        ("#3498DB", "Layer 1", "Known-Bad Signatures — Threat-Profile Detector", "instant · near-free",
          "Does this behavior match a <b>known attack technique</b>? (A beacon calling home, random throwaway domains, a sudden mass download, suspicious programs running.)",
          "The obvious intruders — flagged the moment their fingerprint appears, with the technique named.",
          "USR-234 (slow APT): its steady beacon to one outside server is an unmistakable fingerprint."),
-        ("#1ABC9C", "Phase 2", "Peer Comparison", "cheap · daily",
+        ("#1ABC9C", "Layer 2", "Peer Comparison", "cheap · daily",
          "Is this person or machine acting <b>unlike their team</b>? (Someone in Marketing opening restricted files; a laptop talking to servers no teammate uses.)",
          "The odd-one-out — abnormal for their role, even if it looks normal company-wide.",
          "USR-118 reaches out to far more outside destinations than any of its developer peers."),
-        ("#E67E22", "Phase 3", "Single-Signal Drift", "moderate · weekly",
+        ("#E67E22", "Layer 3", "Single-Signal Drift", "moderate · weekly",
          "Is <b>any one number climbing fast</b> versus this entity's own past? (Network volume, file counts, failed logins.)",
          "The loud, single-dimension attacks — volume floods — caught early, before they get extreme.",
          "USR-118 (Salt Typhoon): a network-volume flood — caught at <b>week 36</b>, before the deep lens."),
-        ("#8E44AD", "Phase 4", "Vector Intelligence — the fusion lens", "deep · the heavy hitter",
-         "Has the <b>whole behavioral picture shifted</b> — even when no single number looks alarming? Vector Intelligence <b>combines every angle</b> "
+        ("#8E44AD", "Layer 4", "Composite Scoring — the fusion lens", "deep · the heavy hitter",
+         "Has the <b>whole behavioral picture shifted</b> — even when no single number looks alarming? Composite Scoring <b>combines every angle</b> "
          "(logins, files, network, programs) into one unified view and watches it move over time.",
          "The subtle, distributed threats that hide in <b>how behaviors combine</b> — an insider whose intent is turning, a stealth hacker using only legitimate tools.",
          "USR-156 (insider) caught at <b>week 4</b> and USR-042 (living-off-the-land) at <b>week 15</b> — weeks before any single raw number budges."),
@@ -5210,20 +5009,20 @@ elif page == "Detection Pipeline":
 
     st.markdown(f"""
     <div style="background:#F4ECF7; border:1px solid #D7BDE2; border-radius:8px; padding:12px 18px; margin:6px 0 16px 0; font-size:0.92rem; color:#4A235A;">
-    <b>What Vector Intelligence really is.</b> It is <b>not a summary</b> that throws away detail. It <b>fuses every behavioral angle into one combined
+    <b>What Composite Scoring really is.</b> It is <b>not a summary</b> that throws away detail. It <b>fuses every behavioral angle into one combined
     picture</b> and tracks how that picture drifts — so it can spot a threat that lives in the <i>relationship</i> between signals, where no single number
     is alarming. That is exactly why it catches the insider and the stealth hacker weeks early, and why it is <i>not</i> the fastest on USR-118: a raw
-    volume flood is one loud number, not a combined-pattern shift — so a single-signal check (Phase 3) naturally beats it there. Different threats reveal
-    themselves in different phases; that is the whole point of running them in sequence.
+    volume flood is one loud number, not a combined-pattern shift — so a single-signal check (Layer 3) naturally beats it there. Different threats reveal
+    themselves in different layers; that is the whole point of running them in sequence.
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("##### Which phase catches each attacker first")
+    st.markdown("##### Which layer catches each attacker first")
     _map = pd.DataFrame([
-        ["USR-234 — slow APT", "Phase 1 · Signature", "on contact", "Unmistakable beacon to a fixed outside server"],
-        ["USR-118 — Salt Typhoon", "Phase 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
-        ["USR-156 — insider", "Phase 4 · Vector Intelligence", "week 4", "Intent shift visible only in the combined picture"],
-        ["USR-042 — living-off-the-land", "Phase 4 · Vector Intelligence", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
+        ["USR-234 — slow APT", "Layer 1 · Signature", "on contact", "Unmistakable beacon to a fixed outside server"],
+        ["USR-118 — Salt Typhoon", "Layer 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
+        ["USR-156 — insider", "Layer 4 · Composite Scoring", "week 4", "Intent shift visible only in the combined picture"],
+        ["USR-042 — living-off-the-land", "Layer 4 · Composite Scoring", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
     ], columns=["Attacker", "Caught earliest by", "When", "Why there"])
     st.dataframe(_map, hide_index=True, use_container_width=True)
 
@@ -5231,7 +5030,9 @@ elif page == "Detection Pipeline":
     <div style="background:{NAVY}; border-radius:10px; padding:16px 24px; text-align:center; margin-top:8px;">
         <span style="color:{GOLD}; font-weight:700; font-size:1.05rem;">Catch the easy ones cheaply and instantly. Spend the deep lens only on the hard ones.</span>
         <span style="color:#A0C8E0; font-size:0.9rem; display:block; margin-top:4px;">
-        Result: every intruder caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on.</span>
+        Result: all 4 intruders caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on.</span>
+        <span style="color:#fff; font-size:0.9rem; display:block; margin-top:8px;">
+        Cost of catching all four: the <b>Layer-1 known-bad detector</b> flags them at <b>0 false positives</b>; the <b>Layer-4 fused score</b> catches the same four at <b>{FP_ALL4_TXT} false positives</b>.</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -5339,7 +5140,7 @@ elif page == "Guided Demo":
         fig = go.Figure()
         fig.add_trace(go.Bar(x=nrm["rank"], y=nrm["composite"], marker_color="rgba(120,130,140,0.32)", name="250 users"))
         fig.add_hline(y=thr, line=dict(color=BLUE, dash="dash"),
-                      annotation_text=f"Catch all 4  →  {fp:.0f}% false positives", annotation_position="top right")
+                      annotation_text=f"Catch all 4  →  {fp:.1f}% false positives", annotation_position="top right")
         for u in GD_ORDER:
             r = csr[csr.uid == u].iloc[0]
             fig.add_trace(go.Scatter(x=[r["rank"]], y=[r["composite"]], mode="markers+text",
@@ -5387,6 +5188,24 @@ elif page == "Guided Demo":
                 st.markdown(f"<div style='border-top:4px solid {GD_ATT[u][1]};background:#F6F9FC;border-radius:6px;padding:10px 14px;'>"
                             f"<b style='color:{GD_ATT[u][1]};font-size:1.05rem;'>{u}</b><br>"
                             f"<span style='color:#2C3E50;'>{GD_ATT[u][0]}</span></div>", unsafe_allow_html=True)
+
+        st.markdown("##### The five layers you'll step through")
+        _gd_layers = [
+            ("Layer 1 · Traditional point-anomaly", "Isolation Forest / SVM / LOF + z-score", "0–1 of 4"),
+            ("Layer 2 · Behavioral drift over time", "Same logs as accumulating entities", "loud movers separate"),
+            ("Layer 3 · Multi-phase fingerprint", "Five behavioral questions vs peers", "each attacker extreme on a different phase"),
+            ("Layer 4 · Fused composite score", "One ranked priority list", "4 of 4, at a false-positive cost"),
+            ("Layer 5 · Known-bad threat profiles", "Measurable adversary techniques", "4 of 4 at 0 false positives"),
+        ]
+        for _t, _d, _r in _gd_layers:
+            st.markdown(
+                f"<div style='display:flex;justify-content:space-between;align-items:center;border-left:3px solid {BLUE};"
+                f"background:#F6F9FC;border-radius:4px;padding:9px 14px;margin:5px 0;'>"
+                f"<span><b style='color:{NAVY};'>{_t}</b> &nbsp;<span style='color:#6C757D;font-size:0.85rem;'>{_d}</span></span>"
+                f"<span style='color:{NAVY};font-weight:700;font-size:0.85rem;white-space:nowrap;'>{_r}</span></div>",
+                unsafe_allow_html=True,
+            )
+
         st.info("Use **Next ▶** (or Back / Restart) to step through the layers. Everything below is computed live from the database.")
 
     elif step == 1:
@@ -5448,7 +5267,7 @@ elif page == "Guided Demo":
         fig, thr, fp = _gd_composite()
         _gd_callout("Layer 4 — Fused composite: one ranked verdict",
                     f"Fuse the five phases into a single score. Now <b>all four</b> campaigns rank above the line that catches all four — "
-                    f"including the two stealth movers that hid in the crowd. The cost: catching all four flags about {fp:.0f}% of normal users for review.")
+                    f"including the two stealth movers that hid in the crowd. The cost: catching all four flags about {fp:.1f}% of normal users for review.")
         st.plotly_chart(fig, use_container_width=True)
 
     elif step == 7:
@@ -5477,7 +5296,7 @@ elif page == "Guided Demo":
         v[1].metric("Intermediate z-score", "1 of 4")
         v[2].metric("Fused composite", "4 of 4")
         v[3].metric("Known-bad profiles", "4 of 4")
-        st.caption("Fused composite catches all four at ~8% false positives; the known-bad profile layer catches the same four at zero false positives.")
+        st.caption(f"Fused composite catches all four at {FP_ALL4_TXT} false positives; the known-bad profile layer catches the same four at zero false positives.")
         st.markdown(f"""<div style="background:{NAVY};border-radius:10px;padding:18px 26px;text-align:center;margin-top:10px;">
         <span style="color:{GOLD};font-weight:700;font-size:1.15rem;">We measure magnitude AND direction — accumulated over time, weighed against peers — applied in layers.</span>
         <span style="color:#A0C8E0;font-size:0.95rem;display:block;margin-top:6px;">Catch the easy ones cheaply; spend the deep lens only on the hard ones; and nail the known techniques with zero noise.</span></div>""",

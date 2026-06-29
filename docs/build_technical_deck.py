@@ -469,7 +469,7 @@ def slide_06_attack_scenarios(prs):
     add_title_bar(slide, "Injected Attack Scenarios")
 
     add_textbox(slide, Inches(0.7), Inches(1.25), Inches(11.9), Inches(0.4),
-                "Four attack campaigns injected into 50-user population. "
+                "Four attack campaigns injected into 250-user population. "
                 "Attack events = 0.05% of total telemetry volume.",
                 font_size=15, bold=False, color=DARK_GRAY, alignment=PP_ALIGN.LEFT)
 
