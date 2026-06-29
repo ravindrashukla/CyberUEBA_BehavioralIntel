@@ -3679,7 +3679,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
 
     with trad_col:
         st.markdown(f"""
-        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center;">
+        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center; min-height:84px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">
             <span style="color:#E74C3C; font-weight:700; font-size:1.1rem;">TRADITIONAL SIEM</span>
             <span style="color:#A0C8E0; font-size:0.8rem;"> (Isolation Forest / SVM / LOF)</span>
         </div>
@@ -3705,7 +3705,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                 detail = "Anomaly score within normal range. No alerts generated."
             st.markdown(f"""
             <div style="background:white; padding:14px 18px; border-left:4px solid {status_color};
-                        margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                        min-height:120px; box-sizing:border-box; margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <span style="font-weight:700; color:{NAVY};">{uid}</span>
@@ -3731,17 +3731,10 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             summary_color = "#E67E22"
             summary_text = f"{trad_detected_count} of {len(ATTACK_USERS)} attacks detected"
             summary_detail = f"{missed_count} slow/stealthy attacker(s) still classified as NORMAL"
-        st.markdown(f"""
-        <div style="background:{summary_bg}; padding:12px 18px; border-radius:8px; margin-top:12px;
-                     border:1px solid {summary_border}; text-align:center;">
-            <span style="color:{summary_color}; font-weight:700;">{summary_text}</span><br>
-            <span style="color:#6C757D; font-size:0.8rem;">{summary_detail}</span>
-        </div>
-        """, unsafe_allow_html=True)
 
     with zscore_col:
         st.markdown(f"""
-        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center;">
+        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center; min-height:84px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">
             <span style="color:#E67E22; font-weight:700; font-size:1.1rem;">INTERMEDIATE ANALYSIS</span>
             <span style="color:#A0C8E0; font-size:0.8rem;"> (Z-Score |z|&gt;3)</span>
         </div>
@@ -3762,7 +3755,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                 detail = "No feature exceeds 3 standard deviations. Attack stays within normal ranges."
             st.markdown(f"""
             <div style="background:white; padding:14px 18px; border-left:4px solid {status_color};
-                        margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                        min-height:120px; box-sizing:border-box; margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <span style="font-weight:700; color:{NAVY};">{uid}</span>
@@ -3788,17 +3781,10 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             zs_color = "#E67E22"
             zs_text = f"{zscore_detected_count} of {len(ATTACK_USERS)} attacks detected"
             zs_detail = f"{zscore_missed} stealthy attacker(s) still below 3-sigma threshold"
-        st.markdown(f"""
-        <div style="background:{zs_bg}; padding:12px 18px; border-radius:8px; margin-top:12px;
-                     border:1px solid {zs_border}; text-align:center;">
-            <span style="color:{zs_color}; font-weight:700;">{zs_text}</span><br>
-            <span style="color:#6C757D; font-size:0.8rem;">{zs_detail}</span>
-        </div>
-        """, unsafe_allow_html=True)
 
     with ace_col:
         st.markdown(f"""
-        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center;">
+        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center; min-height:84px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">
             <span style="color:{GOLD}; font-weight:700; font-size:1.1rem;">V-Intelligence UEBA</span>
             <span style="color:white; font-weight:300; font-size:1.1rem;"> + </span>
             <span style="color:#27AE60; font-weight:700; font-size:1.1rem;">COMPOSITE SCORING</span>
@@ -3828,20 +3814,18 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                 _severity = "DETECTED"
                 if _norm_above == 0:
                     _sev_color = RED
-                    _sep = "ranks above every normal user — clean"
+                    _sep = "clean"
                 else:
                     _sev_color = "#E67E22"
-                    _sep = f"caught, but {_norm_above} normal users score this high too (false-positive cost)"
-                _drift_desc = f"Composite {_score:.1f} · rank #{_rank} / {len(_comp_sorted)} — {_sep}"
-                if _novelty > 0:
-                    _drift_desc += f" · novelty {_novelty:.1f}"
+                    _sep = "noisy"
+                _drift_desc = f"Composite {_score:.1f} · rank #{_rank}/{len(_comp_sorted)} · {_sep}"
             else:
                 _score, _severity, _sev_color = 0, "UNKNOWN", "#BDC3C7"
                 _drift_desc = "No composite score data available"
 
             st.markdown(f"""
             <div style="background:white; padding:14px 18px; border-left:4px solid {_sev_color};
-                        margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                        min-height:120px; box-sizing:border-box; margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
                 <div style="display:flex; justify-content:space-between; align-items:center;">
                     <div>
                         <span style="font-weight:700; color:{NAVY};">{uid}</span>
@@ -3850,24 +3834,15 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                     <span style="background:{_sev_color}; color:white; padding:3px 12px; border-radius:12px;
                                  font-size:0.75rem; font-weight:700;">{_severity}</span>
                 </div>
-                <div style="color:{NAVY}; font-size:0.8rem; margin-top:6px; font-weight:600;">
+                <div style="color:{NAVY}; font-size:0.75rem; margin-top:6px; font-weight:600;">
                     {_drift_desc}
                 </div>
             </div>
             """, unsafe_allow_html=True)
 
-        st.markdown(f"""
-        <div style="background:#EAFAF1; padding:12px 18px; border-radius:8px; margin-top:12px;
-                     border:1px solid #A9DFBF; text-align:center;">
-            <span style="color:#27AE60; font-weight:700;">{ace_det} of {len(ATTACK_USERS)} detected — at {_ace_fp_pct:.1f}% false positives</span><br>
-            <span style="color:#6C757D; font-size:0.8rem;">Composite catches all 4 (vs 0/4 traditional, 1/4 z-score) — but flagging the two stealth attacks
-            (slow-APT, LOTL) costs false alarms on normal users. The <b>Threat-Profile column (right)</b> catches all 4 at <b>0% false positives</b>.</span>
-        </div>
-        """, unsafe_allow_html=True)
-
     with tp_col:
         st.markdown(f"""
-        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center;">
+        <div style="background:{NAVY}; padding:12px 18px; border-radius:8px 8px 0 0; text-align:center; min-height:84px; box-sizing:border-box; display:flex; flex-direction:column; justify-content:center;">
             <span style="color:#27AE60; font-weight:700; font-size:1.1rem;">THREAT-PROFILE DETECTOR</span>
             <span style="color:#A0C8E0; font-size:0.8rem; display:block; margin-top:2px;">Measurable known-bad profiles — the primary detector</span>
         </div>
@@ -3902,7 +3877,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                     _why, _tpc, _tps = "no known-bad profile match", "#BDC3C7", "—"
                 st.markdown(f"""
                 <div style="background:white; padding:14px 18px; border-left:4px solid {_tpc};
-                            margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
+                            min-height:120px; box-sizing:border-box; margin:6px 0; border-radius:0 8px 8px 0; box-shadow:0 1px 4px rgba(0,0,0,0.06);">
                     <div style="display:flex; justify-content:space-between; align-items:center;">
                         <div>
                             <span style="font-weight:700; color:{NAVY};">{uid}</span>
@@ -3917,13 +3892,25 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         else:
             st.caption("threat_profile_alerts.csv not found.")
 
-        st.markdown(f"""
-        <div style="background:#EAFAF1; padding:12px 18px; border-radius:8px; margin-top:12px;
-                     border:1px solid #A9DFBF; text-align:center;">
-            <span style="color:#27AE60; font-weight:700;">{_tp_det} of {len(ATTACK_USERS)} detected — at 0% false positives</span><br>
-            <span style="color:#6C757D; font-size:0.8rem;">Each flagged by a named technique — no threshold tuning, no false alarms.</span>
-        </div>
-        """, unsafe_allow_html=True)
+    # ── Conclusion band: all 4 verdicts in their own row → guaranteed aligned ──
+    _cb = [
+        (summary_bg, summary_border, summary_color, summary_text, summary_detail),
+        (zs_bg, zs_border, zs_color, zs_text, zs_detail),
+        ("#EAFAF1", "#A9DFBF", "#27AE60", f"{ace_det} of {len(ATTACK_USERS)} detected — {_ace_fp_pct:.1f}% FP",
+         "Catches all 4 — but the two stealth attacks cost false alarms"),
+        ("#EAFAF1", "#A9DFBF", "#27AE60", f"{_tp_det} of {len(ATTACK_USERS)} detected — 0% FP",
+         "Each named by technique — no false alarms"),
+    ]
+    for _cc, (_bg, _bd, _cl, _tx, _dt) in zip(st.columns(4), _cb):
+        with _cc:
+            st.markdown(f"""
+            <div style="background:{_bg}; padding:12px 18px; border-radius:8px; margin-top:4px;
+                         border:1px solid {_bd}; text-align:center; min-height:88px; box-sizing:border-box;
+                         display:flex; flex-direction:column; justify-content:center;">
+                <span style="color:{_cl}; font-weight:700;">{_tx}</span>
+                <span style="color:#6C757D; font-size:0.8rem; margin-top:4px;">{_dt}</span>
+            </div>
+            """, unsafe_allow_html=True)
 
     st.markdown(f"""
     <div style="background:linear-gradient(90deg,#16243F,#0F1E3A); padding:16px 22px; border-radius:8px;
