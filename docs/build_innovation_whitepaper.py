@@ -221,22 +221,46 @@ ATTACK_USERS = {
 }
 
 
+def _load_composite_rows_db_first():
+    """Operational PostgreSQL is the single source of truth; CSV only if DB is down."""
+    try:
+        import psycopg2
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(REPO_ROOT, ".env"))
+        url = os.getenv("DATABASE_URL_HOST") or os.getenv("DATABASE_URL")
+        if url:
+            conn = psycopg2.connect(url, connect_timeout=3)
+            cur = conn.cursor()
+            cur.execute(
+                "SELECT uid, is_attack, grp, role, signal_strength, breadth_15, "
+                "breadth_20, sustained_signal, ctx_spread_z, ctx_max_z, "
+                "novelty_score, composite FROM composite_scores")
+            cols = [d[0] for d in cur.description]
+            rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+            conn.close()
+            if rows:
+                print("  composite_scores: loaded from DATABASE (single source of truth)")
+                return rows
+    except Exception as e:
+        print(f"  composite_scores: DB unavailable ({str(e)[:50]}); using CSV fallback")
+    if not os.path.exists(RESULTS_CSV):
+        return None
+    try:
+        with open(RESULTS_CSV, newline="", encoding="utf-8") as f:
+            return list(csv.DictReader(f)) or None
+    except Exception:
+        return None
+
+
 def load_results():
-    """Return a dict of empirical findings from composite_scores.csv, or None.
+    """Return a dict of empirical findings from the composite scores (DB-first), or None.
 
     The composite scorer ranks every entity; an attacker that ranks near the top
     with few false positives above it is 'detected'. We compute, per attacker:
     rank, composite score, and the false-positive count (non-attack users that
     score at or above the lowest-scoring detected attacker).
     """
-    if not os.path.exists(RESULTS_CSV):
-        return None
-    try:
-        with open(RESULTS_CSV, newline="", encoding="utf-8") as f:
-            reader = csv.DictReader(f)
-            rows = list(reader)
-    except Exception:
-        return None
+    rows = _load_composite_rows_db_first()
     if not rows:
         return None
 
@@ -1179,7 +1203,7 @@ def main():
             INNOV_FIGS[key] = p
     print("Building innovation whitepaper(s)...")
     print(f"  disclosure level : {args.disclosure}")
-    print(f"  empirical data   : {'loaded from composite_scores.csv' if results else 'NOT FOUND (theoretical mode)'}")
+    print(f"  empirical data   : {'loaded from database (composite_scores)' if results else 'NOT FOUND (theoretical mode)'}")
 
     if args.audience == "all":
         keys = list(AUDIENCE_CONFIGS) + [UNIVERSAL_KEY]

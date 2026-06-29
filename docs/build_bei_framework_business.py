@@ -205,18 +205,39 @@ def fig3_direction():
     p = os.path.join(FIGDIR, 'fig3_direction.png'); fig.savefig(p, dpi=200); plt.close(fig)
     return p
 
+def _bei_scores_db_first(csv_path):
+    """Composite scores: operational DB first (single source of truth), CSV fallback."""
+    try:
+        import psycopg2
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+        url = os.getenv('DATABASE_URL_HOST') or os.getenv('DATABASE_URL')
+        if url:
+            conn = psycopg2.connect(url, connect_timeout=3)
+            cur = conn.cursor(); cur.execute('SELECT composite FROM composite_scores')
+            vals = [float(r[0]) for r in cur.fetchall()]; conn.close()
+            if vals:
+                return vals
+    except Exception:
+        pass
+    try:
+        import csv as _csv
+        with open(csv_path, newline='') as fh:
+            return [float(r['composite']) for r in _csv.DictReader(fh)]
+    except Exception:
+        return None
+
+
 def fig4_ranking():
     """Composite-score ranking: 4 attackers among 250 users (all points = system output)."""
     csv_path = os.path.join(os.path.dirname(__file__), '..', 'data', 'tier3_results', 'composite_scores.csv')
     attackers = {1: (51.7, 'USR-118\nSalt Typhoon'), 2: (46.2, 'USR-156\nInsider'),
                  7: (20.0, 'USR-234\nSlow APT (C2)'), 30: (12.9, 'USR-042\nVolt Typhoon LOTL')}
     curve_label = 'All 250 users ranked by composite score (system output)'
-    try:
-        import csv as _csv
-        with open(csv_path, newline='') as fh:
-            scores = sorted((float(r['composite']) for r in _csv.DictReader(fh)), reverse=True)
-        scores = np.array(scores)
-    except OSError:
+    _vals = _bei_scores_db_first(csv_path)
+    if _vals:
+        scores = np.array(sorted(_vals, reverse=True))
+    else:
         # fallback: monotone curve pinned through the attacker points (illustrative)
         ranks_f = np.arange(1, 251)
         scores = 19.0 * np.exp(-(ranks_f - 1) / 30.0) + 2.0
