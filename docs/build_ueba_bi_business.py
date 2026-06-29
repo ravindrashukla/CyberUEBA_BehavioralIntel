@@ -203,20 +203,44 @@ ATK_STYLE = [('USR-156', '#C0392B', 'Insider threat (USR-156)'),
              ('USR-118', '#2980B9', 'Salt Typhoon (USR-118)')]
 ATK_IDS = {a for a, _, _ in ATK_STYLE}
 
+def _ueba_db_rows(query):
+    """Operational DB first (single source of truth); returns list of dict rows or None."""
+    try:
+        import psycopg2
+        from dotenv import load_dotenv
+        load_dotenv(os.path.join(os.path.dirname(__file__), '..', '.env'))
+        url = os.getenv('DATABASE_URL_HOST') or os.getenv('DATABASE_URL')
+        if not url:
+            return None
+        conn = psycopg2.connect(url, connect_timeout=3)
+        cur = conn.cursor(); cur.execute(query)
+        cols = [d[0] for d in cur.description]
+        rows = [dict(zip(cols, r)) for r in cur.fetchall()]
+        conn.close()
+        return rows or None
+    except Exception:
+        return None
+
+
 def fig4_semantic():
     """REAL DATA: cumulative drift both ways — feature space (attackers hidden)
     vs semantic embedding space (attackers separate)."""
-    # semantic drift: per-user cumulative drift-from-baseline in embedding space
+    # semantic drift: per-user cumulative drift-from-baseline in embedding space (DB-first)
     sem = {}
-    with open(os.path.join(_DATA, 'tier3_results', 'all250_trajectories.csv')) as f:
-        for r in _csv.DictReader(f):
-            sem.setdefault(r['user_id'], []).append((int(r['week_idx']), float(r['composite_drift'])))
-    # feature-space result: the OFFICIAL final cumulative scores from the validated
-    # comparison run (tier3_comparison.csv) — no recomputation
+    _tr = _ueba_db_rows("SELECT user_id, week_idx, composite_drift FROM weekly_trajectories")
+    if _tr is None:
+        with open(os.path.join(_DATA, 'tier3_results', 'all250_trajectories.csv')) as f:
+            _tr = list(_csv.DictReader(f))
+    for r in _tr:
+        sem.setdefault(r['user_id'], []).append((int(r['week_idx']), float(r['composite_drift'])))
+    # feature-space final cumulative score: DB detection_results.feat_cusum_value (CSV fallback)
     feat_final = {}
-    with open(os.path.join(_DATA, 'tier3_results', 'tier3_comparison.csv')) as f:
-        for r in _csv.DictReader(f):
-            feat_final[r['user_id']] = float(r['feat_cusum_value'])
+    _fc = _ueba_db_rows("SELECT user_id, feat_cusum_value FROM detection_results")
+    if _fc is None:
+        with open(os.path.join(_DATA, 'tier3_results', 'tier3_comparison.csv')) as f:
+            _fc = list(_csv.DictReader(f))
+    for r in _fc:
+        feat_final[r['user_id']] = float(r['feat_cusum_value'])
 
     def sem_cusum(u):
         seq = sorted(sem[u]); return np.cumsum([d for _, d in seq])
