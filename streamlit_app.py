@@ -14,6 +14,7 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import streamlit as st
+import streamlit.components.v1 as components
 
 BASE_DIR = Path(__file__).parent
 DATA_DIR = BASE_DIR / "data"
@@ -323,18 +324,30 @@ if page == "Raw Data":
         if avail_act:
             # Plot the actual per-user-week rows (not 70-week means). Averaging collapses
             # real variance into an artificially tight cluster; weekly points show the
-            # genuine spread — and make the "one week per dot" caption true.
-            _story_feat_df = _story_wf[["user_id"] + avail_act].dropna(subset=avail_act).copy()
+            # genuine spread — and make the "one week per dot" caption true. Keep week_idx
+            # so the hover names which week each dot is (a user has one dot per week).
+            _wk_cols = [c for c in ["week_idx"] if c in _story_wf.columns]
+            _story_feat_df = _story_wf[["user_id"] + _wk_cols + avail_act].dropna(subset=avail_act).copy()
 
     if _story_feat_df is not None and not _story_feat_df.empty:
         user_means = _story_feat_df
-        fig_scatter = make_subplots(rows=1, cols=2,
-            subplot_titles=["Auth Events vs File Access", "Network Bytes vs DNS Domains"])
+        fig_scatter = make_subplots(rows=1, cols=2, horizontal_spacing=0.13,
+            subplot_titles=["Authentication & File Access", "Network & DNS Activity"])
+
+        # Each dot is one user-week, so a user recurs ~70 times — carry week_idx in the
+        # hover so it is clear which week each dot represents.
+        _has_wk = "week_idx" in user_means.columns
+        _cd = (user_means[["user_id", "week_idx"]].to_numpy() if _has_wk
+               else user_means[["user_id"]].to_numpy())
+        _ht_af = ("%{customdata[0]} · week %{customdata[1]:.0f}<br>Auth: %{x:.0f}<br>Files: %{y:.0f}<extra></extra>"
+                  if _has_wk else "%{customdata[0]}<br>Auth: %{x:.0f}<br>Files: %{y:.0f}<extra></extra>")
+        _ht_nd = ("%{customdata[0]} · week %{customdata[1]:.0f}<br>Bytes: %{x:,.0f}<br>DNS: %{y:.0f}<extra></extra>"
+                  if _has_wk else "%{customdata[0]}<br>Bytes: %{x:,.0f}<br>DNS: %{y:.0f}<extra></extra>")
 
         fig_scatter.add_trace(go.Scatter(
             x=user_means.get("auth_total", []), y=user_means.get("file_total", []),
             mode="markers", marker=dict(size=5, color=BLUE, opacity=0.35),
-            text=user_means["user_id"], hovertemplate="%{text}<br>Auth: %{x:.0f}<br>Files: %{y:.0f}",
+            customdata=_cd, hovertemplate=_ht_af,
             showlegend=False,
         ), row=1, col=1)
 
@@ -342,11 +355,15 @@ if page == "Raw Data":
             fig_scatter.add_trace(go.Scatter(
                 x=user_means["net_bytes_out"], y=user_means["dns_unique_domains"],
                 mode="markers", marker=dict(size=5, color=BLUE, opacity=0.35),
-                text=user_means["user_id"], hovertemplate="%{text}<br>Bytes: %{x:.0f}<br>DNS: %{y:.0f}",
+                customdata=_cd, hovertemplate=_ht_nd,
                 showlegend=False,
             ), row=1, col=2)
 
-        fig_scatter.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20))
+        fig_scatter.update_xaxes(title_text="Auth Events / week", row=1, col=1)
+        fig_scatter.update_yaxes(title_text="File Access / week", row=1, col=1)
+        fig_scatter.update_xaxes(title_text="Network Bytes Out / week", row=1, col=2)
+        fig_scatter.update_yaxes(title_text="Unique DNS Domains / week", row=1, col=2)
+        fig_scatter.update_layout(height=430, margin=dict(l=64, r=20, t=44, b=54))
         st.plotly_chart(fig_scatter, use_container_width=True)
 
         st.markdown(f"""
@@ -417,8 +434,8 @@ if page == "Raw Data":
         user_means = _story_feat_df.groupby("user_id", as_index=False)[_rv_cols].mean()
         user_means["is_attack"] = user_means["user_id"].isin(STORY_ATTACK_USERS.keys())
 
-        fig_reveal = make_subplots(rows=1, cols=2,
-            subplot_titles=["Auth Events vs File Access", "Network Bytes vs DNS Domains"])
+        fig_reveal = make_subplots(rows=1, cols=2, horizontal_spacing=0.13,
+            subplot_titles=["Authentication & File Access", "Network & DNS Activity"])
 
         normal = user_means[~user_means["is_attack"]]
         attacks = user_means[user_means["is_attack"]]
@@ -462,8 +479,12 @@ if page == "Raw Data":
                     name=f"{uid} ({info['label']})", showlegend=False,
                 ), row=1, col=2)
 
-        fig_reveal.update_layout(height=400, margin=dict(l=20, r=20, t=40, b=20),
-                                 legend=dict(orientation="h", y=-0.15))
+        fig_reveal.update_xaxes(title_text="Auth Events (per-user avg)", row=1, col=1)
+        fig_reveal.update_yaxes(title_text="File Access (per-user avg)", row=1, col=1)
+        fig_reveal.update_xaxes(title_text="Network Bytes Out (per-user avg)", row=1, col=2)
+        fig_reveal.update_yaxes(title_text="Unique DNS Domains (per-user avg)", row=1, col=2)
+        fig_reveal.update_layout(height=480, margin=dict(l=64, r=20, t=44, b=95),
+                                 legend=dict(orientation="h", y=-0.30))
         st.plotly_chart(fig_reveal, use_container_width=True)
 
         st.markdown(f"""
@@ -3322,6 +3343,21 @@ elif page == "Digital Entity":
         <p>Inspect the transformation pipeline: Raw Features → Zone Partitioning → Text Serialization → 1536-d Embedding → Phase State</p>
     </div>
     """, unsafe_allow_html=True)
+
+    # ── Architecture overview: the full pipeline, end-to-end (every value verbatim from the deep-dive) ──
+    with st.expander(
+        "📐  The full pipeline, end-to-end  —  Raw Data → Digital Twin → Composite Scoring & Ranking → Novelty Persistence",
+        expanded=True,
+    ):
+        _embed_path = Path(__file__).resolve().parent / "assets" / "twin_pipeline_embed.html"
+        if _embed_path.exists():
+            components.html(_embed_path.read_text(encoding="utf-8"), height=1500, scrolling=True)
+            st.caption("Every number above is verbatim from the code and result files "
+                       "(composite_scores.csv, novelty_metrics.csv, weekly_zone_trajectories.csv, entity_structures.json). "
+                       "Below, inspect any single entity as it moves through that same pipeline.")
+        else:
+            st.caption("Pipeline diagram asset missing — run `python assets/build_twin_embed.py`.")
+
     st.info("The 1536-d embedding here is the **Composite Scoring fusion lens** — it combines every behavioral angle into one view. "
             "It's the *deep* phase of detection (best for subtle, distributed threats); see the **Detection Pipeline** page for where it fits, "
             "and **Threat Profiles** for the confirmed alerts.")
