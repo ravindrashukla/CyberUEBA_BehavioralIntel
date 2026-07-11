@@ -9,7 +9,10 @@
       "Glob(*)",
       "WebSearch",
       "PowerShell(*)",
-      "WebFetch(domain:localhost)"
+      "WebFetch(domain:localhost)",
+      "Skill(artifact-design)",
+      "Skill(artifact-design:*)",
+      "Bash(DATABASE_URL_HOST='postgresql://cyber_ueba:password@127.0.0.1:5438/cyber_ueba' DB_HOST='127.0.0.1' DB_PORT='5438' python -m streamlit run streamlit_app.py --server.port 8502 --server.headless true)"
     ],
     "deny": []
   }
