@@ -1,0 +1,35 @@
+=== slide 8
+0 Rectangle 1 pos 0.0 0.0 | ''
+1 Rectangle 2 pos 0.4 7.12 | ''
+2 TextBox 3 pos 0.5 7.16 | 'CONFIDENTIAL  |  22nd Century Technologies  |  Defense '
+    font Segoe UI sz 8.0 b None i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+3 TextBox 4 pos 12.7 7.12 | '5'
+    font Segoe UI sz 10.0 b None i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+4 TextBox 5 pos 0.5 0.24 | 'Why Todays Tools have No Answer'
+    font Segoe UI sz 21.0 b True i False fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+5 TextBox 6 pos 0.5 0.86 | 'The adversary needs only the one path no one proved was'
+    font Segoe UI sz 11.5 b False i True fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+6 Rectangle 7 pos 0.5 1.24 | ''
+7 Rounded Rectangle 12 pos 6.78 1.5 | ''
+8 Rounded Rectangle 13 pos 6.78 1.5 | ''
+9 TextBox 13 pos 6.9 1.55 | 'WHY NO SINGLE PRODUCT CLOSES IT'
+    font Segoe UI sz 12.0 b True i False fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+10 TextBox 17 pos 0.14 1.52 | 'The Obsolescence of\xa0Legacy Tools'
+    font Inter sz 18.0 b True i False fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+11 TextBox 18 pos 0.14 2.1 | 'Signature-Based Blind\xa0Spots /  / Traditional AV and EDR'
+    font None sz 14.0 b True i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+12 TextBox 20 pos 3.29 2.08 | 'Static Rule Limitations /  / Legacy Firewall, SIEMs uti'
+    font None sz 14.0 b True i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+13 TextBox 24 pos 0.14 3.52 | 'The Triage Bottleneck /  / Current stacks generate mass'
+    font None sz 14.0 b True i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+14 TextBox 26 pos 3.29 3.55 | 'Siloed Telemetry /  / Legacy architectures analyze endp'
+    font None sz 14.0 b True i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+15 Rounded Rectangle 12 pos 6.81 3.81 | ''
+16 Rounded Rectangle 13 pos 6.82 3.82 | ''
+17 TextBox 34 pos 6.94 3.88 | 'THE\xa0ASYMMETRY\xa0OF MODERN DEFENSE'
+    font Segoe UI sz 12.0 b True i None fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+18 TextBox 36 pos 6.81 2.05 | '• Prevention tools sample the attack surface they never'
+    font Segoe UI sz 11.0 b False i False fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+19 TextBox 15 pos 6.86 4.33 | '• Reactive vs. Proactive:\xa0Legacy tools wait for an expl'
+    font Segoe UI sz 11.0 b False i False fill <a:solidFill xmlns:a="http://schemas.openxmlformats.org/drawingml/2006/main" xmlns:r="http://schemas.openxmlformats.org/
+20 PICTURE (13) Picture 45 fill?

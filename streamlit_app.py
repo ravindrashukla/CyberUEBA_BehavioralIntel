@@ -174,6 +174,12 @@ with st.sidebar:
     """, unsafe_allow_html=True)
 
 
+def _page_hero(title, subtitle=""):
+    """Standard navy hero band (the .header-bar used app-wide) so every page opens the same way."""
+    st.markdown(f'<div class="header-bar"><h1>{title}</h1>'
+                + (f'<p>{subtitle}</p>' if subtitle else '') + '</div>', unsafe_allow_html=True)
+
+
 def _threat_profile_banner():
     """Consistent headline of the primary detector's result (read live from the
     alerts file). Shown on overview pages so the 4/4-at-0-FP result is everywhere."""
@@ -219,7 +225,7 @@ if page == "Raw Data":
     """, unsafe_allow_html=True)
 
     st.markdown(f"""
-    <h2 style="color:{NAVY};">Act 1: The Raw Data</h2>
+    <h2 style="color:{NAVY};">The Raw Telemetry</h2>
     <p style="color:#6C757D; font-size:1rem;">
     Below is what your SOC sees — authentication logs, file access events, network flows, DNS queries.
     Every user generates telemetry. <strong>Four of these users are compromised.</strong>
@@ -382,7 +388,7 @@ if page == "Raw Data":
     # ═══════════════════════════════════════════════════════════════
     st.markdown("---")
     st.markdown(f"""
-    <h2 style="color:{NAVY};">Act 2: The Reveal</h2>
+    <h2 style="color:{NAVY};">The Reveal — Who Was Compromised</h2>
     <p style="color:#6C757D; font-size:1rem;">
     Four of those users are running active attack campaigns.
     They've been compromised for <strong>100 to 240 days</strong>.
@@ -536,157 +542,6 @@ if page == "Raw Data":
 </div>
 """, unsafe_allow_html=True)
 
-    # ═══════════════════════════════════════════════════════════════
-    # ACT 3: THE DETECTION METHODS
-    # ═══════════════════════════════════════════════════════════════
-    st.markdown("---")
-    st.markdown(f"""
-    <h2 style="color:{NAVY};">Act 3: Why Single Methods Fail — And What Works</h2>
-    <p style="color:#6C757D; font-size:1rem;">
-    Traditional and embedding-based detection methods use <strong>fixed thresholds</strong>.
-    At scale, attackers blend into the population. The solution: <strong>rank users by composite anomaly</strong>.</p>
-    """, unsafe_allow_html=True)
-
-    # --- TIER 1 & 2: The Problem ---
-    prob_c1, prob_c2 = st.columns(2)
-    with prob_c1:
-        st.markdown(f"""
-        <div style="background:#FDEDEC; padding:20px; border-radius:12px; border-left:5px solid {RED};">
-            <h4 style="color:{RED}; margin:0 0 10px 0;">Tier 1: Traditional Algorithms</h4>
-            <p style="color:#2C3E50; font-size:0.9rem; margin:0;">
-            IForest, LOF, SVM on 23 scalar features.
-            These algorithms measure <em>how much</em> behavior deviates —
-            they cannot distinguish <em>what kind</em> of change occurred.
-            An insider accessing restricted files at normal volume is invisible.
-            A C2 beacon hidden in normal HTTPS traffic is invisible.</p>
-            <p style="color:{RED}; font-weight:700; margin:12px 0 0 0;">
-            Limitation: blind to attacks that stay within normal statistical ranges</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    with prob_c2:
-        st.markdown(f"""
-        <div style="background:#FEF9E7; padding:20px; border-radius:12px; border-left:5px solid {GOLD};">
-            <h4 style="color:#B7950B; margin:0 0 10px 0;">Tier 2: Single Embedding</h4>
-            <p style="color:#2C3E50; font-size:0.9rem; margin:0;">
-            Behavior serialized to text and embedded into semantic vectors.
-            Captures <em>what kind</em> of activity — but a single composite embedding
-            averages 5 behavioral zones into one vector. The attack signal from 1 drifting zone
-            is diluted by 4 stable zones.
-            IP addresses are treated as generic tokens, making C2 beacons invisible.</p>
-            <p style="color:#B7950B; font-weight:700; margin:12px 0 0 0;">
-            Limitation: zone-specific signals are diluted in a single composite vector</p>
-        </div>
-        """, unsafe_allow_html=True)
-
-    st.markdown(f"""
-    <div style="background:#F8F9FA; padding:16px 20px; border-radius:8px; margin:20px 0; text-align:center;
-                border:1px solid #DEE2E6;">
-        <p style="color:{NAVY}; font-size:1.05rem; font-weight:600; margin:0;">
-        Neither tier alone catches all 4 attack types. The solution: decompose behavior into zones,
-        compare each user to their role peer group, and <strong>rank by composite anomaly</strong>.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    # --- TIER 3: The Solution ---
-    st.markdown(f"""
-    <div style="background:linear-gradient(135deg, #1A5276, #0E6B8A); padding:28px 32px; border-radius:12px;
-                margin:16px 0; border:2px solid {GOLD};">
-        <h2 style="color:{GOLD}; margin:0;">Tier 3: Multi-Phase Composite Scoring</h2>
-        <p style="color:#D4E6F1; margin:8px 0 0 0; font-size:1.05rem;">
-        Instead of binary detect/miss, Tier 3 computes a <strong>composite score</strong> per user
-        by fusing 5 detection phases across zone-decomposed, group-relative features.</p>
-    </div>
-    """, unsafe_allow_html=True)
-
-    comp_story = db_load_composite_scores()
-    if not comp_story.empty:
-        n_story = len(comp_story)
-        # Catch-all-four threshold = lowest attacker composite score (the minimum
-        # cutoff that still flags all 4). Gives the "catch all 4" FP (computed live).
-        thresh_story = comp_story[comp_story["is_attack"]]["composite"].min()
-        flagged_story = comp_story[comp_story["composite"] >= thresh_story]
-        tp_story = len(flagged_story[flagged_story["is_attack"]])
-        fp_story = len(flagged_story[~flagged_story["is_attack"]])
-        n_normal_story = len(comp_story[~comp_story["is_attack"]])
-        fp_rate_story = 100 * fp_story / n_normal_story
-        _ss = comp_story.sort_values("composite", ascending=False).reset_index(drop=True)
-        clean_story = sum(1 for _u in ["USR-156", "USR-234", "USR-042", "USR-118"]
-                          if len(_ss.index[_ss["uid"] == _u])
-                          and int((~_ss.iloc[:int(_ss.index[_ss["uid"] == _u][0])]["is_attack"]).sum()) == 0)
-
-        ens_c1, ens_c2, ens_c3 = st.columns(3)
-        with ens_c1:
-            st.markdown(f"""
-            <div style="background:white; padding:24px; border-radius:12px; text-align:center;
-                         box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid {BLUE};">
-                <h4 style="color:{BLUE}; margin:0;">5 Detection Phases</h4>
-                <div style="font-size:0.95rem; font-weight:600; color:{BLUE}; margin:8px 0;">Signal Strength + Breadth + Sustained + Context + Novelty</div>
-                <p style="color:#6C757D; font-size:0.85rem;">Group-relative z-scores<br>across role peer groups</p>
-            </div>
-            """, unsafe_allow_html=True)
-        with ens_c2:
-            st.markdown(f"""
-            <div style="background:white; padding:24px; border-radius:12px; text-align:center;
-                         box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
-                <h4 style="color:#27AE60; margin:0;">All 4 Detected</h4>
-                <div style="font-size:2.5rem; font-weight:700; color:#27AE60;">4 / 4</div>
-                <p style="color:#6C757D; font-size:0.85rem;">at {fp_rate_story:.1f}% false positives<br>(threat-profile detector: 4/4 at 0% FP)</p>
-            </div>
-            """, unsafe_allow_html=True)
-        with ens_c3:
-            st.markdown(f"""
-            <div style="background:white; padding:24px; border-radius:12px; text-align:center;
-                         box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid {GOLD};">
-                <h4 style="color:{GOLD}; margin:0;">False Positive Rate</h4>
-                <div style="font-size:2.5rem; font-weight:700; color:{GOLD};">{fp_rate_story:.1f}%</div>
-                <p style="color:#6C757D; font-size:0.85rem;">{fp_story} FP / {n_normal_story} normal users<br>at the threshold that catches all 4</p>
-            </div>
-            """, unsafe_allow_html=True)
-
-        st.markdown("####")
-        for uid in ["USR-118", "USR-156", "USR-234", "USR-042"]:
-            row = comp_story[comp_story["uid"] == uid]
-            if row.empty:
-                continue
-            r = row.iloc[0]
-            rank = comp_story.index[comp_story["uid"] == uid][0] + 1
-            name = STORY_ATTACK_USERS.get(uid, {}).get("label", uid)
-            card_color = RED if rank <= 5 else ("#E67E22" if rank <= 15 else GOLD)
-            st.markdown(f"""
-            <div style="background:white; padding:14px 20px; border-radius:10px; margin:6px 0;
-                         box-shadow:0 1px 6px rgba(0,0,0,0.06); border-left:4px solid {card_color};
-                         display:flex; justify-content:space-between; align-items:center;">
-                <div>
-                    <strong style="color:{NAVY};">{uid}</strong>
-                    <span style="color:#6C757D; margin-left:8px;">{name}</span>
-                </div>
-                <div style="display:flex; gap:20px; align-items:center;">
-                    <span style="color:{NAVY}; font-weight:700; font-size:1.2rem;">{r.composite:.1f}</span>
-                    <span style="background:{card_color}; color:white; padding:3px 12px; border-radius:12px;
-                                 font-weight:600; font-size:0.85rem;">Rank #{rank}/{n_story}</span>
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-    else:
-        st.warning("Composite scores not yet generated. Run `python save_composite_csvs.py` first.")
-
-    # Final message
-    if not comp_story.empty:
-        _story_fp_txt = f"{fp_rate_story:.1f}%" if 'fp_rate_story' in dir() else "low"
-        _story_tp_txt = f"{tp_story}" if 'tp_story' in dir() else "all"
-        st.markdown(f"""
-        <div style="background:{NAVY}; padding:28px 32px; border-radius:16px; margin-top:32px; text-align:center;">
-            <p style="color:{GOLD}; font-size:1.5rem; font-weight:700; margin:0;">
-            4 campaigns. Composite ranks them. Threat profiles catch them.</p>
-            <p style="color:#A0C8E0; font-size:1.1rem; margin:12px 0 0 0;">
-            Composite scoring catches all 4 — at {fp_rate_story:.1f}% false positives; the multi-front
-            <b>threat-profile detector catches all 4 at 0 false positives</b>, each named by technique.<br>
-            No manual algorithm selection — one ranked output, plus an explainable alert per attacker.</p>
-            <p style="color:{GOLD}; font-size:0.95rem; margin:16px 0 0 0; font-weight:600;">
-            Available for 4-week proof of concept on your agency's data.</p>
-        </div>
-        """, unsafe_allow_html=True)
 
 
 # ── PAGE: PROOF OF REALISM ──
@@ -2092,81 +1947,6 @@ elif page == "Traditional vs V-Intelligence UEBA":
 </div>
 """, unsafe_allow_html=True)
 
-    # Visual comparison chart
-    st.subheader("Detection Heatmap")
-    heat_data = []
-    method_list = []
-    fp_rates = {}
-    normal_mask = ~comp_df["user_id"].isin(attack_users.keys())
-    total_normal = normal_mask.sum()
-    for method_name, col in methods.items():
-        if col not in comp_df.columns:
-            continue
-        method_list.append(method_name)
-        fp_count = int(comp_df.loc[normal_mask, col].sum()) if normal_mask.any() else 0
-        fp_rates[method_name] = 100 * fp_count / max(total_normal, 1)
-        for uid, attack_name in attack_users.items():
-            val = comp_df.loc[comp_df["user_id"] == uid, col]
-            detected = bool(val.values[0]) if not val.empty else False
-            heat_data.append({"User": f"{uid} — {attack_name.split(':')[1].strip()}", "Method": method_name, "Detected": 1 if detected else 0})
-
-    heat_df = pd.DataFrame(heat_data)
-    if not heat_df.empty:
-        pivot = heat_df.pivot(index="User", columns="Method", values="Detected").fillna(0)
-        pivot = pivot[method_list]
-        user_labels = pivot.index.tolist()
-
-        n_att = len(user_labels)
-        caught = {m: int(pivot[m].sum()) for m in method_list}
-
-        # FP rate is MEANINGLESS for a method that catches nothing — its false alarms
-        # catch zero attackers. Grey it out (z=0.5) and mark "n/a" instead of rewarding
-        # a low FP as if it were good.  z: 0=red, 0.5=grey(not meaningful), 1=green.
-        fp_row, fp_text_row = [], []
-        for m in method_list:
-            if caught[m] == 0:
-                fp_row.append(0.5); fp_text_row.append(f"{fp_rates[m]:.1f}% (n/a — 0 caught)")
-            elif fp_rates[m] < 10:
-                fp_row.append(1.0); fp_text_row.append(f"{fp_rates[m]:.1f}%")
-            else:
-                fp_row.append(0.0); fp_text_row.append(f"{fp_rates[m]:.1f}%")
-        # Caught summary so FP is always read in context: red=0, grey=partial, green=all.
-        caught_row = [1.0 if caught[m] == n_att else (0.0 if caught[m] == 0 else 0.5) for m in method_list]
-        caught_text_row = [f"{caught[m]}/{n_att}" for m in method_list]
-
-        all_labels = user_labels + ["FP Rate", "Caught (of 4)"]
-        z_all = pivot.values.tolist() + [fp_row, caught_row]
-        text_all = ([["MISSED" if v == 0 else "DETECTED" for v in row] for row in pivot.values]
-                    + [fp_text_row, caught_text_row])
-
-        fig = go.Figure(data=go.Heatmap(
-            z=z_all,
-            x=method_list,
-            y=all_labels,
-            colorscale=[[0, "#E74C3C"], [0.5, "#95A5A6"], [1, "#27AE60"]],
-            zmin=0, zmax=1,
-            showscale=False,
-            text=text_all,
-            texttemplate="%{text}",
-            textfont={"size": 13, "color": "white"},
-            hovertemplate="%{y}<br>%{x}: %{text}<extra></extra>",
-        ))
-        fig.add_hline(y=n_att - 0.5, line_width=2, line_color="white")
-        fig.update_layout(
-            height=430,
-            margin=dict(l=20, r=20, t=30, b=20),
-            yaxis=dict(tickfont=dict(size=12)),
-            xaxis=dict(tickfont=dict(size=11), tickangle=-30, side="bottom"),
-        )
-        st.plotly_chart(fig, use_container_width=True)
-
-    st.markdown(f"""
-<div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {RED}; font-size:0.78rem; color:#555;">
-    <strong>Detection Heatmap</strong> — green = detected, red = missed. The two summary rows put detection and false alarms together:
-    <b>Caught (of 4)</b> is the only number that matters first, and <b>FP Rate</b> is read against it.
-    A method that catches <b>0 of 4</b> (Isolation Forest, One-Class SVM, LOF) has <b>no useful FP rate</b> — its false alarms catch zero attackers, so its FP is shown grey and marked "n/a". A low FP on a tool that detects nothing is not a virtue.
-</div>
-""", unsafe_allow_html=True)
 
     # Feature comparison: attack vs normal users
     st.subheader("Why Traditional Methods Fail")
@@ -4285,6 +4065,50 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     </div>
     """, unsafe_allow_html=True)
 
+    # ── Raw cumulative data: the exact numbers where each attacker crosses the normal limit ──
+    with st.expander("Show the raw cumulative numbers  -  the exact week each attacker crosses the normal users' limit", expanded=False):
+        _sig = st.radio(
+            "Signal", ["V-Intelligence embedding (semantic)", "Feature-space (raw magnitude)"],
+            horizontal=True, key="rawcum_sig")
+        _col, _ddf = (("acecard_cusum", acecard_drift) if _sig.startswith("V-Intelligence")
+                      else ("feat_cusum", feat_drift))
+        _weeks, _p05, _p95, _series, _crossing, _pct = _cusum_view(_ddf, _col)
+        _order = [("USR-118", "Salt"), ("USR-156", "Insider"),
+                  ("USR-042", "Volt"), ("USR-234", "Slow APT")]
+        # plain-language crossing summary (the "this is where they cross" line for the client)
+        _bits = []
+        for _uid, _nm in _order:
+            _cw = _crossing.get(_uid)
+            if _cw is not None:
+                _av, _lv = _series[_uid].get(_cw), _p95.get(_cw)
+                _bits.append(f"<li><b>{_uid} ({_nm})</b> crosses at <b>week {_cw}</b>: cumulative "
+                             f"<b>{_av:.3f}</b> vs the normal limit <b>{_lv:.3f}</b> "
+                             f"(above the band {_pct[_uid]:.0f}% of weeks)</li>")
+            else:
+                _bits.append(f"<li><b>{_uid} ({_nm})</b> never sustains a crossing - it stays inside the "
+                             f"normal band (caught only by the threat-profile detector)</li>")
+        st.markdown("<ul style='font-size:0.9rem; color:#2C3E50; line-height:1.6;'>"
+                    + "".join(_bits) + "</ul>", unsafe_allow_html=True)
+        # raw per-week table: Week | normal limit (95th pct) | each attacker's cumulative value
+        _tbl = pd.DataFrame(index=pd.Index(_weeks, name="Week"))
+        _tbl["Normal limit (95th pct)"] = _p95.reindex(_weeks).values
+        for _uid, _nm in _order:
+            _tbl[f"{_uid} ({_nm})"] = _series[_uid].reindex(_weeks).values
+        _atk_cols = [f"{u} ({n})" for u, n in _order]
+        def _shade(row):
+            _lv = _p95.get(row.name)
+            return ["background-color:#FADBD8; color:#922B21; font-weight:600"
+                    if (c in _atk_cols and pd.notna(row[c]) and pd.notna(_lv) and row[c] > _lv)
+                    else "" for c in _tbl.columns]
+        st.dataframe(_tbl.style.apply(_shade, axis=1).format("{:.3f}"),
+                     use_container_width=True, height=380)
+        st.download_button("Download this table (CSV)", _tbl.to_csv().encode("utf-8"),
+                           file_name=f"cumulative_{_col}.csv", mime="text/csv", key="rawcum_dl")
+        st.caption("Red cells = the attacker's cumulative drift is above the normal users' band "
+                   "(95th percentile) - it has crossed the normal limit. The first week an attacker stays "
+                   "above for 3+ straight weeks is its detection point (the star in the chart above). These "
+                   "are the exact cumulative values plotted above.")
+
     # ═══════════════════════════════════════════════════════════════
     # SECTION 3B: COMPOSITE SCORE DECOMPOSITION — WHY IT CATCHES WHAT CUSUM CAN'T
     # ═══════════════════════════════════════════════════════════════
@@ -4447,7 +4271,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {NAVY}; font-size:0.78rem; color:#555;">
     <strong>Grey dashed</strong> = Normal user median. <strong>Grey dotted</strong> = Normal 75th percentile.<br>
-    Normal users cluster as a small shape in the center. Attackers extend far beyond on different phases — USR-234 spikes on Novelty Persistence, USR-156 dominates Signal Strength and Breadth. No normal user reaches these extremes across multiple phases simultaneously.
+    USR-156 and USR-118 separate strongly across multiple phases. USR-042 (Volt LOTL) stays modest, and USR-234 (slow APT) scores on Novelty Persistence alone — which is why the composite ranks these two low (USR-234 below normal users) and they need the multi-front threat-profile detector. The composite cleanly separates 2 of 4.
 </div>
 """, unsafe_allow_html=True)
 
@@ -5006,13 +4830,8 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
 
 # ── PAGE: THREAT PROFILES ──
 elif page == "Threat Profiles":
-    st.markdown(f"""
-    <h2 style="color:{NAVY};">Multi-Front Threat-Profile Detection</h2>
-    <p style="color:#6C757D;">Every entity is scored against a library of <strong>measurable known-bad behavior profiles</strong>
-    (C2 beacon, DGA, insider collection, LOTL, exfil, recon, …), each compared <strong>within the entity's role-group cohort</strong>.
-    A flag carries the matched technique + score — not a black-box number. Self-drift (change vs the entity's own past) is shown
-    as supporting corroboration.</p>
-    """, unsafe_allow_html=True)
+    _page_hero("Multi-Front Threat-Profile Detection",
+               "Every entity scored against a library of measurable known-bad behavior profiles (C2 beacon, DGA, insider collection, LOTL, exfil, recon), each compared within the entity's role-group cohort. A flag carries the matched technique and score, not a black-box number.")
 
     _alert_path = Path("data/threat_profile_alerts.csv")
     if not _alert_path.exists():
@@ -5049,7 +4868,7 @@ elif page == "Threat Profiles":
             </div>
             """, unsafe_allow_html=True)
 
-        with st.expander("How this works — the three fronts"):
+        with st.expander("How this works — three detection fronts (an entity can match one or more)"):
             st.markdown("""
 - **Known-bad profiles (cohort-relative):** each technique is a measurable fingerprint, scored against the entity's
   role-group peers (robust IQR z). A *Marketing* user touching restricted files is abnormal *for Marketing*, even if IT users do it routinely.
@@ -5064,28 +4883,23 @@ A flag from one strong profile is enough; multiple fronts raise confidence. Rege
 
 # ── PAGE: DETECTION PIPELINE ──
 elif page == "Detection Pipeline":
-    st.markdown(f"""
-    <h2 style="color:{NAVY};">Detection Pipeline: Catch Early, Escalate Smartly</h2>
-    <p style="color:#6C757D; font-size:1.02rem;">No single method catches every intruder, and the most powerful one is also the most
-    expensive. So we run detection in <b>layers</b> — cheap, fast checks first to catch the loud and obvious intruders the moment they act,
-    and we escalate to the deep <b>Composite Scoring</b> lens only for the subtle ones who slip through. Every intruder is caught at its
-    earliest point, at the lowest cost.</p>
-    """, unsafe_allow_html=True)
+    _page_hero("Detection Pipeline: Catch Early, Escalate Smartly",
+               "No single method catches every intruder, and the most powerful one is also the most expensive. We run detection in stages: cheap, fast checks first for the loud and obvious intruders, escalating to the deep composite lens only for the subtle ones who slip through. Every intruder caught at its earliest point, at the lowest cost.")
 
     _phases = [
-        ("#3498DB", "Layer 1", "Known-Bad Signatures — Threat-Profile Detector", "instant · near-free",
+        ("#3498DB", "Stage 1", "Known-Bad Signatures — Threat-Profile Detector", "instant · near-free",
          "Does this behavior match a <b>known attack technique</b>? (A beacon calling home, random throwaway domains, a sudden mass download, suspicious programs running.)",
          "The obvious intruders — flagged the moment their fingerprint appears, with the technique named.",
          "USR-234 (slow APT): its steady beacon to one outside server is an unmistakable fingerprint."),
-        ("#1ABC9C", "Layer 2", "Peer Comparison", "cheap · daily",
+        ("#1ABC9C", "Stage 2", "Peer Comparison", "cheap · daily",
          "Is this person or machine acting <b>unlike their team</b>? (Someone in Marketing opening restricted files; a laptop talking to servers no teammate uses.)",
          "The odd-one-out — abnormal for their role, even if it looks normal company-wide.",
          "USR-118 reaches out to far more outside destinations than any of its developer peers."),
-        ("#E67E22", "Layer 3", "Single-Signal Drift", "moderate · weekly",
+        ("#E67E22", "Stage 3", "Single-Signal Drift", "moderate · weekly",
          "Is <b>any one number climbing fast</b> versus this entity's own past? (Network volume, file counts, failed logins.)",
          "The loud, single-dimension attacks — volume floods — caught early, before they get extreme.",
          "USR-118 (Salt Typhoon): a network-volume flood — caught at <b>week 36</b>, before the deep lens."),
-        ("#8E44AD", "Layer 4", "Composite Scoring — the fusion lens", "deep · the heavy hitter",
+        ("#8E44AD", "Stage 4", "Composite Scoring — the fusion lens", "deep · the heavy hitter",
          "Has the <b>whole behavioral picture shifted</b> — even when no single number looks alarming? Composite Scoring <b>combines every angle</b> "
          "(logins, files, network, programs) into one unified view and watches it move over time.",
          "The subtle, distributed threats that hide in <b>how behaviors combine</b> — an insider whose intent is turning, a stealth hacker using only legitimate tools.",
@@ -5109,17 +4923,17 @@ elif page == "Detection Pipeline":
     <b>What Composite Scoring really is.</b> It is <b>not a summary</b> that throws away detail. It <b>fuses every behavioral angle into one combined
     picture</b> and tracks how that picture drifts — so it can spot a threat that lives in the <i>relationship</i> between signals, where no single number
     is alarming. That is exactly why it catches the insider and the stealth hacker weeks early, and why it is <i>not</i> the fastest on USR-118: a raw
-    volume flood is one loud number, not a combined-pattern shift — so a single-signal check (Layer 3) naturally beats it there. Different threats reveal
-    themselves in different layers; that is the whole point of running them in sequence.
+    volume flood is one loud number, not a combined-pattern shift — so a single-signal check (Stage 3) naturally beats it there. Different threats reveal
+    themselves in different stages; that is the whole point of running them in sequence.
     </div>
     """, unsafe_allow_html=True)
 
-    st.markdown("##### Which layer catches each attacker first")
+    st.markdown("##### Which stage catches each attacker first")
     _map = pd.DataFrame([
-        ["USR-234 — slow APT", "Layer 1 · Signature", "on contact", "Unmistakable beacon to a fixed outside server"],
-        ["USR-118 — Salt Typhoon", "Layer 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
-        ["USR-156 — insider", "Layer 4 · Composite Scoring", "week 4", "Intent shift visible only in the combined picture"],
-        ["USR-042 — living-off-the-land", "Layer 4 · Composite Scoring", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
+        ["USR-234 — slow APT", "Stage 1 · Signature", "on contact", "Unmistakable beacon to a fixed outside server"],
+        ["USR-118 — Salt Typhoon", "Stage 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
+        ["USR-156 — insider", "Stage 4 · Composite Scoring", "week 4", "Intent shift visible only in the combined picture"],
+        ["USR-042 — living-off-the-land", "Stage 4 · Composite Scoring", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
     ], columns=["Attacker", "Caught earliest by", "When", "Why there"])
     st.dataframe(_map, hide_index=True, use_container_width=True)
 
@@ -5129,7 +4943,7 @@ elif page == "Detection Pipeline":
         <span style="color:#A0C8E0; font-size:0.9rem; display:block; margin-top:4px;">
         Result: all 4 intruders caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on.</span>
         <span style="color:#fff; font-size:0.9rem; display:block; margin-top:8px;">
-        Cost of catching all four: the <b>Layer-1 known-bad detector</b> flags them at <b>0 false positives</b>; the <b>Layer-4 fused score</b> catches the same four at <b>{FP_ALL4_TXT} false positives</b>.</span>
+        Cost of catching all four: the <b>Stage-1 known-bad detector</b> flags them at <b>0 false positives</b>; the <b>Stage-4 fused score</b> catches the same four at <b>{FP_ALL4_TXT} false positives</b> — and even then it ranks the two stealth attackers (USR-234, USR-042) below normal users, so only the known-bad detector separates them cleanly.</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -5258,9 +5072,8 @@ elif page == "Guided Demo":
         st.session_state.gd_step = 0
     step = max(0, min(st.session_state.gd_step, TOTAL - 1))
 
-    st.markdown(f"<h1 style='color:{NAVY};margin-bottom:2px;'>Guided Walkthrough</h1>"
-                f"<p style='color:#6C757D;margin-top:0;'>Same data — 4 stealth attacks hidden among 250 users over 485 days. "
-                f"Click <b>Next</b> to watch each layer catch what the last one missed.</p>", unsafe_allow_html=True)
+    _page_hero("Guided Walkthrough",
+               "Same data: 4 stealth attacks hidden among 250 users over 485 days. Click Next to watch each layer catch what the last one missed.")
     st.progress((step + 1) / TOTAL, text=f"Step {step + 1} of {TOTAL}  —  {STEPS[step]}")
 
     nav1, nav2, nav3 = st.columns([1, 4, 1])

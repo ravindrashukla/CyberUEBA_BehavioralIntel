@@ -1,0 +1,26 @@
+box 0.44669510061242346 0.9791327646544182 6.881265310586176 5.96377624671916
+0 lvl 0 bold True ital True font Aptos col None | Part 0 — Introduction
+1 lvl 0 bold None ital None font Aptos col None | 22nd Century – Offerings and Capabilities  - 15-20 min
+2 lvl 0 bold None ital None font None col None | 
+3 lvl 0 bold True ital True font Aptos col None | Part 1 — Problem statement
+4 lvl 0 bold None ital None font Aptos col None | Current challenges: AI‑enabled threats, insider threats, shortcomings 
+5 lvl 0 bold None ital None font Aptos col None | Today's tools leave a gap at every layer — network, behavioral/UEBA, a
+6 lvl 0 bold None ital None font Aptos col None | No single tool covers this; a multiple layered platform is the answer 
+7 lvl 0 bold None ital None font None col None | 
+8 lvl 0 bold True ital None font Aptos col None | Break  
+9 lvl 0 bold None ital None font None col None | 
+10 lvl 0 bold True ital True font Aptos col None | Part 2a — Technical deep dive, Innovation & demo
+11 lvl 0 bold None ital None font Aptos col None | User anomaly detection: behavioral digital twin — meaning over magnitu
+12 lvl 0 bold None ital None font Aptos col None | Preemptive cybersecurity: responding to AI‑enabled threats at the netw
+13 lvl 0 bold True ital None font Aptos col None |   
+14 lvl 0 bold True ital None font Aptos col None | Lunch
+15 lvl 0 bold None ital None font None col None | 
+16 lvl 0 bold True ital True font Aptos col None | Part 2b — Technical deep dive continued
+17 lvl 0 bold None ital None font Aptos col None | App / API / data protection: defending against bots and agents; protec
+18 lvl 0 bold None ital None font Aptos col None | Mythos‑level code vulnerability: novel zero‑day discovery pre‑deploy a
+19 lvl 1 bold None ital None font Aptos col None | Layer-4 – 1 slide, demo (time – 5-7 min)
+20 lvl 1 bold None ital None font Aptos col None | Layer-5 – 1 slide, demo (time – 5-7 min)
+21 lvl 0 bold True ital None font Aptos col None |   
+22 lvl 0 bold True ital None font Aptos col None | Part 3 — Next steps & implementation roadmap
+23 lvl 0 bold None ital None font Aptos col None | MVP pilot on real Army telemetry, ROM, and contract vehicles (BD – Red
+24 lvl 0 bold None ital None font Aptos col None | Implementation steps ( open for discussion based on scope)
