@@ -1109,7 +1109,7 @@ elif page == "Behavioral Drift":
         st.plotly_chart(fig, use_container_width=True)
 
         # Honest caption: raw drift magnitude does NOT surface the confirmed intruders.
-        _att_ids = {"USR-118", "USR-156", "USR-234", "USR-042"}
+        _att_ids = {"USR-118", "USR-156", "USR-234", "USR-042", "USR-EVA"}
         _ranked = db_heatmap.sort_values("total_drift", ascending=False).reset_index(drop=True)
         _rank_bits = [
             f"{a} #{int(_ranked.index[_ranked.entity_id == a][0]) + 1}"
@@ -3164,7 +3164,7 @@ elif page == "Digital Entity":
     TIER3_RESULTS = DATA_DIR / "tier3_results"
     struct_file = TIER3_RESULTS / "entity_structures.json"
 
-    ATTACK_IDS_DE = {"USR-156", "USR-234", "USR-042", "USR-118"}
+    ATTACK_IDS_DE = {"USR-156", "USR-234", "USR-042", "USR-118", "USR-EVA"}
 
     if USE_DB:
         all_ids = load_all_user_ids()

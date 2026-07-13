@@ -128,12 +128,16 @@ The EVA overlay was written into the **6 weekly gold tables** but NOT the 2 dail
 | `novelty_metrics` | per-entity | 251 | 251 | **YES** | novelty persistence |
 | `zscored_features` | per-entity | 251 | 251 | **YES** | z-score heatmap |
 | `detection_results` | per-entity | 251 | 251 | **YES** | verdict matrix, per-method counts |
-| `behavioral_snapshots` | entity×**day** | 45,250 | **250** | **no** | daily embeddings (full horizon to 2026-04-29) |
-| `trajectory_snapshots` | entity×**day** | 32,250 | **250** | **no** | Behavioral Drift page — **STALE, see §11** |
+| `behavioral_snapshots` | entity×**day** | 45,431 | **251** | **YES** (181, forward-filled) | daily embeddings (full horizon to 2026-04-29) |
+| `trajectory_snapshots` | entity×**day** | ~45,180 | **251** | **YES** (180) | Behavioral Drift page (re-run to full horizon 2026-07-13) |
+| `daily_features` | entity×**day** | 32,500 | **250** | **no** | Digital Entity Stage 1/2 (only 130 daily dates, Jan–May 2025) |
 
-**Consequence:** every page that reads the 6 weekly gold tables shows EVA. The **Behavioral Drift** page
-(daily `trajectory_snapshots`) and the **Digital Entity** per-entity inspector (needs an entity structure EVA
-doesn't have) do NOT show EVA yet — see Pending (§11).
+**Consequence:** EVA now appears on **all 16 pages**. It was backfilled into `behavioral_snapshots`
+(`scripts/backfill_eva_daily.py`, forward-filled from its weekly embeddings) and `entity_structures.json`,
+then its `trajectory_snapshots` were derived EVA-scoped (`scripts/eva_trajectory.py`). `daily_features` was
+intentionally NOT backfilled for EVA — that table is itself only 130 days for everyone, so Digital Entity's
+Stage-1/2 expanders are the same stale window for all entities and are collapsed by default; EVA's Stage-3
+zone-text + Stage-4 phase render fine.
 
 ---
 
@@ -205,16 +209,19 @@ Page names are unchanged; find a page's code with `elif page == "<name>":`.
 
 ## 11. Known issues / pending
 
-- **`trajectory_snapshots` is STALE** — it only spans 2025-01-02 → 2025-05-10 (week 0→18) for the 250, even though the
-  source `behavioral_snapshots` goes to 2026-04-29. So the **Behavioral Drift** page's daily charts freeze at May 2025
-  and miss every attack after week 18. Fix: re-run `python -m pipeline.trajectory_snapshots` (derives from
-  behavioral_snapshots, cosine only, no embeddings; ~2.5–3 h for all 181 days). **A re-run was in progress at last edit.**
-- **EVA not on Behavioral Drift / Digital Entity.** To add it: (a) insert EVA into `behavioral_snapshots` at the 181
-  snapshot dates (forward-fill EVA's weekly embeddings — no fresh API calls) then re-run `trajectory_snapshots`;
-  (b) persist EVA's entity structure to `entity_structures.json` for the Digital Entity inspector.
-- **Non-Detection-Story hardcoded 4-attacker lists** still exist on: Proof of Realism (`_ATTACK_LABELS`), Behavioral
-  Drift caption (`_att_ids`), Digital Entity selector (`ATTACK_IDS_DE`). These were out of the Detection Story audit
-  scope and are partly blocked on the two backfills above.
+RESOLVED 2026-07-13:
+- `trajectory_snapshots` re-run to the full horizon (250 users to 2026-04-29) — Behavioral Drift no longer freezes at May 2025.
+- EVA backfilled onto Behavioral Drift + Digital Entity (see §6). `_att_ids`, `ATTACK_IDS_DE`, and the
+  `load_entity_structure` `is_attack` set now include USR-EVA.
+
+Still open:
+- **The static twin-pipeline diagram** at the top of Digital Entity (`assets/twin_pipeline_embed.html`) is a
+  hand-authored illustration of the canonical 250-user pipeline and still shows the 4 real attackers / "4/4". It is a
+  fixed educational artifact, not a live count; left as-is. Update it there if a 5-attacker illustration is wanted.
+- **Digital Entity Stage-1/2 for EVA are empty** (no `daily_features` rows). Same collapsed-by-default window applies to
+  all entities; only backfill `daily_features` if those expanders need populating.
+- **Proof of Realism** (`_ATTACK_LABELS`) still lists the 4 real attackers — it is the realism proof for the *real*
+  injected attacks; EVA (a synthetic overlay built on a real profile) is intentionally not part of that proof.
 
 ---
 

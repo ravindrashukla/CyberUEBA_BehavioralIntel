@@ -327,7 +327,7 @@ def load_entity_structure(entity_id: str) -> dict:
             "entity_id": entity_id,
             "entity_type": "user",
             "profile": profile,
-            "is_attack": entity_id in {"USR-156", "USR-234", "USR-042", "USR-118"},
+            "is_attack": entity_id in {"USR-156", "USR-234", "USR-042", "USR-118", "USR-EVA"},
             "raw_features": raw_features,
             "zone_features": zone_features,
             "zone_serialized_text": zone_texts,
