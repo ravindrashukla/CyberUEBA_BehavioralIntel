@@ -214,14 +214,16 @@ RESOLVED 2026-07-13:
 - EVA backfilled onto Behavioral Drift + Digital Entity (see §6). `_att_ids`, `ATTACK_IDS_DE`, and the
   `load_entity_structure` `is_attack` set now include USR-EVA.
 
-Still open:
-- **The static twin-pipeline diagram** at the top of Digital Entity (`assets/twin_pipeline_embed.html`) is a
-  hand-authored illustration of the canonical 250-user pipeline and still shows the 4 real attackers / "4/4". It is a
-  fixed educational artifact, not a live count; left as-is. Update it there if a 5-attacker illustration is wanted.
-- **Digital Entity Stage-1/2 for EVA are empty** (no `daily_features` rows). Same collapsed-by-default window applies to
-  all entities; only backfill `daily_features` if those expanders need populating.
-- **Proof of Realism** (`_ATTACK_LABELS`) still lists the 4 real attackers — it is the realism proof for the *real*
-  injected attacks; EVA (a synthetic overlay built on a real profile) is intentionally not part of that proof.
+Also RESOLVED 2026-07-13:
+- The **static twin-pipeline diagram** (`assets/twin_pipeline_embed.html`) now shows USR-EVA as the 5th attacker
+  (#1 at 77.87; counts moved to 0/5, 1/5, 5/5, "catch-all-five", 251 entities).
+- **Digital Entity Stage-1/2 for EVA** now populate — `scripts/backfill_eva_daily_features.py` forward-filled EVA into
+  `daily_features` (130 dates, pre-attack window). `load_entity_structure(USR-EVA)` returns all four stages.
+
+Still open (intentional):
+- **Proof of Realism** (`_ATTACK_LABELS`) lists the 4 real attackers — it is the realism proof for the *real* injected
+  attacks; EVA (a synthetic overlay built on a real profile) is intentionally not part of that proof.
+- ~17 verification screenshots (`data/*.png`) from capture scripts sit untracked — delete if undesired.
 
 ---
 
