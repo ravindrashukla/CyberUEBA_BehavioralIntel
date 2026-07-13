@@ -3680,7 +3680,12 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     drift_col1, drift_col2 = st.columns(2)
 
     normal_ids = [uid for uid in feat_df.user_id.unique() if uid not in ATTACK_USERS]
-    sample_normals = sorted(normal_ids)[:8]
+
+    def _norm_band(drift_df, value_col):
+        """5-95% band + median over ALL normal users (not a sample) per week."""
+        nrm = drift_df[drift_df.user_id.isin(normal_ids)].groupby("week_idx")[value_col]
+        wk = sorted(int(w) for w in drift_df.week_idx.unique())
+        return wk, nrm.quantile(0.05).reindex(wk), nrm.quantile(0.50).reindex(wk), nrm.quantile(0.95).reindex(wk)
 
     def _first_cross(drift_df, value_col, uid):
         """First week the user begins a sustained (>=3 wk) run above the 95th-pct
@@ -3749,14 +3754,17 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         """, unsafe_allow_html=True)
 
         fig_feat = go.Figure()
-        for nid in sample_normals:
-            nd = feat_drift[feat_drift.user_id == nid]
-            fig_feat.add_trace(go.Scatter(
-                x=nd.week_idx, y=nd.feat_cusum, mode="lines",
-                line=dict(color="#BDC3C7", width=1), name=nid,
-                showlegend=False, hoverinfo="text",
-                text=[f"{nid}: {v:.2f}" for v in nd.feat_cusum],
-            ))
+        _bw, _b05, _b50, _b95 = _norm_band(feat_drift, "feat_cusum")
+        fig_feat.add_trace(go.Scatter(
+            x=list(_bw) + list(_bw[::-1]), y=list(_b95.values) + list(_b05.values[::-1]),
+            fill="toself", fillcolor="rgba(189,195,199,0.35)", line=dict(width=0),
+            name="Normal range (5-95%, all 246)", showlegend=True, hoverinfo="skip",
+        ))
+        fig_feat.add_trace(go.Scatter(
+            x=_bw, y=_b50.values, mode="lines",
+            line=dict(color="#7F8C8D", width=1.8, dash="dash"),
+            name="Typical normal user (median)",
+        ))
         sel_d = feat_drift[feat_drift.user_id == selected_user]
         fig_feat.add_trace(go.Scatter(
             x=sel_d.week_idx, y=sel_d.feat_cusum, mode="lines+markers",
@@ -3790,14 +3798,17 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         """, unsafe_allow_html=True)
 
         fig_ace = go.Figure()
-        for nid in sample_normals:
-            nd = acecard_drift[acecard_drift.user_id == nid]
-            fig_ace.add_trace(go.Scatter(
-                x=nd.week_idx, y=nd.acecard_cusum, mode="lines",
-                line=dict(color="#BDC3C7", width=1), name=nid,
-                showlegend=False, hoverinfo="text",
-                text=[f"{nid}: {v:.3f}" for v in nd.acecard_cusum],
-            ))
+        _aw, _a05, _a50, _a95 = _norm_band(acecard_drift, "acecard_cusum")
+        fig_ace.add_trace(go.Scatter(
+            x=list(_aw) + list(_aw[::-1]), y=list(_a95.values) + list(_a05.values[::-1]),
+            fill="toself", fillcolor="rgba(189,195,199,0.35)", line=dict(width=0),
+            name="Normal range (5-95%, all 246)", showlegend=True, hoverinfo="skip",
+        ))
+        fig_ace.add_trace(go.Scatter(
+            x=_aw, y=_a50.values, mode="lines",
+            line=dict(color="#7F8C8D", width=1.8, dash="dash"),
+            name="Typical normal user (median)",
+        ))
         sel_a = acecard_drift[acecard_drift.user_id == selected_user]
         fig_ace.add_trace(go.Scatter(
             x=sel_a.week_idx, y=sel_a.acecard_cusum, mode="lines+markers",
