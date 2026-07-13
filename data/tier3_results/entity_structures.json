@@ -32748,5 +32748,136 @@
         "risk_posture": 0.4
       }
     }
+  },
+  {
+    "entity_id": "USR-EVA",
+    "entity_type": "user",
+    "profile": {
+      "user_id": "USR-EVA",
+      "user_type": "employee",
+      "department": "QA",
+      "role": "ML Engineer",
+      "clearance": "internal",
+      "primary_device_id": "DEV-EVA"
+    },
+    "is_attack": true,
+    "week_idx": 69,
+    "raw_features": {
+      "auth_total": 17.0,
+      "auth_failed": 1.0,
+      "auth_fail_rate": 0.058824,
+      "auth_unique_sources": 2.0,
+      "auth_unique_dests": 7.0,
+      "auth_off_hours_ratio": 0.95,
+      "auth_methods_used": 3.0,
+      "file_total": 107.605556,
+      "file_unique_paths": 104.005556,
+      "file_restricted_ratio": 0.560963,
+      "file_confidential_ratio": 0.95,
+      "file_write_ratio": 0.263158,
+      "file_total_bytes": 925885887.0,
+      "endpoint_total": 17.375,
+      "endpoint_suspicious_ratio": 0.113482,
+      "endpoint_max_risk": 65.0,
+      "endpoint_mean_risk": 13.75,
+      "endpoint_unique_processes": 12.430556,
+      "net_bytes_out": 293938401.0,
+      "net_unique_dsts": 48.222222,
+      "net_external_ratio": 0.407049,
+      "dns_unique_domains": 13.0,
+      "dns_nxdomain_ratio": 0.0
+    },
+    "zone_features": {
+      "identity": {
+        "department": "QA",
+        "role": "ML Engineer",
+        "clearance": "internal",
+        "user_type": "employee"
+      },
+      "access_pattern": {
+        "auth_total": 17.0,
+        "auth_failed": 1.0,
+        "auth_fail_rate": 0.058824,
+        "auth_unique_sources": 2.0,
+        "auth_unique_dests": 7.0,
+        "auth_off_hours_ratio": 0.95,
+        "auth_methods_used": 3.0
+      },
+      "data_behavior": {
+        "file_total": 107.605556,
+        "file_unique_paths": 104.005556,
+        "file_restricted_ratio": 0.560963,
+        "file_confidential_ratio": 0.95,
+        "file_write_ratio": 0.263158,
+        "file_total_bytes": 925885887.0
+      },
+      "network_footprint": {
+        "net_bytes_out": 293938401.0,
+        "net_unique_dsts": 48.222222,
+        "net_external_ratio": 0.407049,
+        "dns_unique_domains": 13.0,
+        "dns_nxdomain_ratio": 0.0
+      },
+      "risk_posture": {
+        "endpoint_total": 17.375,
+        "endpoint_suspicious_ratio": 0.113482,
+        "endpoint_max_risk": 65.0,
+        "endpoint_mean_risk": 13.75,
+        "endpoint_unique_processes": 12.430556
+      }
+    },
+    "zone_serialized_text": {
+      "identity": "User USR-EVA identity: role=ML Engineer, department=QA, clearance=internal, tenure_days=42, type=employee",
+      "access_pattern": "User USR-EVA access: auth_events=17, fail_rate=0.0588, off_hours=0.9500, unique_sources=2, unique_dests=7, methods=3",
+      "data_behavior": "User USR-EVA data: file_accesses=108, restricted_ratio=0.5610, confidential_ratio=0.9500, write_ratio=0.2632, unique_paths=104, bytes=925885887",
+      "network_footprint": "User USR-EVA network: bytes_out=293938401, unique_dsts=48, external_ratio=0.4070, dns_domains=13, nxdomain_ratio=0.0000",
+      "risk_posture": "User USR-EVA risk: endpoint_events=17, suspicious_ratio=0.1135, max_risk=65.0000, mean_risk=13.7500, unique_processes=12"
+    },
+    "zone_embedding_dims": {
+      "identity": 1536,
+      "access_pattern": 1536,
+      "data_behavior": 1536,
+      "network_footprint": 1536,
+      "risk_posture": 1536
+    },
+    "phase_state": {
+      "velocity_magnitude": 0.088175,
+      "acceleration": -0.002994,
+      "stability": 0.994332,
+      "regime_shifts": 0.0,
+      "trend_consistency": -0.406206,
+      "total_drift": 0.109236,
+      "current_regime": "drifting"
+    },
+    "context_weights": {
+      "normal_ops": {
+        "identity": 0.2,
+        "access_pattern": 0.2,
+        "data_behavior": 0.2,
+        "network_footprint": 0.2,
+        "risk_posture": 0.2
+      },
+      "insider_investigation": {
+        "identity": 0.1,
+        "access_pattern": 0.15,
+        "data_behavior": 0.4,
+        "network_footprint": 0.15,
+        "risk_posture": 0.2
+      },
+      "apt_hunt": {
+        "identity": 0.05,
+        "access_pattern": 0.15,
+        "data_behavior": 0.1,
+        "network_footprint": 0.4,
+        "risk_posture": 0.3
+      },
+      "privilege_audit": {
+        "identity": 0.1,
+        "access_pattern": 0.25,
+        "data_behavior": 0.1,
+        "network_footprint": 0.15,
+        "risk_posture": 0.4
+      }
+    }
   }
 ]
