@@ -4409,7 +4409,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
     user_weeks = feat_df[feat_df.user_id == radar_uid].sort_values("week_idx")
     all_users_mean = feat_df.groupby("week_idx")[radar_features].mean()
 
-    radar_col1, radar_col2 = st.columns(2)
+    radar_col1 = st.container()
 
     with radar_col1:
         st.markdown(f"**{radar_uid} — Weekly Feature Lines vs Population Mean**")
@@ -4435,77 +4435,6 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
             <div style="background:#FDEDEC; padding:10px 14px; border-radius:6px; text-align:center;">
                 <span style="color:{RED}; font-weight:600;">Traditional verdict: NORMAL</span> —
                 <span style="color:#6C757D;">All features within expected ranges. No threshold crossed.</span>
-            </div>
-            """, unsafe_allow_html=True)
-
-    with radar_col2:
-        st.markdown(f"**{radar_uid} — Drift Vector Direction Over Time**")
-        if radar_uid in ATTACK_USERS:
-            info = ATTACK_USERS[radar_uid]
-            ace_u = acecard_drift[acecard_drift.user_id == radar_uid]
-
-            drift_concepts = []
-            n_wk = int(ace_u.week_idx.max()) if len(ace_u) else int(feat_df.week_idx.max())
-            if radar_uid == "USR-156":
-                sw = ATTACK_USERS["USR-156"]["start_week"]
-                phases = [
-                    (0, sw - 1, "Normal baseline", "#27AE60"),
-                    (sw, sw + 3, "Off-hours access increase", GOLD),
-                    (sw + 4, sw + 7, "Cross-dept file scope creep", "#E67E22"),
-                    (sw + 8, n_wk, "Data staging + exfiltration", RED),
-                ]
-            elif radar_uid == "USR-234":
-                sw = ATTACK_USERS["USR-234"]["start_week"]
-                phases = [
-                    (0, sw - 1, "Normal baseline", "#27AE60"),
-                    (sw, sw + 3, "C2 beacon establishment", GOLD),
-                    (sw + 4, n_wk, "Progressive data staging", RED),
-                ]
-            else:
-                phases = [
-                    (0, 3, "Normal baseline", "#27AE60"),
-                    (4, 5, "Credential compromise + lateral movement", RED),
-                    (6, n_wk, "Post-incident normal", "#27AE60"),
-                ]
-
-            fig_drift_dir = go.Figure()
-            for start, end, label, color in phases:
-                phase_data = ace_u[(ace_u.week_idx >= start) & (ace_u.week_idx <= end)]
-                fig_drift_dir.add_trace(go.Scatter(
-                    x=phase_data.week_idx, y=phase_data.acecard_cusum,
-                    mode="lines+markers", line=dict(color=color, width=3),
-                    marker=dict(size=5), name=label,
-                ))
-            fig_drift_dir.update_layout(
-                height=400, margin=dict(l=40, r=20, t=30, b=40),
-                xaxis_title="Week", yaxis_title="Semantic CUSUM",
-                legend=dict(x=0.02, y=0.98, font=dict(size=10), bgcolor="rgba(255,255,255,0.8)"),
-                plot_bgcolor="white",
-            )
-            st.plotly_chart(fig_drift_dir, use_container_width=True)
-            st.markdown(f"""
-            <div style="background:#EAFAF1; padding:10px 14px; border-radius:6px; text-align:center;">
-                <span style="color:#27AE60; font-weight:600;">V-Intelligence UEBA + Composite verdict: {info['atk']}</span> —
-                <span style="color:#6C757D;">Semantic drift direction aligns with {info['label'].lower()} pattern. Composite Score ranks this entity for analyst review.</span>
-            </div>
-            """, unsafe_allow_html=True)
-        else:
-            ace_u = acecard_drift[acecard_drift.user_id == radar_uid]
-            fig_normal_drift = go.Figure()
-            fig_normal_drift.add_trace(go.Scatter(
-                x=ace_u.week_idx, y=ace_u.acecard_cusum, mode="lines+markers",
-                line=dict(color=TEAL, width=2), marker=dict(size=4), name="Drift CUSUM",
-            ))
-            fig_normal_drift.update_layout(
-                height=400, margin=dict(l=40, r=20, t=30, b=40),
-                xaxis_title="Week", yaxis_title="Semantic CUSUM",
-                plot_bgcolor="white",
-            )
-            st.plotly_chart(fig_normal_drift, use_container_width=True)
-            st.markdown(f"""
-            <div style="background:#EAFAF1; padding:10px 14px; border-radius:6px; text-align:center;">
-                <span style="color:#27AE60; font-weight:600;">V-Intelligence UEBA verdict: NORMAL</span> —
-                <span style="color:#6C757D;">Flat drift trajectory. No behavioral direction change.</span>
             </div>
             """, unsafe_allow_html=True)
 
