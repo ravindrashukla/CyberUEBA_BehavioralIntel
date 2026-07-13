@@ -3431,6 +3431,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         "USR-234": {"label": "Slow APT (180-day)", "atk": "ATK-003", "color": "#E67E22", "start_week": 13},
         "USR-042": {"label": "Volt Typhoon LOTL (115-day)", "atk": "ATK-007", "color": "#8E44AD", "start_week": 2},
         "USR-118": {"label": "Salt Typhoon Telecom (100-day)", "atk": "ATK-008", "color": "#2980B9", "start_week": 4},
+        "USR-EVA": {"label": "Evasive Insider (low-and-slow demo)", "atk": "ATK-EVA", "color": "#16A085", "start_week": 35},
     }
     FEATURE_COLS = [c for c in feat_df.columns if c not in ["user_id", "week_idx", "week_start", "week_end"]]
 
@@ -3488,7 +3489,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <h2 style="text-align:center; color:{NAVY};">What Your SOC Analyst Sees</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:20px;">
-    Same four users. Same telemetry. Four very different verdicts.</p>
+    Same five users. Same telemetry. Four very different verdicts.</p>
     """, unsafe_allow_html=True)
 
     trad_col, zscore_col, ace_col, tp_col = st.columns(4)
@@ -3731,10 +3732,11 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <div style="background:linear-gradient(90deg,#16243F,#0F1E3A); padding:16px 22px; border-radius:8px;
                  margin-top:16px; text-align:center; border:1px solid #27AE60;">
-        <span style="color:#27AE60; font-weight:700; font-size:1.05rem;">Multi-Front Threat-Profile Detector &nbsp;→&nbsp; 4 of 4 attacks caught, 0 false positives</span>
+        <span style="color:#27AE60; font-weight:700; font-size:1.05rem;">Threat-Profile &amp; Composite are complementary &nbsp;→&nbsp; each catches what the other misses</span>
         <span style="color:#A0C8E0; font-size:0.85rem; display:block; margin-top:4px;">
-        Where composite buries the stealth attacks, measurable known-bad profiles catch them by technique —
-        slow-APT via <b>C2-beacon&nbsp;+&nbsp;DGA</b>, LOTL via <b>process profile</b>, insider via <b>cohort-rare access</b>.
+        The threat-profile catches the stealth attacks composite buries — slow-APT via <b>C2-beacon&nbsp;+&nbsp;DGA</b>,
+        LOTL via <b>process profile</b>, insider via <b>cohort-rare access</b> — at <b>0 false positives</b> (4 of 5).
+        But it <b>misses the evasive insider (EVA)</b>, which the composite catches at rank #1. Two lenses, different blind spots.
         See the <b>Threat Profiles</b> page for the full alert table.</span>
     </div>
     """, unsafe_allow_html=True)
@@ -3913,7 +3915,9 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     How far each attacker drifts from normal over the full ~70-week campaign (★ = first clear detection).
     Each lens wins on different attacks: the <b>raw numbers</b> (left) catch the noisy, high-volume attack (USR-118)
     earliest — even before the AI; the <b>AI "meaning" lens</b> (right) catches the subtle insider and stealth-hacker
-    ~30 weeks sooner, but is slower on that volume attack. Neither catches the slow APT on its own.</p>
+    ~30 weeks sooner, but is slower on that volume attack. The <b style="color:#16A085;">evasive insider (USR-EVA)</b> —
+    a demo attacker that evades every known-bad profile — still climbs out of the normal band on both drift lenses
+    (feature wk 40, embedding wk 53), which is exactly why the drift + composite layer is needed. Neither lens catches the slow APT on its own.</p>
     """, unsafe_allow_html=True)
 
     # ── Like-for-like view: RAW cumulative CUSUM over the same ~70-week window ──
@@ -3974,7 +3978,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
 
     def _ttd_caption(crossing):
         bits = []
-        for u in ["USR-156", "USR-042", "USR-118", "USR-234"]:
+        for u in ATTACK_USERS:
             c = ATTACK_USERS[u]["color"]
             w = crossing.get(u)
             lab = f"wk {w}" if w is not None else "not flagged"
@@ -4484,7 +4488,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
 
     radar_user = st.selectbox(
         "Select user to inspect:",
-        ["USR-156", "USR-234", "USR-042", "USR-118", "USR-001 (Normal baseline)"],
+        ["USR-156", "USR-234", "USR-042", "USR-118", "USR-EVA", "USR-001 (Normal baseline)"],
         key="radar_select",
     )
     radar_uid = radar_user.split(" ")[0]
@@ -4793,11 +4797,12 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60;">
             <h3 style="color:#27AE60; margin:0;">V-INTELLIGENCE UEBA + COMPOSITE SCORING</h3>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Digital Entity Features → 5-Phase Anomaly Detection</p>
-            <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">4 of 4</div>
-            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite catches all 4 at {FP_ALL4_TXT} FP; threat-profile detector catches all 4 at 0% FP</p>
+            <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">5 of 5</div>
+            <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite catches all 5 at {FP_ALL4_TXT} FP; the threat-profile detector catches 4 of 5 (misses the evasive insider) at 0% FP</p>
             <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Composite scoring ranks USR-156 &amp; USR-118 above all normal
-            users but buries the stealth slow-APT &amp; LOTL. The multi-front <b>threat-profile detector</b> catches all four by named
-            technique (C2-beacon, DGA, LOTL-process, cohort-rare access) at zero false positives.</p>
+            users but buries the stealth slow-APT &amp; LOTL — which the multi-front <b>threat-profile detector</b> then catches by named
+            technique (C2-beacon, DGA, LOTL-process, cohort-rare access) at zero false positives. The evasive insider (EVA) is the mirror case:
+            composite catches it, the profiles miss it.</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -4934,6 +4939,7 @@ elif page == "Detection Pipeline":
         ["USR-118 — Salt Typhoon", "Stage 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
         ["USR-156 — insider", "Stage 4 · Composite Scoring", "week 4", "Intent shift visible only in the combined picture"],
         ["USR-042 — living-off-the-land", "Stage 4 · Composite Scoring", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
+        ["USR-EVA — evasive insider (demo)", "Stage 3 · Single-signal drift", "week 40", "Evades every known-bad profile — caught only once its accumulated drift breaks out"],
     ], columns=["Attacker", "Caught earliest by", "When", "Why there"])
     st.dataframe(_map, hide_index=True, use_container_width=True)
 
@@ -4941,7 +4947,7 @@ elif page == "Detection Pipeline":
     <div style="background:{NAVY}; border-radius:10px; padding:16px 24px; text-align:center; margin-top:8px;">
         <span style="color:{GOLD}; font-weight:700; font-size:1.05rem;">Catch the easy ones cheaply and instantly. Spend the deep lens only on the hard ones.</span>
         <span style="color:#A0C8E0; font-size:0.9rem; display:block; margin-top:4px;">
-        Result: all 4 intruders caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on.</span>
+        Result: all 4 profiled intruders caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on. The evasive insider (USR-EVA) evades every known-bad profile and is caught only by the drift + composite layers — the reason those layers stay in the stack.</span>
         <span style="color:#fff; font-size:0.9rem; display:block; margin-top:8px;">
         Cost of catching all four: the <b>Stage-1 known-bad detector</b> flags them at <b>0 false positives</b>; the <b>Stage-4 fused score</b> catches the same four at <b>{FP_ALL4_TXT} false positives</b> — and even then it ranks the two stealth attackers (USR-234, USR-042) below normal users, so only the known-bad detector separates them cleanly.</span>
     </div>
