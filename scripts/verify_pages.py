@@ -14,10 +14,22 @@ for section, pages in GROUPS.items():
         print("  section '%s' select failed: %s" % (section, e))
     for page in pages:
         try:
-            click_page(d, page); time.sleep(2.5)
+            click_page(d, page); time.sleep(3)
+            # force full render: scroll top->bottom so below-the-fold widgets execute
+            for _ in range(8):
+                d.execute_script("window.scrollTo(0, document.body.scrollHeight);"); time.sleep(0.8)
+            d.execute_script("window.scrollTo(0, 0);")
+            # wait for the "Running" status widget to clear
+            for _ in range(20):
+                rw = d.find_elements(By.CSS_SELECTOR, '[data-testid="stStatusWidget"]')
+                if not rw or all("Running" not in (r.text or "") for r in rw):
+                    break
+                time.sleep(1)
+            time.sleep(1.5)
             excs = d.find_elements(By.CSS_SELECTOR, '[data-testid="stException"]')
             body = d.find_element(By.TAG_NAME, "body").text
-            has_tb = "Traceback" in body or "is out-of-bounds" in body or "KeyError" in body or "NameError" in body
+            has_tb = any(k in body for k in ["Traceback", "is out-of-bounds", "out of range",
+                                             "KeyError", "NameError", "IndexError", "AttributeError"])
             bad = bool(excs) or has_tb
             print("  [%-5s] %-32s%s" % ("ERROR" if bad else "ok", page,
                   "  (%d stException)" % len(excs) if excs else ("  (traceback in text)" if has_tb else "")))
