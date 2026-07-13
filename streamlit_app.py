@@ -3989,7 +3989,12 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     sustained detection: embedding flags the insider at wk 4 vs wk 39 for feature, and LOTL at wk 15 vs 47 —
     roughly 30 weeks earlier on behavioral-direction attacks. The slow APT (USR-234) clears neither band —
     and composite scoring buries it too (rank #8, below normal users). It is caught only by the multi-front
-    threat-profile detector (C2-beacon + DGA) — see the Threat Profiles page.
+    threat-profile detector (C2-beacon + DGA) — see the Threat Profiles page.<br><br>
+    <b>Crossing a drift band is not the same as ranking high.</b> These bands measure <i>self-drift</i> (how far an
+    entity moved from its own baseline); the composite score is largely <i>group-relative</i> (deviation from role peers).
+    A living-off-the-land attacker like <b>USR-042 crosses the embedding band at wk 15 yet still ranks only #31</b> on the
+    composite — loud against its own past, but modest against its security-cohort peers (26 normal users outscore it).
+    That gap is exactly why the threat-profile detector, which flags USR-042 at 0 FP, is the primary detector.
     </div>
     """, unsafe_allow_html=True)
 
