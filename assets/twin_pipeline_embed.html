@@ -186,7 +186,7 @@
     <p class="lede">How raw logs become a living behavioral twin, a drift trajectory, a ranked verdict.
       Every value below is verbatim from the code and result files —
       <span style="font-family:var(--mono);font-size:.85em">composite_scores.csv, novelty_metrics.csv, weekly_zone_trajectories.csv, entity_structures.json</span>.
-      Test bed: 250 entities · 485 days · 70 weekly snapshots · ~14M events · 4 attackers hidden among 246 normals.</p>
+      Test bed: 250 entities · 485 days · 70 weekly snapshots · ~14M events · 4 real attackers hidden among 246 normals, plus a 5th evasive-insider demo (USR-EVA).</p>
     <div class="flowline">
       raw logs <span class="ar">→</span> <b>5 zone prose</b> <span class="ar">→</span> 5 embeddings (1536-d)
       <span class="ar">→</span> <b>1 composite twin vector</b> <span class="ar">→</span> weekly trajectory
@@ -235,7 +235,7 @@
                 <li><b>250</b> users · <b>400</b> devices · <b>25</b> segments · <b>60</b> apps · <b>30</b> roles</li>
                 <li><b>485 days</b> (2025-01-01 → 2026-05-01) → <b>70</b> weekly snapshots</li>
                 <li><b>4 attackers</b> injected with MITRE-mapped phased behavior:
-                  Volt (LOTL) · Salt (telecom pivot) · Insider · Slow APT</li>
+                  Volt (LOTL) · Salt (telecom pivot) · Insider · Slow APT — plus <b>USR-EVA</b>, an evasive-insider demo that matches no known-bad profile</li>
               </ul>
               <p class="note">Same seven streams in a real deployment — only the source of the raw events changes;
                 nothing downstream does.</p>
@@ -397,20 +397,22 @@ network_footprint DRIFTING (0.082)
           </div>
 
           <div class="sub">
-            <div class="sub-hd"><span class="tag">RANK</span><h3>The four attackers — exact from composite_scores.csv</h3></div>
+            <div class="sub-hd"><span class="tag">RANK</span><h3>The five attackers — exact from composite_scores.csv</h3></div>
             <div class="sub-bd">
               <div class="tblwrap"><table class="tbl">
                 <tr><th>Attacker</th><th>#</th><th>sig</th><th>br&nbsp;z&gt;1.5&nbsp;(2.0)</th><th>sust</th><th>ctx&nbsp;sp</th><th>ctx&nbsp;mx</th><th>nov</th><th>COMP</th></tr>
-                <tr class="att"><td>Salt · USR-118</td><td class="em">1</td><td>30.60</td><td>17 (16)</td><td>9.58</td><td>9.00</td><td>8.10</td><td>2.8</td><td class="em">51.71</td></tr>
-                <tr class="att"><td>Insider · USR-156</td><td class="em">2</td><td>30.02</td><td>19 (17)</td><td>8.37</td><td>4.34</td><td>6.80</td><td>0.0</td><td class="em">46.24</td></tr>
-                <tr class="att"><td>Slow APT · USR-234</td><td class="em">7</td><td>4.50</td><td>2 (0)</td><td>1.57</td><td>1.48</td><td>0.85</td><td class="hot">13.0</td><td class="em">20.00</td></tr>
-                <tr class="att"><td>Volt · USR-042</td><td class="em">30</td><td>6.20</td><td>10 (3)</td><td>3.70</td><td>0.40</td><td>1.40</td><td>0.0</td><td class="em">12.90</td></tr>
+                <tr class="att"><td>Evasive · USR-EVA</td><td class="em">1</td><td>50.61</td><td>24 (24)</td><td>13.50</td><td>12.46</td><td>16.59</td><td>0.0</td><td class="em">77.87</td></tr>
+                <tr class="att"><td>Salt · USR-118</td><td class="em">2</td><td>30.60</td><td>17 (16)</td><td>9.58</td><td>9.00</td><td>8.10</td><td>2.8</td><td class="em">51.71</td></tr>
+                <tr class="att"><td>Insider · USR-156</td><td class="em">3</td><td>30.02</td><td>19 (17)</td><td>8.37</td><td>4.34</td><td>6.80</td><td>0.0</td><td class="em">46.24</td></tr>
+                <tr class="att"><td>Slow APT · USR-234</td><td class="em">8</td><td>4.50</td><td>2 (0)</td><td>1.57</td><td>1.48</td><td>0.85</td><td class="hot">13.0</td><td class="em">20.00</td></tr>
+                <tr class="att"><td>Volt · USR-042</td><td class="em">31</td><td>6.20</td><td>10 (3)</td><td>3.70</td><td>0.40</td><td>1.40</td><td>0.0</td><td class="em">12.90</td></tr>
               </table></div>
               <ul class="tight">
-                <li><b>Salt #1</b> — highest raw signal_strength (30.60) + highest context spread (9.00).</li>
-                <li><b>Insider #2</b> — most features elevated (19 up), signal_strength 30.02.</li>
-                <li><b>Slow APT #7</b> — caught by <b class="hot">novelty alone</b> (13.0); invisible to every magnitude method.</li>
-                <li><b>Volt #30</b> — many small elevations (breadth 10, but only 3 at z&gt;2.0): the LOTL signature.</li>
+                <li><b>Evasive #1</b> — highest composite (77.87): a distributed insider drift (breadth 24) that <b class="hot">evades every known-bad profile</b> — caught only by the fused score.</li>
+                <li><b>Salt #2</b> — highest raw signal_strength (30.60) + highest context spread (9.00).</li>
+                <li><b>Insider #3</b> — most real-attacker features elevated (19 up), signal_strength 30.02.</li>
+                <li><b>Slow APT #8</b> — caught by <b class="hot">novelty alone</b> (13.0); invisible to every magnitude method.</li>
+                <li><b>Volt #31</b> — many small elevations (breadth 10, but only 3 at z&gt;2.0): the LOTL signature.</li>
               </ul>
             </div>
           </div>
@@ -459,6 +461,7 @@ network_footprint DRIFTING (0.082)
                 <tr><td>Salt · USR-118</td><td>1</td><td>14</td><td>0.23</td><td>2.8</td></tr>
                 <tr><td>Insider · USR-156</td><td>0</td><td>1</td><td>0.05</td><td>0.0</td></tr>
                 <tr><td>Slow APT · USR-234</td><td class="cool">1</td><td class="hot">60</td><td class="cool">1.00</td><td class="hot">13.0</td></tr>
+                <tr><td>Evasive · USR-EVA</td><td>0</td><td>0</td><td>0.00</td><td>0.0</td></tr>
               </table></div>
               <p class="note"><b>Slow APT:</b> a novel IP every week for 60 weeks → min(60/5,10)=10, +1.00×3 = <b>13.0</b>.
                 Without it, signal_strength 4.50 and breadth 2 leave it <i>missed entirely</i>. This is the proof the
@@ -476,18 +479,18 @@ network_footprint DRIFTING (0.082)
     <div class="cap-hd">
       <div class="num">✓</div>
       <div><h2>Output — a ranked verdict, not a flood of alarms</h2>
-        <p>Sort all 250 entities by composite. The operating line reaches down to <b>12.95</b> to catch the stealthiest
-          scorer (Volt, 12.90).</p></div>
+        <p>Sort all 251 entities by composite. The operating line reaches down to <b>12.95</b> to catch the stealthiest
+          scorer (Volt, 12.90); the evasive-insider demo USR-EVA tops the list at 77.87.</p></div>
     </div>
     <div class="cap-bd">
       <div>
         <h4>Detection on identical data</h4>
         <div class="baselines">
-          <div class="brow"><span class="name">Isolation Forest</span><span class="bar"><i style="width:0%;background:var(--threat)"></i></span><span class="sc" style="color:var(--threat)">0/4</span></div>
-          <div class="brow"><span class="name">One-Class SVM</span><span class="bar"><i style="width:0%;background:var(--threat)"></i></span><span class="sc" style="color:var(--threat)">0/4</span></div>
-          <div class="brow"><span class="name">Local Outlier Factor</span><span class="bar"><i style="width:0%;background:var(--threat)"></i></span><span class="sc" style="color:var(--threat)">0/4</span></div>
-          <div class="brow"><span class="name">Z-score</span><span class="bar"><i style="width:25%;background:var(--gold)"></i></span><span class="sc" style="color:var(--gold)">1/4</span></div>
-          <div class="brow"><span class="name">Behavioral Twin (this)</span><span class="bar"><i style="width:100%;background:var(--good)"></i></span><span class="sc" style="color:var(--good)">4/4</span></div>
+          <div class="brow"><span class="name">Isolation Forest</span><span class="bar"><i style="width:0%;background:var(--threat)"></i></span><span class="sc" style="color:var(--threat)">0/5</span></div>
+          <div class="brow"><span class="name">One-Class SVM</span><span class="bar"><i style="width:0%;background:var(--threat)"></i></span><span class="sc" style="color:var(--threat)">0/5</span></div>
+          <div class="brow"><span class="name">Local Outlier Factor</span><span class="bar"><i style="width:0%;background:var(--threat)"></i></span><span class="sc" style="color:var(--threat)">0/5</span></div>
+          <div class="brow"><span class="name">Z-score</span><span class="bar"><i style="width:20%;background:var(--gold)"></i></span><span class="sc" style="color:var(--gold)">1/5</span></div>
+          <div class="brow"><span class="name">Behavioral Twin (this)</span><span class="bar"><i style="width:100%;background:var(--good)"></i></span><span class="sc" style="color:var(--good)">5/5</span></div>
         </div>
         <p class="note" style="margin-top:10px">Separation is by <b>rank</b>, not a clean gap: the top normal user
           (USR-081, HR Manager, 21.52) outscores both Slow APT (20.00) and Volt (12.90). The honest claim is
@@ -496,17 +499,18 @@ network_footprint DRIFTING (0.082)
       <div>
         <h4>The operating point</h4>
         <div class="stat">
-          <div class="statbox"><div class="v g">4/4</div><div class="l">attackers caught</div></div>
+          <div class="statbox"><div class="v g">5/5</div><div class="l">attackers caught</div></div>
           <div class="statbox"><div class="v gold">10.6%</div><div class="l">false positive (26/246)</div></div>
-          <div class="statbox"><div class="v">12.95</div><div class="l">catch-all-four line</div></div>
+          <div class="statbox"><div class="v">12.95</div><div class="l">catch-all-five line</div></div>
         </div>
         <div class="tblwrap" style="margin-top:12px"><table class="tbl">
           <tr><th>#</th><th>UID</th><th>Type</th><th>Composite</th></tr>
-          <tr><td><span class="rk">1</span></td><td>USR-118</td><td class="hot">Salt Typhoon</td><td class="em">51.71</td></tr>
-          <tr><td><span class="rk">2</span></td><td>USR-156</td><td class="hot">Insider</td><td class="em">46.24</td></tr>
-          <tr><td><span class="rk">3</span></td><td>USR-081</td><td>normal — HR Manager</td><td>21.52</td></tr>
-          <tr><td><span class="rk">7</span></td><td>USR-234</td><td class="hot">Slow APT</td><td class="em">20.00</td></tr>
-          <tr><td><span class="rk">30</span></td><td>USR-042</td><td class="hot">Volt Typhoon</td><td class="em">12.90</td></tr>
+          <tr><td><span class="rk">1</span></td><td>USR-EVA</td><td class="hot">Evasive Insider</td><td class="em">77.87</td></tr>
+          <tr><td><span class="rk">2</span></td><td>USR-118</td><td class="hot">Salt Typhoon</td><td class="em">51.71</td></tr>
+          <tr><td><span class="rk">3</span></td><td>USR-156</td><td class="hot">Insider</td><td class="em">46.24</td></tr>
+          <tr><td><span class="rk">4</span></td><td>USR-081</td><td>normal — HR Manager</td><td>21.52</td></tr>
+          <tr><td><span class="rk">8</span></td><td>USR-234</td><td class="hot">Slow APT</td><td class="em">20.00</td></tr>
+          <tr><td><span class="rk">31</span></td><td>USR-042</td><td class="hot">Volt Typhoon</td><td class="em">12.90</td></tr>
         </table></div>
       </div>
     </div>
