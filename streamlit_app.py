@@ -1939,10 +1939,12 @@ elif page == "Traditional vs V-Intelligence UEBA":
 </div>
 """, unsafe_allow_html=True)
 
+    _znorm_tv = comp_df[~comp_df["user_id"].isin(attack_users)]
+    _zfp_tv = 100 * int(_znorm_tv["zscore_anomaly"].sum()) / max(len(_znorm_tv), 1) if "zscore_anomaly" in comp_df.columns else 0.0
     st.markdown(f"""
 <div style="background:#EAF4EC; border-left:4px solid #1E8449; border-radius:8px; padding:12px 18px; margin-top:8px; font-size:0.9rem; color:#1D3A2A;">
     <b>What the matrix shows:</b> traditional point-anomaly tools (Isolation Forest / SVM / LOF) catch <b>0 of 5</b> at low FP — they see every attacker as a normal user.
-    The z-score catches <b>1 of 5</b> (the single-feature LOTL spike) at 9.8% FP. <b>Composite scoring catches 5 of 5 at {FP_ALL4_TXT} FP</b>, and the
+    The z-score catches <b>1 of 5</b> (the single-feature LOTL spike) at {_zfp_tv:.1f}% FP. <b>Composite scoring catches 5 of 5 at {FP_ALL4_TXT} FP</b>, and the
     <b>multi-front threat-profile detector catches 4 of 5 at 0 false positives</b> — it flags the four measurable known-bad profiles but by design does <b>not</b> match the evasive insider (USR-EVA), which only the drift + composite layer catches.<br>
     <span style="color:#7B341E;">The old Temporal-Z-Score / Feature-CUSUM / embedding-CUSUM rows were removed: they "detected" all four only by firing on ~100% of normal users — flagging everyone is not detection.</span>
 </div>
@@ -1985,7 +1987,9 @@ elif page == "Traditional vs V-Intelligence UEBA":
             if _tp == 0:
                 _assess = f"Misses all {_n_atk} — false alarms catch no attacker"
             elif _tp < _n_atk:
-                _hits = [uid for uid in _atk_ids if bool(comp_df.loc[comp_df["user_id"] == uid, _col].values[0])]
+                _hits = [uid for uid in _atk_ids
+                         if len(comp_df.loc[comp_df["user_id"] == uid, _col].values)
+                         and bool(comp_df.loc[comp_df["user_id"] == uid, _col].values[0])]
                 _assess = f"Catches only {', '.join(sorted(_hits))} ({_tp} of {_n_atk})"
             else:
                 _assess = "All detected"
@@ -2000,7 +2004,7 @@ elif page == "Traditional vs V-Intelligence UEBA":
     try:
         _tpa = pd.read_csv("data/threat_profile_alerts.csv")
         _tp_caught = int(_tpa["is_known_attack"].sum()); _tp_fp = int((~_tpa["is_known_attack"]).sum())
-        _tp_fp_pct = 100 * _tp_fp / max(250 - _tp_caught, 1)
+        _tp_fp_pct = 100 * _tp_fp / max(_n_norm, 1)
         _table += f"| **Threat-Profile Detector** | **{_tp_caught} / {_n_atk}** | **{_tp_fp_pct:.1f}%** | **{_tp_caught} of {_n_atk} clean — each named by technique (C2-beacon, DGA, LOTL, cohort-rare access); the evasive insider (EVA) evades every profile by design** |\n"
     except Exception:
         pass
@@ -2370,7 +2374,7 @@ elif page == "Three-Tier Detection":
         ))
         _thr_all4 = comp_scores[comp_scores["is_attack"]]["composite"].min() if "is_attack" in comp_scores.columns else comp_scores["composite"].quantile(0.90)
         fig_rank.add_hline(y=_thr_all4, line_dash="dash", line_color=RED,
-                          annotation_text=f"catch-all-4 threshold ({_thr_all4:.1f})")
+                          annotation_text=f"catch-all-5 threshold ({_thr_all4:.1f})")
         fig_rank.update_layout(
             height=400, yaxis_title="Composite Score",
             xaxis_title="", xaxis_tickangle=-45,
@@ -2702,12 +2706,13 @@ elif page == "Three-Tier Detection":
         <p style="color:#2C3E50; margin:0 0 10px 0;">
         Modern attackers use valid credentials, legitimate tools, and authorized access —
         they don't trigger signatures. The only detectable signal is <em>behavioral change over time</em>.
-        All 4 threats below are core UEBA use cases, each producing a different type of behavioral drift:</p>
+        All 5 threats below are core UEBA use cases, each producing a different type of behavioral drift:</p>
         <ul style="color:#2C3E50; margin:0; padding-left:20px; font-size:0.95rem;">
             <li><strong>Insider Threat</strong> — data access pattern drifts (valid credentials, authorized access)</li>
             <li><strong>Slow APT</strong> — network communication drifts (C2 looks like normal HTTPS)</li>
             <li><strong>Nation-State LOTL</strong> — endpoint behavior drifts (uses tools admins use daily)</li>
             <li><strong>Telecom Pivot</strong> — network footprint drifts (authorized maintenance credentials)</li>
+            <li><strong>Evasive Insider (demo)</strong> — distributed multi-zone drift that matches no known-bad profile; caught only by composite scoring</li>
         </ul>
         <p style="color:{NAVY}; margin:12px 0 0 0; font-weight:600;">
         The threat type determines which algorithm to deploy.</p>
@@ -2745,7 +2750,15 @@ elif page == "Three-Tier Detection":
             "color": "#2980B9",
             "description": "Attacker compromises telecom infrastructure — routers, switches, lawful intercept systems — to intercept communications at scale. Operates with legitimate credentials and protocols, making each individual action indistinguishable from normal telecom operations.",
             "real_world": "Salt Typhoon (China, 2024) operated undetected for 5+ years inside AT&T, Verizon, T-Mobile. Accessed lawful intercept systems of senior US officials. Traditional SIEM rules never triggered — every metric stayed within normal bounds.",
-            "behavioral_sig": "Broad multi-zone change — network, data, and access patterns all shift during infrastructure pivot. Traditional methods MISS this entirely (max z=1.71), but composite scoring ranks it #1/250",
+            "behavioral_sig": "Broad multi-zone change — network, data, and access patterns all shift during infrastructure pivot. Traditional methods MISS this entirely (max z=1.71), but composite scoring ranks it #2 of 251 (behind only the evasive-insider demo)",
+        },
+        {
+            "threat": "Evasive Insider (low-and-slow demo)",
+            "user": "USR-EVA",
+            "color": "#16A085",
+            "description": "A trusted developer who slowly ramps confidential/restricted file access and off-hours activity over months, staying inside every measurable known-bad profile. No single action is alarming; only the fused composite drift, accumulated over time, separates it.",
+            "real_world": "Synthetic demonstration built on a real developer profile — the evasion case: matches no known-bad signature (C2, DGA, fan-out, mass-collection), so the Stage-1 threat-profile detector never fires. Caught only by the behavioral composite.",
+            "behavioral_sig": "Distributed multi-feature drift with no single spike — data_behavior and access zones climb together; evades every known-bad profile, yet ranked #1 by composite",
         },
     ]
 
@@ -3818,9 +3831,9 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     <h2 style="text-align:center; color:{NAVY};">All Attack Users: Signal Separation</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:8px;">
     How far each attacker drifts from normal over the full ~70-week campaign (★ = first clear detection).
-    Each lens wins on different attacks: the <b>raw numbers</b> (left) catch the noisy, high-volume attack (USR-118)
+    Each lens wins on different attacks: the <b>raw numbers</b> (left) catch the noisy, high-fan-out attack (USR-118)
     earliest — even before the AI; the <b>AI "meaning" lens</b> (right) catches the subtle insider and stealth-hacker
-    ~30 weeks sooner, but is slower on that volume attack. The <b style="color:#16A085;">evasive insider (USR-EVA)</b> —
+    ~30 weeks sooner, but is slower on that fan-out attack. The <b style="color:#16A085;">evasive insider (USR-EVA)</b> —
     a demo attacker that evades every known-bad profile — still climbs out of the normal band on both drift lenses
     (feature wk 40, embedding wk 53), which is exactly why the drift + composite layer is needed. Neither lens catches the slow APT on its own.</p>
     """, unsafe_allow_html=True)
@@ -3905,7 +3918,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.plotly_chart(fig_f, use_container_width=True)
         st.markdown(f"""
         <div style="text-align:center; color:{RED}; font-weight:600; font-size:0.9rem;">
-            Best at noisy, high-volume attacks — catches USR-118 first, even before the AI lens. Slow on subtle attacks; never the slow APT.
+            Best at noisy, high-fan-out attacks — catches USR-118 first, even before the AI lens. Slow on subtle attacks; never the slow APT.
         </div>
         {_ttd_caption(cross_f)}
         """, unsafe_allow_html=True)
@@ -3916,7 +3929,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         st.plotly_chart(fig_a, use_container_width=True)
         st.markdown(f"""
         <div style="text-align:center; color:#1E8449; font-weight:600; font-size:0.9rem;">
-            Best at subtle attacks — catches the insider &amp; stealth-hacker ~30 weeks earlier, but ~24 weeks slower on the noisy volume attack (USR-118). Never the slow APT.
+            Best at subtle attacks — catches the insider &amp; stealth-hacker ~30 weeks earlier, but ~24 weeks slower on the noisy fan-out attack (USR-118). Never the slow APT.
         </div>
         {_ttd_caption(cross_a)}
         """, unsafe_allow_html=True)
@@ -3932,7 +3945,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
 <div style="background:#FDEDEC; border-left:4px solid {RED}; border-radius:8px; padding:14px 18px; height:340px;">
   <div style="color:{RED}; font-weight:700; font-size:1.0rem;">Feature-Space CUSUM — raw magnitude</div>
   <div style="color:#6C757D; font-size:0.75rem; margin-bottom:10px;">
-    <code>compute_feature_drift</code> &nbsp;·&nbsp; streamlit_app.py:3648</div>
+    <code>compute_feature_drift</code> &nbsp;·&nbsp; streamlit_app.py</div>
   <ol style="margin:0; padding-left:18px; color:#2C3E50; font-size:0.86rem; line-height:1.55;">
     <li>Each user-week is <b>23 raw numeric features</b> (login counts, bytes moved, distinct
         destinations, off-hours ratio, privilege ops…) from the <code>weekly_features</code> table.</li>
@@ -3951,7 +3964,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
 <div style="background:#E9F7EF; border-left:4px solid #27AE60; border-radius:8px; padding:14px 18px; height:340px;">
   <div style="color:#1E8449; font-weight:700; font-size:1.0rem;">V-Intelligence embedding drift — semantic</div>
   <div style="color:#6C757D; font-size:0.75rem; margin-bottom:10px;">
-    <code>load_real_drift</code> &nbsp;·&nbsp; streamlit_app.py:3672</div>
+    <code>load_real_drift</code> &nbsp;·&nbsp; streamlit_app.py</div>
   <ol style="margin:0; padding-left:18px; color:#2C3E50; font-size:0.86rem; line-height:1.55;">
     <li>Each user-week's activity is serialized to text and embedded into a <b>1536-d vector</b>
         (OpenAI <code>text-embedding-3-small</code>); the per-week movement is precomputed as
@@ -3975,7 +3988,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     CUSUM ~2 — so compare each line to <i>its own</i> normal band, not across panels). The ★ marks first
     sustained detection: embedding flags the insider at wk 4 vs wk 39 for feature, and LOTL at wk 15 vs 47 —
     roughly 30 weeks earlier on behavioral-direction attacks. The slow APT (USR-234) clears neither band —
-    and composite scoring buries it too (rank #7, below normal users). It is caught only by the multi-front
+    and composite scoring buries it too (rank #8, below normal users). It is caught only by the multi-front
     threat-profile detector (C2-beacon + DGA) — see the Threat Profiles page.
     </div>
     """, unsafe_allow_html=True)
@@ -4512,7 +4525,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Digital Entity Features → 5-Phase Anomaly Detection</p>
             <div style="font-size:3rem; font-weight:700; color:#27AE60; margin:16px 0;">5 of 5</div>
             <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Composite catches all 5 at {FP_ALL4_TXT} FP; the threat-profile detector catches 4 of 5 (misses the evasive insider) at 0% FP</p>
-            <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Composite scoring ranks USR-156 &amp; USR-118 above all normal
+            <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Composite scoring ranks USR-156, USR-118 &amp; USR-EVA above all normal
             users but buries the stealth slow-APT &amp; LOTL — which the multi-front <b>threat-profile detector</b> then catches by named
             technique (C2-beacon, DGA, LOTL-process, cohort-rare access) at zero false positives. The evasive insider (EVA) is the mirror case:
             composite catches it, the profiles miss it.</p>
@@ -4528,6 +4541,10 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
     </div>
     """, unsafe_allow_html=True)
 
+    _u118_n = len(_vcs) if not _vcs.empty else 251
+    _u118_rank = 2
+    if not _vcs.empty and (_vcs["uid"] == "USR-118").any():
+        _u118_rank = int((_vcs["composite"] >= float(_vcs.loc[_vcs["uid"] == "USR-118", "composite"].iloc[0])).sum())
     st.markdown(f"""
     <div style="background:linear-gradient(135deg, #1B2838 0%, #1A3A5C 100%); padding:22px 28px; border-radius:12px;
                 margin-top:20px; border-left:5px solid #2980B9;">
@@ -4538,8 +4555,8 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
         <strong style="color:white;">over 5 years</strong> before discovery, accessing lawful intercept systems of senior US officials.
         Our simulation confirms why: <strong style="color:{RED};">every traditional detection method scores USR-118 as NORMAL</strong>
         (max z-score = 1.71, well below the 3.0 threshold). No single metric spikes.
-        Yet V-Intelligence UEBA's composite scoring ranks it <strong style="color:#27AE60;">#1 out of {len(_vcs) if not _vcs.empty else 250} users</strong>
-        — the strongest behavioral anomaly in the entire population.
+        Yet V-Intelligence UEBA's composite scoring ranks it <strong style="color:#27AE60;">#{_u118_rank} of {_u118_n} users</strong>
+        — among the strongest behavioral anomalies in the population (behind only the evasive-insider demo, USR-EVA).
         The gap between threshold-based detection and behavioral intelligence is not theoretical — it is the difference
         between 5 years of undetected access and immediate identification.</div>
     </div>
@@ -4617,9 +4634,9 @@ elif page == "Detection Pipeline":
          "The odd-one-out — abnormal for their role, even if it looks normal company-wide.",
          "USR-118 reaches out to far more outside destinations than any of its developer peers."),
         ("#E67E22", "Stage 3", "Single-Signal Drift", "moderate · weekly",
-         "Is <b>any one number climbing fast</b> versus this entity's own past? (Network volume, file counts, failed logins.)",
-         "The loud, single-dimension attacks — volume floods — caught early, before they get extreme.",
-         "USR-118 (Salt Typhoon): a network-volume flood — caught at <b>week 36</b>, before the deep lens."),
+         "Is <b>any one number climbing fast</b> versus this entity's own past? (Distinct destinations contacted, file counts, failed logins.)",
+         "The loud, single-dimension climbs — one raw number spiking — caught early, before they get extreme.",
+         "USR-118 (Salt Typhoon): its outbound-destination count spikes vs its own history — a recon fan-out caught at <b>week 36</b>, before the deep lens."),
         ("#8E44AD", "Stage 4", "Composite Scoring — the fusion lens", "deep · the heavy hitter",
          "Has the <b>whole behavioral picture shifted</b> — even when no single number looks alarming? Composite Scoring <b>combines every angle</b> "
          "(logins, files, network, programs) into one unified view and watches it move over time.",
@@ -4643,8 +4660,8 @@ elif page == "Detection Pipeline":
     <div style="background:#F4ECF7; border:1px solid #D7BDE2; border-radius:8px; padding:12px 18px; margin:6px 0 16px 0; font-size:0.92rem; color:#4A235A;">
     <b>What Composite Scoring really is.</b> It is <b>not a summary</b> that throws away detail. It <b>fuses every behavioral angle into one combined
     picture</b> and tracks how that picture drifts — so it can spot a threat that lives in the <i>relationship</i> between signals, where no single number
-    is alarming. That is exactly why it catches the insider and the stealth hacker weeks early, and why it is <i>not</i> the fastest on USR-118: a raw
-    volume flood is one loud number, not a combined-pattern shift — so a single-signal check (Stage 3) naturally beats it there. Different threats reveal
+    is alarming. That is exactly why it catches the insider and the stealth hacker weeks early, and why it is <i>not</i> the fastest on USR-118: a recon
+    fan-out is one loud raw signal (its destination count spikes), not a subtle combined-pattern shift — so a single-signal check (Stage 3) naturally beats it there. Different threats reveal
     themselves in different stages; that is the whole point of running them in sequence.
     </div>
     """, unsafe_allow_html=True)
@@ -4652,7 +4669,7 @@ elif page == "Detection Pipeline":
     st.markdown("##### Which stage catches each attacker first")
     _map = pd.DataFrame([
         ["USR-234 — slow APT", "Stage 1 · Signature", "on contact", "Unmistakable beacon to a fixed outside server"],
-        ["USR-118 — Salt Typhoon", "Stage 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
+        ["USR-118 — Salt Typhoon", "Stage 3 · Single-signal drift", "week 36", "Its outbound-destination count spikes — a recon fan-out, not a subtle combined shift"],
         ["USR-156 — insider", "Stage 4 · Composite Scoring", "week 4", "Intent shift visible only in the combined picture"],
         ["USR-042 — living-off-the-land", "Stage 4 · Composite Scoring", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
         ["USR-EVA — evasive insider (demo)", "Stage 4 · Composite Scoring", "week 40", "Distributed insider drift — no single number spikes; evades every known-bad profile, so only the fused score separates it (rank #1)"],
@@ -4870,7 +4887,7 @@ elif page == "Guided Demo":
 
     elif step == 3:
         _gd_callout("Signal separation — two lenses, different attacks caught first",
-                    "The raw-magnitude lens flags the noisy volume attack first (even before the AI). The AI 'meaning' lens flags the subtle "
+                    "The raw-magnitude lens flags the noisy fan-out attack first (even before the AI). The AI 'meaning' lens flags the subtle "
                     "insider & stealth-hacker ~30 weeks earlier. ★ = first clear detection. Neither lens catches the slow APT on its own.")
         cL, cR = st.columns(2)
         with cL:
