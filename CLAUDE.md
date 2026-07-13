@@ -1,5 +1,9 @@
 # CLAUDE.md — Cyber UEBA Behavioral Intelligence
 
+> **Before changing the app, pipeline, or any narrative/number, read [docs/TECHNICAL_SPEC.md](docs/TECHNICAL_SPEC.md)** —
+> the authoritative spec: architecture, canonical attackers & scenarios (do not mislabel), ground-truth numbers,
+> the three "anomaly" measurements that get conflated, data model (which tables carry USR-EVA), conventions, and known-pending items.
+
 ## Architecture
 
 - **Docker:** base stack PostgreSQL+pgvector (5433)/FastAPI (8000); **the Streamlit app runs against the _enhanced_ stack** (`docker-compose.enhanced.yml`: db **5438**, api **8003**, worker).
