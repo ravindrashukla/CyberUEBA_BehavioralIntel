@@ -557,7 +557,7 @@ elif page == "Proof of Realism":
     """, unsafe_allow_html=True)
     st.info("This page proves the attacks are realistic — they blend into normal ranges, which is why standard tools miss them. "
             "How we catch them anyway: see the **Detection Pipeline** page (phased: signatures → peer comparison → Composite Scoring) "
-            "and **Threat Profiles** (the confirmed 4/4 alerts).")
+            "and **Threat Profiles** (the four confirmed known-bad alerts).")
 
     _ATTACK_LABELS = {"USR-234": "Slow APT", "USR-118": "Salt Typhoon",
                       "USR-156": "Insider Threat", "USR-042": "Volt Typhoon"}
@@ -626,7 +626,7 @@ elif page == "Proof of Realism":
             st.info("The attacker sits in the upper range on some volume features but is **never the extreme outlier** — "
                     "there are always normal users above it — and it is even **lower** than normal on others "
                     "(e.g. restricted-file ratio). No single metric is extreme enough to cross an anomaly threshold, "
-                    "which is exactly why magnitude-based detection scores 0/4.")
+                    "which is exactly why magnitude-based detection scores 0/5.")
 
         # ─────────────────────────────────────────────────────────────
         # SECTION 2: RAW TELEMETRY
@@ -1854,6 +1854,7 @@ elif page == "Traditional vs V-Intelligence UEBA":
         "USR-234": "ATK-003: Slow APT (180-day)",
         "USR-042": "ATK-007: Volt Typhoon LOTL (115-day)",
         "USR-118": "ATK-008: Salt Typhoon Telecom (100-day)",
+        "USR-EVA": "ATK-EVA: Evasive Insider (low-and-slow demo)",
     }
     comp_df["label"] = comp_df["user_id"].map(lambda x: attack_users.get(x, "Normal"))
 
@@ -1940,9 +1941,9 @@ elif page == "Traditional vs V-Intelligence UEBA":
 
     st.markdown(f"""
 <div style="background:#EAF4EC; border-left:4px solid #1E8449; border-radius:8px; padding:12px 18px; margin-top:8px; font-size:0.9rem; color:#1D3A2A;">
-    <b>What the matrix shows:</b> traditional point-anomaly tools (Isolation Forest / SVM / LOF) catch <b>0 of 4</b> at low FP — they see every attacker as a normal user.
-    The z-score catches <b>1 of 4</b> (the single-feature LOTL spike) at 9.8% FP. <b>Composite scoring catches 4 of 4 at {FP_ALL4_TXT} FP</b>, and the
-    <b>multi-front threat-profile detector catches 4 of 4 at 0 false positives</b>.<br>
+    <b>What the matrix shows:</b> traditional point-anomaly tools (Isolation Forest / SVM / LOF) catch <b>0 of 5</b> at low FP — they see every attacker as a normal user.
+    The z-score catches <b>1 of 5</b> (the single-feature LOTL spike) at 9.8% FP. <b>Composite scoring catches 5 of 5 at {FP_ALL4_TXT} FP</b>, and the
+    <b>multi-front threat-profile detector catches 4 of 5 at 0 false positives</b> — it flags the four measurable known-bad profiles but by design does <b>not</b> match the evasive insider (USR-EVA), which only the drift + composite layer catches.<br>
     <span style="color:#7B341E;">The old Temporal-Z-Score / Feature-CUSUM / embedding-CUSUM rows were removed: they "detected" all four only by firing on ~100% of normal users — flagging everyone is not detection.</span>
 </div>
 """, unsafe_allow_html=True)
@@ -1972,6 +1973,7 @@ elif page == "Traditional vs V-Intelligence UEBA":
         ("Z-Score (3-sigma)", "zscore_anomaly"),
     ]
 
+    _n_atk = len(_atk_ids)
     _table = "| Method | Attacks Detected | FP Rate | Assessment |\n|---|---|---|---|\n"
     for _name, _col in _detect_methods:
         if _col in comp_df.columns:
@@ -1981,25 +1983,25 @@ elif page == "Traditional vs V-Intelligence UEBA":
             # FP rate is meaningless for a method that catches nothing — mark n/a.
             _fp_txt = f"{_fp_pct:.1f}% (n/a)" if _tp == 0 else f"{_fp_pct:.1f}%"
             if _tp == 0:
-                _assess = "Misses all 4 — false alarms catch no attacker"
-            elif _tp < 4:
+                _assess = f"Misses all {_n_atk} — false alarms catch no attacker"
+            elif _tp < _n_atk:
                 _hits = [uid for uid in _atk_ids if bool(comp_df.loc[comp_df["user_id"] == uid, _col].values[0])]
-                _assess = f"Catches only {', '.join(sorted(_hits))} ({_tp} of 4)"
+                _assess = f"Catches only {', '.join(sorted(_hits))} ({_tp} of {_n_atk})"
             else:
                 _assess = "All detected"
-            _table += f"| {_name} | {_tp} / 4 | {_fp_txt} | {_assess} |\n"
+            _table += f"| {_name} | {_tp} / {_n_atk} | {_fp_txt} | {_assess} |\n"
 
     _cs = db_load_composite_scores()
     if not _cs.empty:
         _cs_atk = _cs[_cs.uid.isin(_atk_ids)]; _cs_norm = _cs[~_cs.uid.isin(_atk_ids)]
-        _thr = _cs_atk["composite"].min()  # threshold that catches all 4
+        _thr = _cs_atk["composite"].min()  # threshold that catches every attacker
         _comp_fp_pct = 100 * int((_cs_norm["composite"] >= _thr).sum()) / max(len(_cs_norm), 1)
-        _table += f"| Composite Scoring | {len(_cs_atk)} / 4 | {_comp_fp_pct:.1f}% | Catches all 4, but flagging the two stealth attacks (slow-APT, LOTL) costs false positives |\n"
+        _table += f"| Composite Scoring | {len(_cs_atk)} / {_n_atk} | {_comp_fp_pct:.1f}% | Catches all {_n_atk} (incl. the evasive insider), but flagging the two stealth attacks (slow-APT, LOTL) costs false positives |\n"
     try:
         _tpa = pd.read_csv("data/threat_profile_alerts.csv")
         _tp_caught = int(_tpa["is_known_attack"].sum()); _tp_fp = int((~_tpa["is_known_attack"]).sum())
         _tp_fp_pct = 100 * _tp_fp / max(250 - _tp_caught, 1)
-        _table += f"| **Threat-Profile Detector** | **{_tp_caught} / 4** | **{_tp_fp_pct:.1f}%** | **The only clean 4/4 — each attacker named by technique (C2-beacon, DGA, LOTL, cohort-rare access)** |\n"
+        _table += f"| **Threat-Profile Detector** | **{_tp_caught} / {_n_atk}** | **{_tp_fp_pct:.1f}%** | **{_tp_caught} of {_n_atk} clean — each named by technique (C2-beacon, DGA, LOTL, cohort-rare access); the evasive insider (EVA) evades every profile by design** |\n"
     except Exception:
         pass
 
@@ -2062,11 +2064,13 @@ elif page == "Three-Tier Detection":
         "USR-234": "Slow APT (180-day)",
         "USR-042": "Volt Typhoon LOTL (115-day)",
         "USR-118": "Salt Typhoon Telecom (100-day)",
+        "USR-EVA": "Evasive Insider (low-and-slow demo)",
     }
     ATTACK_NAMES_T3 = {
         "USR-042": "Volt Typhoon", "USR-118": "Salt Typhoon",
-        "USR-156": "Insider", "USR-234": "Slow APT",
+        "USR-156": "Insider", "USR-234": "Slow APT", "USR-EVA": "Evasive Insider",
     }
+    _T3_ORDER = ["USR-118", "USR-156", "USR-234", "USR-042", "USR-EVA"]
 
     t3_df = db_load_detection_results()
     t3_df = t3_df if not t3_df.empty else None
@@ -2148,7 +2152,7 @@ elif page == "Three-Tier Detection":
         n_users = len(comp_scores)
         _t3_sorted = comp_scores.sort_values("composite", ascending=False).reset_index(drop=True)
         clean = 0
-        for _u in ["USR-156", "USR-234", "USR-042", "USR-118"]:
+        for _u in _T3_ORDER:
             _rk = _t3_sorted.index[_t3_sorted["uid"] == _u]
             if len(_rk) and int((~_t3_sorted.iloc[:int(_rk[0])]["is_attack"]).sum()) == 0:
                 clean += 1
@@ -2166,13 +2170,13 @@ elif page == "Three-Tier Detection":
             </div>""", unsafe_allow_html=True)
         with hero_c2:
             st.markdown(f"""<div class="metric-card gold">
-                <p class="metric-value">4/4</p>
+                <p class="metric-value">5/5</p>
                 <p class="metric-label">Attacks Detected<br>(at the FP cost shown →)</p>
             </div>""", unsafe_allow_html=True)
         with hero_c3:
             st.markdown(f"""<div class="metric-card">
                 <p class="metric-value">{fp_rate:.1f}%</p>
-                <p class="metric-label">FP to catch all 4<br>(threshold = lowest attacker score)</p>
+                <p class="metric-label">FP to catch all 5<br>(threshold = lowest attacker score)</p>
             </div>""", unsafe_allow_html=True)
         with hero_c4:
             st.markdown(f"""<div class="metric-card critical">
@@ -2181,15 +2185,15 @@ elif page == "Three-Tier Detection":
             </div>""", unsafe_allow_html=True)
         st.markdown(f"""
         <div style="background:#FEF9E7; border:1px solid #F7DC6F; border-radius:6px; padding:10px 16px; margin-top:8px; font-size:0.85rem; color:#7D6608;">
-        Composite ranking <b>catches all 4 attacks</b> — but flagging the two stealth attacks (USR-234, USR-042, which rank below
+        Composite ranking <b>catches all 5 attacks</b> (including the evasive insider, USR-EVA, at rank #1) — but flagging the two stealth attacks (USR-234, USR-042, which rank below
         some normal users) costs <b>{fp_rate:.1f}% false positives</b> ({fp} normal users also flagged). The <b>multi-front
-        Threat-Profile detector catches all 4 at 0 false positives</b> — see the Threat Profiles page.
+        Threat-Profile detector catches 4 of 5 at 0 false positives</b> — it names the four measurable known-bad profiles but by design does not match USR-EVA (see the Threat Profiles page).
         </div>""", unsafe_allow_html=True)
 
         # ── Attack user composite cards ──
         st.subheader("Attack Campaign Composite Scores")
 
-        for uid in ["USR-118", "USR-156", "USR-234", "USR-042"]:
+        for uid in _T3_ORDER:
             row = comp_scores[comp_scores["uid"] == uid]
             if row.empty:
                 continue
@@ -2246,7 +2250,7 @@ elif page == "Three-Tier Detection":
         st.subheader("5-Phase Composite Breakdown")
 
         phase_data = []
-        for uid in ["USR-118", "USR-156", "USR-234", "USR-042"]:
+        for uid in _T3_ORDER:
             r = comp_scores[comp_scores["uid"] == uid].iloc[0]
             name = ATTACK_NAMES_T3.get(uid, uid)
             phase_data.extend([
@@ -2321,17 +2325,18 @@ elif page == "Three-Tier Detection":
             sweep_rows.append({
                 "Percentile": f"{pct}%",
                 "Threshold": round(thresh, 2),
-                "TP": f"{tp_s}/4",
+                "TP": f"{tp_s}/{len(t3_attack_users)}",
                 "FP": fp_s,
                 "FP Rate": f"{100 * fp_s / n_normal:.1f}%",
                 "Precision": f"{100 * tp_s / max(tp_s + fp_s, 1):.1f}%",
-                "Recall": f"{100 * tp_s / 4:.0f}%",
+                "Recall": f"{100 * tp_s / len(t3_attack_users):.0f}%",
             })
 
         sweep_df = pd.DataFrame(sweep_rows)
+        _all_tp = f"{len(t3_attack_users)}/{len(t3_attack_users)}"
         st.dataframe(
             sweep_df.style.map(
-                lambda v: "background-color: #D5F5E3; font-weight: bold" if v == "4/4" else "",
+                lambda v: "background-color: #D5F5E3; font-weight: bold" if v == _all_tp else "",
                 subset=["TP"]
             ),
             hide_index=True, use_container_width=True,
@@ -2469,7 +2474,8 @@ elif page == "Three-Tier Detection":
                 top_z_cols = list(dict.fromkeys(top_z_cols))[:12]
 
                 z_matrix = []
-                for uid in ["USR-118", "USR-156", "USR-234", "USR-042"]:
+                _z_rows = [uid for uid in _T3_ORDER if not attack_z[attack_z["uid"] == uid].empty]
+                for uid in _z_rows:
                     row = attack_z[attack_z["uid"] == uid]
                     if not row.empty:
                         z_matrix.append([row.iloc[0][c] for c in top_z_cols])
@@ -2477,7 +2483,7 @@ elif page == "Three-Tier Detection":
                 fig_heat = go.Figure(data=go.Heatmap(
                     z=z_matrix,
                     x=[c.replace("z_", "").replace("_", " ") for c in top_z_cols],
-                    y=[f"{uid} ({ATTACK_NAMES_T3[uid]})" for uid in ["USR-118", "USR-156", "USR-234", "USR-042"]],
+                    y=[f"{uid} ({ATTACK_NAMES_T3[uid]})" for uid in _z_rows],
                     colorscale="RdYlBu_r", zmid=0,
                     text=[[f"{v:.1f}" for v in row] for row in z_matrix],
                     texttemplate="%{text}",
@@ -2640,7 +2646,7 @@ elif page == "Three-Tier Detection":
         <div style="background:white; padding:20px; border-radius:12px; text-align:center;
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #34495E;">
             <div style="font-size:1rem; font-weight:700; color:#34495E; margin-bottom:8px;">TIER 1</div>
-            <div style="font-size:1.8rem; font-weight:700; color:{RED}; margin:8px 0;">{_ct_trad_best} / 4</div>
+            <div style="font-size:1.8rem; font-weight:700; color:{RED}; margin:8px 0;">{_ct_trad_best} / {len(_ct_atk)}</div>
             <p style="color:{NAVY}; font-weight:600;">Traditional Algorithms</p>
             <p style="color:#6C757D; font-size:0.85rem;">Catches statistical outliers.<br>
             Misses insiders who stay within normal ranges.</p>
@@ -2652,7 +2658,7 @@ elif page == "Three-Tier Detection":
         <div style="background:white; padding:20px; border-radius:12px; text-align:center;
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid {BLUE};">
             <div style="font-size:1rem; font-weight:700; color:{BLUE}; margin-bottom:8px;">TIER 2</div>
-            <div style="font-size:1.8rem; font-weight:700; color:#E67E22; margin:8px 0;">{_ct_t2_best} / 4</div>
+            <div style="font-size:1.8rem; font-weight:700; color:#E67E22; margin:8px 0;">{_ct_t2_best} / {len(_ct_atk)}</div>
             <p style="color:{NAVY}; font-weight:600;">Behavioral Embeddings</p>
             <p style="color:#6C757D; font-size:0.85rem;">Adds drift direction analysis.<br>
             Single composite embedding dilutes zone-specific signals.</p>
@@ -2664,10 +2670,10 @@ elif page == "Three-Tier Detection":
         <div style="background:white; padding:20px; border-radius:12px; text-align:center;
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #27AE60; border:2px solid {GOLD};">
             <div style="font-size:1rem; font-weight:700; color:{GOLD}; margin-bottom:8px;">TIER 3</div>
-            <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">4 / 4</div>
+            <div style="font-size:1.8rem; font-weight:700; color:#27AE60; margin:8px 0;">{len(_ct_atk)} / {len(_ct_atk)}</div>
             <p style="color:{NAVY}; font-weight:600;">Composite + Threat Profiles</p>
-            <p style="color:#6C757D; font-size:0.85rem;">Composite catches all 4 at {FP_ALL4_TXT} FP; the multi-front<br>
-            threat-profile detector catches all 4 at 0% FP.</p>
+            <p style="color:#6C757D; font-size:0.85rem;">Composite catches all {len(_ct_atk)} at {FP_ALL4_TXT} FP; the multi-front<br>
+            threat-profile detector catches 4 of {len(_ct_atk)} at 0% FP (the evasive insider evades every profile).</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -3714,7 +3720,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
         (summary_bg, summary_border, summary_color, summary_text, summary_detail),
         (zs_bg, zs_border, zs_color, zs_text, zs_detail),
         ("#EAFAF1", "#A9DFBF", "#27AE60", f"{ace_det} of {len(ATTACK_USERS)} detected — {_ace_fp_pct:.1f}% FP",
-         "Catches all 4 — but the two stealth attacks cost false alarms"),
+         "Catches all 5 (incl. the evasive insider) — but the two stealth attacks cost false alarms"),
         ("#EAFAF1", "#A9DFBF", "#27AE60", f"{_tp_det} of {len(ATTACK_USERS)} detected — 0% FP",
          "Each named by technique — no false alarms"),
     ]
@@ -4120,9 +4126,9 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     st.markdown(f"""
     <h2 style="text-align:center; color:{NAVY};">Composite Scoring — How It Ranks, and Where It Falls Short</h2>
     <p style="text-align:center; color:#6C757D; margin-bottom:8px;">
-    The 5 phases below explain each attacker's composite score. But the score only ranks USR-156 and USR-118
-    above all normal users — the stealth slow-APT and LOTL stay buried, which is exactly why the multi-front
-    threat-profile detector (Threat Profiles page) is needed to catch all four.</p>
+    The 5 phases below explain each attacker's composite score. It ranks USR-156, USR-118, and the evasive insider (USR-EVA)
+    above all normal users — but the stealth slow-APT and LOTL stay buried, which is exactly why the multi-front
+    threat-profile detector (Threat Profiles page) is needed to catch that stealth pair.</p>
     """, unsafe_allow_html=True)
 
     _cs_df = db_load_composite_scores()
@@ -4275,7 +4281,7 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             st.markdown(f"""
 <div style="background:#F7F8FA; padding:10px 14px; border-radius:8px; border-left:3px solid {NAVY}; font-size:0.78rem; color:#555;">
     <strong>Grey dashed</strong> = Normal user median. <strong>Grey dotted</strong> = Normal 75th percentile.<br>
-    USR-156 and USR-118 separate strongly across multiple phases. USR-042 (Volt LOTL) stays modest, and USR-234 (slow APT) scores on Novelty Persistence alone — which is why the composite ranks these two low (USR-234 below normal users) and they need the multi-front threat-profile detector. The composite cleanly separates 2 of 4.
+    USR-156, USR-118, and USR-EVA (evasive insider) separate strongly across multiple phases. USR-042 (Volt LOTL) stays modest, and USR-234 (slow APT) scores on Novelty Persistence alone — which is why the composite ranks these two low (USR-234 below normal users) and they need the multi-front threat-profile detector. The composite cleanly separates 3 of 5.
 </div>
 """, unsafe_allow_html=True)
 
@@ -4772,7 +4778,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid {RED};">
             <h3 style="color:{RED}; margin:0;">TRADITIONAL DETECTION</h3>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Isolation Forest, One-Class SVM, LOF</p>
-            <div style="font-size:3rem; font-weight:700; color:{RED}; margin:16px 0;">{_best_trad_tp} of 4</div>
+            <div style="font-size:3rem; font-weight:700; color:{RED}; margin:16px 0;">{_best_trad_tp} of {len(_verdict_atk_ids)}</div>
             <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Fixed thresholds on 23 scalar features.
             Attackers who stay within normal statistical ranges are invisible — no individual metric
             is abnormal enough to cross a detection boundary.</p>
@@ -4784,7 +4790,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
                      box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:4px solid #E67E22;">
             <h3 style="color:#E67E22; margin:0;">INTERMEDIATE ANALYSIS</h3>
             <p style="color:#6C757D; font-size:0.85rem; margin:8px 0;">Z-Score (|z|&gt;3) — single-feature spike detection</p>
-            <div style="font-size:3rem; font-weight:700; color:#E67E22; margin:16px 0;">{_zscore_tp} of 4</div>
+            <div style="font-size:3rem; font-weight:700; color:#E67E22; margin:16px 0;">{_zscore_tp} of {len(_verdict_atk_ids)}</div>
             <p style="color:{NAVY}; font-weight:600; font-size:1rem;">Catches Volt Typhoon at {_zscore_fp_pct:.1f}% FP</p>
             <p style="color:#6C757D; font-size:0.85rem; margin-top:12px;">Z-Score detects single-feature spikes beyond
             3 standard deviations — catches the one attacker with a single-feature spike but misses slow, distributed campaigns
@@ -4811,7 +4817,7 @@ z = (0.44 − 0.30) ÷ 0.08 = 1.75 → 1.75σ above its developer peers</p>
         <p style="color:{GOLD}; font-size:1.2rem; font-weight:700; margin:0;">
         V-Intelligence UEBA builds the digital entity. Composite Scoring detects the anomaly.</p>
         <p style="color:#27AE60; font-size:1.1rem; font-weight:700; margin:10px 0 0 0;">
-        {_comp_tp}/4 attacks detected at {_comp_fp_pct:.1f}% FP — vs {_best_trad_tp}/4 with traditional methods.</p>
+        {_comp_tp}/{len(_verdict_atk_ids)} attacks detected at {_comp_fp_pct:.1f}% FP — vs {_best_trad_tp}/{len(_verdict_atk_ids)} with traditional methods.</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -4850,9 +4856,12 @@ elif page == "Threat Profiles":
 
         m1, m2, m3, m4 = st.columns(4)
         m1.metric("Entities flagged", len(_ta))
-        m2.metric("Known attacks caught", f"{_n_att} / 4")
+        m2.metric("Known attacks caught", f"{_n_att} / 5")
         m3.metric("False positives", _n_fp)
         m4.metric("Precision", f"{_prec:.0f}%")
+        st.caption("This detector targets **measurable known-bad profiles**, so it catches the four real campaigns at zero false positives. "
+                   "The fifth attacker — the evasive insider (USR-EVA) — matches no known-bad profile by design; it is the mirror case the "
+                   "drift + composite layer catches (see Detection Comparison).")
 
         st.markdown("##### Alert table — each flag with its technique evidence")
         for _, r in _ta.iterrows():
@@ -4949,7 +4958,7 @@ elif page == "Detection Pipeline":
         <span style="color:#A0C8E0; font-size:0.9rem; display:block; margin-top:4px;">
         Result: all 4 profiled intruders caught — each at its earliest moment, at the lowest cost — and every alert comes with a plain reason a SOC team can act on. The evasive insider (USR-EVA) evades every known-bad profile and is caught only by the drift + composite layers — the reason those layers stay in the stack.</span>
         <span style="color:#fff; font-size:0.9rem; display:block; margin-top:8px;">
-        Cost of catching all four: the <b>Stage-1 known-bad detector</b> flags them at <b>0 false positives</b>; the <b>Stage-4 fused score</b> catches the same four at <b>{FP_ALL4_TXT} false positives</b> — and even then it ranks the two stealth attackers (USR-234, USR-042) below normal users, so only the known-bad detector separates them cleanly.</span>
+        Cost of catching them: the <b>Stage-1 known-bad detector</b> flags the four profiled intruders at <b>0 false positives</b>; the <b>Stage-4 fused score</b> catches all five — the evasive insider included — at <b>{FP_ALL4_TXT} false positives</b>, and even then it ranks the two stealth attackers (USR-234, USR-042) below normal users, so only the known-bad detector separates them cleanly.</span>
     </div>
     """, unsafe_allow_html=True)
 
@@ -4965,8 +4974,9 @@ elif page == "Guided Demo":
         "USR-234": ("Slow APT (stealth)", "#E67E22"),
         "USR-042": ("Volt Typhoon · LOTL", "#8E44AD"),
         "USR-118": ("Salt Typhoon · recon", "#2980B9"),
+        "USR-EVA": ("Evasive Insider (demo)", "#16A085"),
     }
-    GD_ORDER = ["USR-156", "USR-118", "USR-042", "USR-234"]
+    GD_ORDER = ["USR-156", "USR-118", "USR-042", "USR-234", "USR-EVA"]
     GD_ATT_IDS = list(GD_ATT)
     GD_GREEN = "#1E8449"
 
@@ -5057,7 +5067,7 @@ elif page == "Guided Demo":
         fig = go.Figure()
         fig.add_trace(go.Bar(x=nrm["rank"], y=nrm["composite"], marker_color="rgba(120,130,140,0.32)", name="250 users"))
         fig.add_hline(y=thr, line=dict(color=BLUE, dash="dash"),
-                      annotation_text=f"Catch all 4  →  {fp:.1f}% false positives", annotation_position="top right")
+                      annotation_text=f"Catch all 5  →  {fp:.1f}% false positives", annotation_position="top right")
         for u in GD_ORDER:
             r = csr[csr.uid == u].iloc[0]
             fig.add_trace(go.Scatter(x=[r["rank"]], y=[r["composite"]], mode="markers+text",
@@ -5079,7 +5089,7 @@ elif page == "Guided Demo":
     step = max(0, min(st.session_state.gd_step, TOTAL - 1))
 
     _page_hero("Guided Walkthrough",
-               "Same data: 4 stealth attacks hidden among 250 users over 485 days. Click Next to watch each layer catch what the last one missed.")
+               "Same data: 5 attacks (four real campaigns plus one evasive-insider demo) hidden among 250 users over 485 days. Click Next to watch each layer catch what the last one missed.")
     st.progress((step + 1) / TOTAL, text=f"Step {step + 1} of {TOTAL}  —  {STEPS[step]}")
 
     nav1, nav2, nav3 = st.columns([1, 4, 1])
@@ -5097,9 +5107,9 @@ elif page == "Guided Demo":
     if step == 0:
         _gd_callout("The problem: threats that live inside authorized access",
                     "Insiders and nation-state actors use legitimate credentials and built-in tools — they never trip a threshold. "
-                    "We layer five detection methods on the same logs; each layer catches what the last one missed. Here are the four hidden attacks.")
-        c = st.columns(4)
-        for i, u in enumerate(["USR-118", "USR-156", "USR-042", "USR-234"]):
+                    "We layer five detection methods on the same logs; each layer catches what the last one missed. Here are the five hidden attacks.")
+        c = st.columns(5)
+        for i, u in enumerate(GD_ORDER):
             with c[i]:
                 st.markdown(f"<div style='border-top:4px solid {GD_ATT[u][1]};background:#F6F9FC;border-radius:6px;padding:10px 14px;'>"
                             f"<b style='color:{GD_ATT[u][1]};font-size:1.05rem;'>{u}</b><br>"
@@ -5107,11 +5117,11 @@ elif page == "Guided Demo":
 
         st.markdown("##### The five layers you'll step through")
         _gd_layers = [
-            ("Layer 1 · Traditional point-anomaly", "Isolation Forest / SVM / LOF + z-score", "0–1 of 4"),
+            ("Layer 1 · Traditional point-anomaly", "Isolation Forest / SVM / LOF + z-score", "0–1 of 5"),
             ("Layer 2 · Behavioral drift over time", "Same logs as accumulating entities", "loud movers separate"),
             ("Layer 3 · Multi-phase fingerprint", "Five behavioral questions vs peers", "each attacker extreme on a different phase"),
-            ("Layer 4 · Fused composite score", "One ranked priority list", "4 of 4, at a false-positive cost"),
-            ("Layer 5 · Known-bad threat profiles", "Measurable adversary techniques", "4 of 4 at 0 false positives"),
+            ("Layer 4 · Fused composite score", "One ranked priority list", "5 of 5, at a false-positive cost"),
+            ("Layer 5 · Known-bad threat profiles", "Measurable adversary techniques", "4 of 5 at 0 false positives"),
         ]
         for _t, _d, _r in _gd_layers:
             st.markdown(
@@ -5127,20 +5137,20 @@ elif page == "Guided Demo":
     elif step == 1:
         _gd_callout("Layer 1 — Traditional point-anomaly detection",
                     "What most agencies run today. Isolation Forest, One-Class SVM, and LOF score each user against a threshold. "
-                    "On these four campaigns they catch <b>0 of 4</b>; a simple z-score catches <b>1 of 4</b> (the LOTL case) but alarms on nearly everyone.", RED)
+                    "On these five campaigns they catch <b>0 of 5</b>; a simple z-score catches <b>1 of 5</b> (the LOTL case) but alarms on nearly everyone.", RED)
         def _caught(u, col):
             r = gd_dr[gd_dr.user_id == u]
             return bool(r.iloc[0].get(col, False)) if not r.empty else False
         rows = []
-        for u in ["USR-156", "USR-234", "USR-042", "USR-118"]:
+        for u in GD_ORDER:
             trad = any(_caught(u, c) for c in ["iforest_anomaly", "ocsvm_anomaly", "lof_anomaly"])
             rows.append({"Entity": u, "Campaign": GD_ATT[u][0],
                          "Traditional (IF/SVM/LOF)": "DETECTED" if trad else "MISSED",
                          "Z-score": "DETECTED" if _caught(u, "zscore_anomaly") else "MISSED"})
         m1, m2, m3 = st.columns(3)
-        m1.metric("Traditional SIEM (IF/SVM/LOF)", "0 of 4")
-        m2.metric("Intermediate z-score", "1 of 4")
-        m3.metric("Still hidden", "3 of 4")
+        m1.metric("Traditional SIEM (IF/SVM/LOF)", "0 of 5")
+        m2.metric("Intermediate z-score", "1 of 5")
+        m3.metric("Still hidden", "4 of 5")
         st.caption("Point-anomaly tools see every attacker as a normal employee; the z-score catches only the LOTL case — and flags nearly all normal users.")
         st.dataframe(pd.DataFrame(rows), use_container_width=True, hide_index=True)
 
@@ -5182,14 +5192,15 @@ elif page == "Guided Demo":
     elif step == 6:
         fig, thr, fp = _gd_composite()
         _gd_callout("Layer 4 — Fused composite: one ranked verdict",
-                    f"Fuse the five phases into a single score. Now <b>all four</b> campaigns rank above the line that catches all four — "
-                    f"including the two stealth movers that hid in the crowd. The cost: catching all four flags about {fp:.1f}% of normal users for review.")
+                    f"Fuse the five phases into a single score. Now <b>all five</b> campaigns rank above the line that catches them all — "
+                    f"including the two stealth movers that hid in the crowd and the evasive insider. The cost: catching all five flags about {fp:.1f}% of normal users for review.")
         st.plotly_chart(fig, use_container_width=True)
 
     elif step == 7:
-        _gd_callout("Layer 5 — Known-bad profiles: 4 of 4 at zero false positives",
+        _gd_callout("Layer 5 — Known-bad profiles: 4 of 5 at zero false positives",
                     "Instead of only 'how far has it drifted?', ask 'does it match a measurable known-bad profile?' — a beacon's robotic timing, "
-                    "an algorithmically-generated domain, a destination no peer contacts. Every campaign matches one; no normal entity matches any.", GD_GREEN)
+                    "an algorithmically-generated domain, a destination no peer contacts. Each of the four real campaigns matches one and no normal entity matches any — "
+                    "but the evasive insider (USR-EVA) matches none, which is exactly why Layer 4's fused score stays in the stack to catch it.", GD_GREEN)
         try:
             _tpa = pd.read_csv("data/threat_profile_alerts.csv")
             _show = _tpa[_tpa.get("is_known_attack", False) == True][["user_id", "attack_type", "techniques"]].rename(
@@ -5202,17 +5213,17 @@ elif page == "Guided Demo":
                 {"Entity": "USR-042", "Campaign": "Volt Typhoon (LOTL)", "Profile that fired": "Living-off-the-land process profile"},
                 {"Entity": "USR-118", "Campaign": "Salt Typhoon", "Profile that fired": "Cohort-relative reconnaissance fan-out"},
             ]), use_container_width=True, hide_index=True)
-        st.success("4 of 4 caught at 0 false positives — each alert named by the technique that fired.")
+        st.success("4 of 5 caught at 0 false positives — each alert named by the technique that fired. The evasive insider (USR-EVA) evades every known-bad profile; Layer 4's fused score is what catches it.")
 
     elif step == 8:
         _gd_callout("The verdict — same data, a fundamentally different outcome",
                     "Layer by layer, each method caught what the last one missed. The combination is the innovation.", NAVY)
         v = st.columns(4)
-        v[0].metric("Traditional", "0 of 4")
-        v[1].metric("Intermediate z-score", "1 of 4")
-        v[2].metric("Fused composite", "4 of 4")
-        v[3].metric("Known-bad profiles", "4 of 4")
-        st.caption(f"Fused composite catches all four at {FP_ALL4_TXT} false positives; the known-bad profile layer catches the same four at zero false positives.")
+        v[0].metric("Traditional", "0 of 5")
+        v[1].metric("Intermediate z-score", "1 of 5")
+        v[2].metric("Fused composite", "5 of 5")
+        v[3].metric("Known-bad profiles", "4 of 5")
+        st.caption(f"Fused composite catches all five at {FP_ALL4_TXT} false positives; the known-bad profile layer catches the four real campaigns at zero false positives (the evasive insider evades every profile — the composite is what catches it).")
         st.markdown(f"""<div style="background:{NAVY};border-radius:10px;padding:18px 26px;text-align:center;margin-top:10px;">
         <span style="color:{GOLD};font-weight:700;font-size:1.15rem;">We measure magnitude AND direction — accumulated over time, weighed against peers — applied in layers.</span>
         <span style="color:#A0C8E0;font-size:0.95rem;display:block;margin-top:6px;">Catch the easy ones cheaply; spend the deep lens only on the hard ones; and nail the known techniques with zero noise.</span></div>""",
