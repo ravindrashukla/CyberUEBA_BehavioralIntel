@@ -4948,7 +4948,7 @@ elif page == "Detection Pipeline":
         ["USR-118 — Salt Typhoon", "Stage 3 · Single-signal drift", "week 36", "One loud dimension — a network-volume flood"],
         ["USR-156 — insider", "Stage 4 · Composite Scoring", "week 4", "Intent shift visible only in the combined picture"],
         ["USR-042 — living-off-the-land", "Stage 4 · Composite Scoring", "week 15", "Legitimate tools, normal volume — only the combination reveals it"],
-        ["USR-EVA — evasive insider (demo)", "Stage 3 · Single-signal drift", "week 40", "Evades every known-bad profile — caught only once its accumulated drift breaks out"],
+        ["USR-EVA — evasive insider (demo)", "Stage 4 · Composite Scoring", "week 40", "Distributed insider drift — no single number spikes; evades every known-bad profile, so only the fused score separates it (rank #1)"],
     ], columns=["Attacker", "Caught earliest by", "When", "Why there"])
     st.dataframe(_map, hide_index=True, use_container_width=True)
 
