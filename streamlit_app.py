@@ -3503,6 +3503,42 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
     week_labels = feat_df[["week_idx", "week_start"]].drop_duplicates().sort_values("week_idx")
     week_dates = week_labels.set_index("week_idx")["week_start"].to_dict()
 
+    # ── Raw data -> derived features, kept on THIS page so the demo needs no page-switch ──
+    with st.expander("Raw telemetry  ->  the 23 features we derive   (show the inputs without leaving this page)", expanded=False):
+        _rd_t1, _rd_t2 = st.tabs(["Raw event streams", "Derived features (23)"])
+        with _rd_t1:
+            st.markdown("Event streams every enterprise already collects — no new sensors. "
+                        "Aggregated **per entity, per week** into the numeric features on the next tab.")
+            st.dataframe(pd.DataFrame([
+                ["Authentication", "logins, MFA, failures, source/dest, off-hours", "Okta / Azure AD / AD"],
+                ["File access", "opens & writes, path, restricted/confidential, bytes", "DLP / file audit / EDR"],
+                ["Network", "bytes out, distinct destinations, external ratio", "NetFlow / Zeek / firewall"],
+                ["DNS", "domains queried, NXDOMAIN ratio", "DNS logs / Zeek"],
+                ["Endpoint", "processes, risk score, suspicious ratio", "Sysmon / EDR"],
+            ], columns=["Raw stream", "What it captures", "Typical source"]),
+                hide_index=True, use_container_width=True)
+            st.caption("Application and privilege streams are collected too; the 23 detector features below span these 5 behavioral zones.")
+        with _rd_t2:
+            st.markdown("Each entity-week aggregates to **23 numeric features** across 5 behavioral zones — the digital twin's raw inputs.")
+            _feat_groups = {
+                "Authentication (7)": ["auth_total", "auth_failed", "auth_fail_rate", "auth_unique_sources",
+                                       "auth_unique_dests", "auth_off_hours_ratio", "auth_methods_used"],
+                "File access (6)": ["file_total", "file_unique_paths", "file_restricted_ratio",
+                                    "file_confidential_ratio", "file_write_ratio", "file_total_bytes"],
+                "Endpoint (5)": ["endpoint_total", "endpoint_suspicious_ratio", "endpoint_max_risk",
+                                 "endpoint_mean_risk", "endpoint_unique_processes"],
+                "Network (3)": ["net_bytes_out", "net_unique_dsts", "net_external_ratio"],
+                "DNS (2)": ["dns_unique_domains", "dns_nxdomain_ratio"],
+            }
+            for _c, (_grp, _fl) in zip(st.columns(len(_feat_groups)), _feat_groups.items()):
+                _c.markdown(f"**{_grp}**\n\n" + "\n".join(f"- `{f}`" for f in _fl))
+            st.markdown("**Live values — the actual derived features for one entity, week by week:**")
+            _rd_uid = st.selectbox("Entity", list(ATTACK_USERS.keys()),
+                                   format_func=lambda x: f"{x} — {ATTACK_USERS[x]['label']}", key="rawfeat_uid")
+            _rd_show = [c for c in FEATURE_COLS if c in feat_df.columns]
+            _rd_tbl = feat_df[feat_df.user_id == _rd_uid].sort_values("week_idx")[["week_idx"] + _rd_show]
+            st.dataframe(_rd_tbl, hide_index=True, use_container_width=True, height=300)
+
     # ═══════════════════════════════════════════════════════════════
     # SECTION 1: SOC ANALYST DASHBOARD — SPLIT SCREEN
     # ═══════════════════════════════════════════════════════════════
