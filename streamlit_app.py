@@ -3518,6 +3518,24 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
             ], columns=["Raw stream", "What it captures", "Typical source"]),
                 hide_index=True, use_container_width=True)
             st.caption("Application and privilege streams are collected too; the 23 detector features below span these 5 behavioral zones.")
+            st.markdown("**Actual raw events — a live sample straight from the bronze logs (before any feature engineering):**")
+            _rawmap = {
+                "Authentication": ("auth", ["timestamp", "user_id", "source_ip", "dest_system", "success", "auth_method"]),
+                "File access": ("file_access", ["timestamp", "user_id", "file_path", "operation", "data_classification", "file_size_bytes"]),
+                "Network": ("network", ["timestamp", "src_ip", "dst_ip", "protocol", "bytes_out", "device_id"]),
+                "DNS": ("dns", ["timestamp", "device_id", "query_name", "record_type", "response_code"]),
+                "Endpoint": ("endpoint", ["timestamp", "user_id", "process_name", "process_category", "risk_score"]),
+            }
+            _rs = st.selectbox("Show raw events for", list(_rawmap), key="rawev_stream")
+            _subdir, _rcols = _rawmap[_rs]
+            _csvs = sorted((GENERATED_DIR / _subdir).glob("*.csv"))
+            if _csvs:
+                _samp = pd.read_csv(_csvs[-1])
+                _av = [c for c in _rcols if c in _samp.columns] or list(_samp.columns[:6])
+                st.dataframe(_samp[_av].head(15), hide_index=True, use_container_width=True, height=300)
+                st.caption(f"{len(_csvs)} daily files · {len(_samp):,} events in {_csvs[-1].name} — untouched input; the {_rs} features on the next tab are aggregated from streams like this.")
+            else:
+                st.caption(f"No raw {_rs} logs found under {GENERATED_DIR / _subdir}.")
         with _rd_t2:
             st.markdown("Each entity-week aggregates to **23 numeric features** across 5 behavioral zones — the digital twin's raw inputs.")
             _feat_groups = {
