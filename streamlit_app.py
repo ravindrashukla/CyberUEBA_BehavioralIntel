@@ -4108,6 +4108,32 @@ Uses V-Intelligence UEBA's entity features to score and rank anomalies.
                    "above for 3+ straight weeks is its detection point (the star in the chart above). These "
                    "are the exact cumulative values plotted above.")
 
+    with st.expander("How the two lenses aggregate the weekly stream — cumulative drift (CUSUM) vs composite z-score", expanded=False):
+        st.markdown("""
+Both lenses read the **same weekly stream** — a new behavioral snapshot every week — but they **aggregate it two different ways**. Neither uses the *latest week alone*: a low-and-slow insider looks normal in any single snapshot, so the signal only exists in the accumulation.
+
+**1 · Cumulative drift (CUSUM) — weekly drift accumulated *above a noise floor*.**
+Only the part of each week's drift that exceeds a small floor accumulates, so ordinary week-to-week noise doesn't pile up:
+- **Feature-space:** `CUSUM = Σ max(weekly_drift − 0.5, 0)` — the **0.5** is the noise floor.
+- **Pipeline zone-CUSUM:** `cusum = max(0, cusum + drift − 0.02)` — same idea, floor 0.02.
+- *(The embedding Signal-Separation chart above uses a plain `cumsum` of the week-to-week cosine drift — no floor — for that view.)*
+
+Measured against the entity's **own baseline** + the normal band. Answers **"*when* did it start drifting / cross the line."**
+
+**2 · Composite z-score — peak + sustained, relative to peers.**
+Each entity's 70-week trajectory is collapsed to two aggregates, then z-scored against its **role-group's normal users**:
+- **peak** = `max` over *all* weeks (the worst moment), and
+- **sustained** = `mean` over the second-half monitoring window (persistence).
+
+The 5 composite phases (signal strength, breadth, sustained, context, novelty) are built from those z-scores. Answers **"*how anomalous* is it, and *where does it rank*."**
+
+| | Cumulative drift (CUSUM) | Composite z-score |
+|---|---|---|
+| **Aggregates over** | time — week by week, above a floor | the trajectory — peak + sustained |
+| **Compared to** | the entity's own baseline + normal band | its role-group peers |
+| **Answers** | *when* did it start drifting / cross the line | *how anomalous*, and *where it ranks* |
+""")
+
     # ═══════════════════════════════════════════════════════════════
     # SECTION 3B: COMPOSITE SCORE DECOMPOSITION — WHY IT CATCHES WHAT CUSUM CAN'T
     # ═══════════════════════════════════════════════════════════════
