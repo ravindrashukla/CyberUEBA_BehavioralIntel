@@ -17,7 +17,11 @@
       "Bash(DATABASE_URL_HOST=postgresql://cyber_ueba:password@127.0.0.1:5438/cyber_ueba python -c ' *)",
       "Bash(DATABASE_URL_HOST='postgresql://cyber_ueba:password@127.0.0.1:5438/cyber_ueba' DB_HOST='127.0.0.1' DB_PORT='5438' python scripts/backfill_eva_daily_features.py)",
       "Bash(DATABASE_URL_HOST=postgresql://cyber_ueba:password@127.0.0.1:5438/cyber_ueba DB_HOST=127.0.0.1 DB_PORT=5438 python -c ' *)",
-      "Bash(git commit -m ' *)"
+      "Bash(git commit -m ' *)",
+      "Bash(git fetch *)",
+      "Bash(git rev-list *)",
+      "Bash(git checkout *)",
+      "Bash(git merge *)"
     ],
     "deny": []
   }
